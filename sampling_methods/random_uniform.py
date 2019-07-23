@@ -1,5 +1,5 @@
 import numpy as np
-from sampling_experiments.sampling_methods.base import CSamplingMethod
+from sampling_methods.base import CSamplingMethod
 
 
 class CRandomUniformSampling(CSamplingMethod):

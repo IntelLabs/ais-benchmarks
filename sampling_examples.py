@@ -7,42 +7,43 @@ from mpl_toolkits.mplot3d import Axes3D
 import sys
 
 # PROBABILITY DISTRIBUTION FUNCTIONS
-from sampling_experiments.distributions.CGaussianMixtureModel import CGaussianMixtureModel
-from sampling_experiments.distributions.CGaussianMixtureModel import generateRandomGMM
-from sampling_experiments.distributions.CMultivariateNormal import CMultivariateNormal
-from sampling_experiments.distributions.CRosenbrockPDF import CRosenbrock
-from sampling_experiments.distributions.CRipple import CRipple
-from sampling_experiments.distributions.CKernelDensity import CKernelDensity
-from sampling_experiments.distributions.CNearestNeighbor import CNearestNeighbor
+from distributions.CGaussianMixtureModel import CGaussianMixtureModel
+from distributions.CGaussianMixtureModel import generateRandomGMM
+from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.CRosenbrockPDF import CRosenbrock
+from distributions.CRipple import CRipple
+from distributions.CKernelDensity import CKernelDensity
+from distributions.CNearestNeighbor import CNearestNeighbor
 
 # SAMPLING METHODS
-from sampling_experiments.sampling_methods.random_uniform import CRandomUniformSampling
-from sampling_experiments.sampling_methods.tree_pyramid import CTreePyramidSampling
-from sampling_experiments.sampling_methods.metropolis_hastings import CMetropolisHastings
-from sampling_experiments.sampling_methods.rejection import CRejectionSampling
-from sampling_experiments.sampling_methods.grid import CGridSampling
-from sampling_experiments.sampling_methods.nested import CNestedSampling
-from sampling_experiments.sampling_methods.multi_nested import CMultiNestedSampling
+from sampling_methods.random_uniform import CRandomUniformSampling
+from sampling_methods.tree_pyramid import CTreePyramidSampling
+from sampling_methods.metropolis_hastings import CMetropolisHastings
+from sampling_methods.rejection import CRejectionSampling
+from sampling_methods.grid import CGridSampling
+from sampling_methods.nested import CNestedSampling
+from sampling_methods.multi_nested import CMultiNestedSampling
 
 # UTILS FOR SAMPLING
-from sampling_experiments.sampling_methods.base import uniform_sample_distribution
-from sampling_experiments.sampling_methods.base import grid_sample_distribution
-from sampling_experiments.sampling_methods.base import kl_divergence
-from sampling_experiments.sampling_methods.base import bhattacharyya_distance
+from sampling_methods.base import uniform_sample_distribution
+from sampling_methods.base import grid_sample_distribution
+from sampling_methods.base import kl_divergence
+from sampling_methods.base import bhattacharyya_distance
 
 # PLOTTING FUNCTIONS
-from sampling_experiments.utils.plot_utils import plot_grid_sampled_pdfs
-from sampling_experiments.utils.plot_utils import plot_ellipsoids
-from sampling_experiments.utils.plot_utils import plot_ellipsoids1D
-from sampling_experiments.utils.plot_utils import plot_tpyramid_area
-from sampling_experiments.utils.plot_utils import plot_tpyramid_volume
-from sampling_experiments.utils.plot_utils import plot_grid_area
-from sampling_experiments.utils.plot_utils import plot_grid_volume
+from utils.plot_utils import plot_grid_sampled_pdfs
+from utils.plot_utils import plot_ellipsoids
+from utils.plot_utils import plot_ellipsoids1D
+from utils.plot_utils import plot_tpyramid_area
+from utils.plot_utils import plot_tpyramid_volume
+from utils.plot_utils import plot_grid_area
+from utils.plot_utils import plot_grid_volume
 
 
 if __name__ == "__main__":
     np.random.seed(3)
     make_plot = True
+    save_plot = False
     kde_bw = 0.2                    # bandwidth for the KDE approximation
     sampling_eval_resolution = 0.05 # Resolution for the grid used to compute KL and Bhatacharayya metrics
     num_gaussians_gmm = 5           # Number of mixture components in the GMM model
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         expected_value_var = samples_acc.var(axis=0)
         expected_value_weighted_var = (samples_acc * np.exp(samples_logprob_acc.reshape(-1,1))).var()
 
-        if make_plot and ndims==1:
+        if make_plot and ndims == 1:
             ax1.axvline(expected_value, c='r', label="approximate EV")
             ax1.axvline(gt_expected_value, c='b', label="target EV")
 
@@ -280,7 +281,8 @@ if __name__ == "__main__":
             ax1.autoscale(True)
             # ax2.autoscale(True)
             # ax2.set_title("KDE distribution. $\omega = %3.2f$" % kde_bw)
-            plt.savefig("%s_%s_%03d.png" % (method,distribution,n_iter))
+            if save_plot:
+                plt.savefig("%s_%s_%03d.png" % (method,distribution,n_iter))
             plt.pause(0.01)
             ax1.legend()
             ax1.cla()

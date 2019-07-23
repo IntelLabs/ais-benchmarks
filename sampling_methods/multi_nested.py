@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.special import gamma
-from sampling_experiments.sampling_methods.base import CSamplingMethod
-from sampling_experiments.distributions.CMultivariateNormal import CMultivariateNormal
+from sampling_methods.base import CSamplingMethod
+from distributions.CMultivariateNormal import CMultivariateNormal
 from sklearn.cluster import KMeans
 
 class CEllipsoid:

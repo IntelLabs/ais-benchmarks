@@ -1,6 +1,6 @@
 import numpy as np
-from sampling_experiments.distributions.CMixtureModel import CMixtureModel
-from sampling_experiments.distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.CMixtureModel import CMixtureModel
+from distributions.CMultivariateNormal import CMultivariateNormal
 
 
 class CGaussianMixtureModel:

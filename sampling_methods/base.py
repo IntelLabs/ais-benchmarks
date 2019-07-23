@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import array as t_tensor
-from scipy.stats import entropy
 
 
 class CSamplingMethod:
@@ -15,6 +14,7 @@ class CSamplingMethod:
 
     def sample_with_likelihood(self, pdf, n_samples):
         raise NotImplementedError()
+
 
 def make_grid(space_min, space_max, resolution):
     dim_range = space_max - space_min
@@ -45,10 +45,4 @@ def uniform_sample_distribution(dist, space_min, space_max, nsamples):
     log_prob = dist.log_prob(samples.reshape(nsamples,len(space_max)))
     return samples.reshape(nsamples, len(space_max)), log_prob
 
-def bhattacharyya_distance(p_samples_prob, q_samples_prob):
-    res = - np.log(np.sum(np.sqrt(p_samples_prob * q_samples_prob)))
-    return res
 
-def kl_divergence(p_samples_prob, q_samples_prob):
-    res = entropy(pk=p_samples_prob, qk=q_samples_prob)
-    return res

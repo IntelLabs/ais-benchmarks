@@ -4,7 +4,7 @@ import itertools
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 
-from sampling_experiments.sampling_methods.base import CSamplingMethod
+from sampling_methods.base import CSamplingMethod
 
 class CTreePyramidNode:
     def __init__(self, center, idx, radius, level, nidx):

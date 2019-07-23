@@ -1,5 +1,5 @@
 import numpy as np
-import torch
+
 
 class CMultivariateNormal:
     def __init__(self, mean, cov):
@@ -27,7 +27,7 @@ class CMultivariateNormal:
             samples = samples.reshape(len(samples), -1, 1)
 
         diff = self.mean - samples
-        term3_1 = np.matmul(np.transpose(diff,axes=(0,2,1)), self.inv_cov)
+        term3_1 = np.matmul(np.transpose(diff, axes=(0, 2, 1)), self.inv_cov)
         term3_2 = np.matmul(term3_1, diff)
         term3 = -0.5 * term3_2.flatten()
         return self.term1 + self.term2 + term3
@@ -36,7 +36,7 @@ class CMultivariateNormal:
         return np.exp(self.log_prob(samples))
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import torch
     import time
     from torch import DoubleTensor as t_tensor

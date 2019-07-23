@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class CMixtureModel:
     def __init__(self, models, weights):
 

@@ -1,6 +1,7 @@
 from sklearn.neighbors.kde import KernelDensity
 # from scipy.stats import gaussian_kde
 
+
 class CKernelDensity:
     def __init__(self, samples, sample_weight, bw=0.1):
         # self.kde = gaussian_kde(samples)
