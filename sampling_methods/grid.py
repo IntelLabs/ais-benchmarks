@@ -11,13 +11,16 @@ class CGridSampling(CSamplingMethod):
         self.cell_volume = 0
         self.resolution = 1
 
+    def reset(self):
+        pass
+
     def sample(self, n_samples):
         samples_per_dim = n_samples ** (1/self.ndims)
         resolution = self.range / samples_per_dim
         samples, dims = self.make_grid(self.space_min, self.space_max, resolution)
         return samples
 
-    def sample_with_likelihood(self, pdf, n_samples):
+    def sample_with_likelihood(self, pdf, n_samples, timeout=10):
         samples = self.sample(n_samples)
         values = pdf.log_prob(samples)
         self.integral = np.sum(np.exp(values) * self.cell_volume)

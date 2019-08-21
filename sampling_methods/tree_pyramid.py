@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from numpy import array as t_tensor
 import itertools
@@ -28,6 +29,7 @@ class CTreePyramidNode:
 
     def __repr__(self):
         return "[ " + str(self.leaf_idx) +" , "+ str(self.radius) +  " ]"
+
 
 class CTreePyramid:
     def __init__(self, dmin, dmax):
@@ -132,12 +134,14 @@ class CTreePyramidSampling(CSamplingMethod):
 
         return new_particles, particles_coords, remaining_particles
 
-    def samplTPyramidPDF(self, pdf, n_samples=10000):
+    def sampleTPyramidPDF(self, pdf, n_samples=10000, timeout=60):
         # Expand particles and stop after n_samples have been taken
         values_acc = t_tensor([])
         samples_acc = t_tensor([])
         num_evals = 0
-        while len(self.particles_to_expand) > 0 and n_samples > len(values_acc):
+        elapsed_time = 0
+        t_ini = time.time()
+        while len(self.particles_to_expand) > 0 and n_samples > len(values_acc) and elapsed_time < timeout:
             self.particles_to_expand.sort(reverse=True)
             eval_parts, samples, self.particles_to_expand = self.expand_particles(self.particles_to_expand, n_samples)
             num_evals = num_evals + len(eval_parts)
@@ -151,6 +155,8 @@ class CTreePyramidSampling(CSamplingMethod):
                 eval_parts[idx_int].value = values[idx_int] * ((eval_parts[idx_int].radius*2) ** self.ndims)
                 self.particles_to_expand.append(eval_parts[idx_int])
 
+            elapsed_time = time.time() - t_ini
+
         volume = 0
         for n in self.T.leaves:
             volume = volume + n.value
@@ -161,7 +167,7 @@ class CTreePyramidSampling(CSamplingMethod):
     def sample(self, n_samples):
         raise NotImplementedError
 
-    def sample_with_likelihood(self, pdf, n_samples):
-        samples, values = self.samplTPyramidPDF(pdf,n_samples)
+    def sample_with_likelihood(self, pdf, n_samples, timeout=60):
+        samples, values = self.sampleTPyramidPDF(pdf, n_samples, timeout)
         return samples, values
 

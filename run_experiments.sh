@@ -1,15 +1,9 @@
 #!/usr/bin/env bash
 
-#methods="BSPT random MCMC-MH grid nested multi-nested reject"
-distributions="gmm normal rosenbrock ripple"
-dimensions="1 2 3 4 5 6 7 8 9 10"
+trials="2 3 4 5 6 7 8 9 10"
 
-m=$1
-for d in $distributions
+for i in $trials
 do
-    for dim in $dimensions
-    do
-        echo "python3 sampling_examples.py $m $d $dim"
-        python3 sampling_examples.py $m $d $dim &
-    done
+    echo "python3 evaluate_methods.py results_$i.txt"
+    python3 evaluate_methods.py results_$i.txt
 done

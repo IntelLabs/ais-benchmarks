@@ -1,5 +1,7 @@
 import numpy as np
+import time
 from sampling_methods.base import CSamplingMethod
+from sampling_methods.base import t_tensor
 
 
 class CMetropolisHastings(CSamplingMethod):
@@ -11,10 +13,15 @@ class CMetropolisHastings(CSamplingMethod):
     def sample(self, n_samples):
         raise NotImplementedError
 
-    def sample_with_likelihood(self, pdf, n_samples):
-        samples = self.current_sample
-        values = pdf.log_prob(self.current_sample)
-        while len(values) < n_samples:
+    def reset(self):
+        pass
+
+    def sample_with_likelihood(self, pdf, n_samples, timeout=60):
+        samples = t_tensor([])
+        values = t_tensor([])
+        elapsed_time = 0
+        t_ini = time.time()
+        while len(values) < n_samples and elapsed_time < timeout:
 
             # Sample from the proposal distribution to obtain the proposed next sample x'
             proposal_sample = self.proposal.sample() + self.current_sample
@@ -37,7 +44,12 @@ class CMetropolisHastings(CSamplingMethod):
             # Accept or reject the proposed new sample x'
             if alpha > np.log(accept):
                 self.current_sample = proposal_sample
-                samples = np.vstack((samples, self.current_sample))
+                if len(samples) == 0:
+                    samples = self.current_sample
+                else:
+                    samples = np.vstack((samples, self.current_sample))
                 values = np.concatenate((values, proposal_sample_logprob))
+
+            elapsed_time = time.time() - t_ini
 
         return samples, values

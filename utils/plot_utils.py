@@ -13,7 +13,7 @@ def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes = None):
     prob_p_margin_color = prob_p_margin / np.linalg.norm(prob_p_margin)
     ax.scatter(samples[:, 0], samples[:, 1], prob_p_margin, c=prob_p_margin_color, cmap=plt.cm.hot)
 
-def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes = None):
+def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes = None, alpha=1):
     prob_p_margin = prob_p.reshape(shape).transpose()
     if marginalize_axes is not None:
         prob_p_margin = np.sum(prob_p_margin, axis=marginalize_axes)
@@ -23,7 +23,7 @@ def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes = None
 
     # prob_p_margin_color = prob_p_margin / np.max(prob_p_margin)
 
-    ax.plot_surface(X, Y, prob_p_margin, cmap=plt.cm.hot, linewidth=0, antialiased=True, shade=True, rstride=2, cstride=2, zorder=1)
+    ax.plot_surface(X, Y, prob_p_margin, cmap=plt.cm.hot, linewidth=0, antialiased=True, shade=True, rstride=2, cstride=2, zorder=1, alpha=alpha)
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='z', offset=-1.9, cmap=plt.cm.Reds)
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='x', offset=-1, cmap=plt.cm.Reds)
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='y', offset=1, cmap=plt.cm.Reds)

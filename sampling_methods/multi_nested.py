@@ -3,6 +3,8 @@ from scipy.special import gamma
 from sampling_methods.base import CSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
 from sklearn.cluster import KMeans
+import time
+
 
 class CEllipsoid:
     def __init__(self, loc, scale, indices=[]):
@@ -26,7 +28,6 @@ class CEllipsoid:
         sphere_vol = 2/d * (np.pi ** (d/2) / gamma(d/2))
 
         self.volume = sphere_vol * np.linalg.det(scale)
-
 
     def __repr__(self):
         return "loc: " + str(self.loc) + "n_points:" + str(np.count_nonzero(self.indices)) + "vol: %f" % self.volume
@@ -60,17 +61,24 @@ class CMultiNestedSampling(CSamplingMethod):
         self.ellipsoids = []
 
         # Obtain initial samples from a uniform prior distribution
-        self.live_points = np.random.uniform(0, 1, size=(num_points, len(self.space_max))) * self.range + self.space_min
+        self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
     def sample(self, n_samples):
         raise NotImplementedError
 
-    def resample(self, sample, value, pdf, ellipsoid):
+    def reset(self):
+        self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
+
+    def resample(self, value, pdf, ellipsoid, timeout=60):
         new_sample = ellipsoid.sample()
         new_value = pdf.log_prob(new_sample)
-        while value > new_value:
+        elapsed_time = 0
+        t_ini = time.time()
+        while value > new_value and elapsed_time < timeout:
             new_sample = ellipsoid.sample()
             new_value = pdf.log_prob(new_sample)
+            elapsed_time = time.time() - t_ini
+
         return new_sample, new_value
 
     # TODO: Include covariance in ellipsoid to ellipsoid distance
@@ -78,7 +86,7 @@ class CMultiNestedSampling(CSamplingMethod):
     def ellipsoid_distance(e1, e2):
         return np.sqrt(np.sum((e1.loc - e2.loc) * (e1.loc - e2.loc)))
 
-    def recursive_clustering(self, points, ellipsoids=None, cluster_volume_ratio=0.8, cluster_min_distance=0.2, inflate_factor=2.0):
+    def recursive_clustering(self, points, ellipsoids=None, cluster_volume_ratio=0.8, cluster_min_distance=0.2, inflate_factor=2.0, debug=False):
         # Compute live points ellipsoid for the first iteration
         if ellipsoids is None:
             ellipsoids = [CEllipsoid.fit(points, inflate_factor)]
@@ -98,19 +106,27 @@ class CMultiNestedSampling(CSamplingMethod):
         for i in range(estimator.n_clusters):
             c_npoints = np.count_nonzero(estimator.labels_ == i)
             if c_npoints < len(self.space_min) + 1:
-                print("Rejected subdivision. Number of points: %d" % c_npoints)
+                if debug:
+                    print("Rejected subdivision. Number of points: %d" % c_npoints)
                 return points, ellipsoids
 
         # Condition 1: Volume of cluster ellipsoids must be below unclustered ellipsoid
         c_ellipsoid = []
         c_volume = 0
         for i in range(estimator.n_clusters):
-            c_ellipsoid.append(CEllipsoid.fit(points[estimator.labels_ == i], inflate_factor))
-            c_ellipsoid[-1].indices = estimator.labels_ == i
-            c_volume = c_volume + c_ellipsoid[-1].volume
+            fit_ellipsoid = CEllipsoid.fit(points[estimator.labels_ == i], inflate_factor)
+            if fit_ellipsoid is not None:
+                c_ellipsoid.append(fit_ellipsoid)
+                c_ellipsoid[-1].indices = estimator.labels_ == i
+                c_volume = c_volume + c_ellipsoid[-1].volume
+            else:
+                if debug:
+                    print("Rejected subdivision. Reason: unable to fit ellipsoid.")
+                return points, ellipsoids
 
         if c_volume/ellipsoid_volume > cluster_volume_ratio:
-            print("Rejected subdivision. Reason: volume ratio %f" % (c_volume/ellipsoid_volume))
+            if debug:
+                print("Rejected subdivision. Reason: volume ratio %f" % (c_volume/ellipsoid_volume))
             return points, ellipsoids
 
         # Condition 2: Clusters must be separated w/ little overlap
@@ -121,14 +137,16 @@ class CMultiNestedSampling(CSamplingMethod):
                 distance = distance + self.ellipsoid_distance(c_ellipsoid[i], c_ellipsoid[j])
                 num_distances = num_distances + 1
         if distance / num_distances < cluster_min_distance:
-            print("Rejected subdivision. Reason: distance %f" % (distance / num_distances))
+            if debug:
+                print("Rejected subdivision. Reason: distance %f" % (distance / num_distances))
             return points, ellipsoids
 
         # Recursively subdivide into more clusters
-        print("Accepted subdivision into %d clusters" % len(c_ellipsoid))
+        if debug:
+            print("Accepted subdivision into %d clusters" % len(c_ellipsoid))
         return self.recursive_clustering(points, c_ellipsoid, cluster_volume_ratio, cluster_min_distance)
 
-    def sample_with_likelihood(self, pdf, n_samples):
+    def sample_with_likelihood(self, pdf, n_samples, timeout=60):
         points = self.live_points
         values = pdf.log_prob(points)
         samples = np.array([])
@@ -138,6 +156,7 @@ class CMultiNestedSampling(CSamplingMethod):
 
         # Perform the nested sampling algorithm on each cluster
         n_samples = int(n_samples / len(c_ellipsoids))
+        n_samples = max(n_samples, 1)
         for idx,c_ellipsoid in enumerate(c_ellipsoids):
             L = np.zeros(n_samples)
             X = np.zeros(n_samples)
@@ -157,7 +176,7 @@ class CMultiNestedSampling(CSamplingMethod):
                 samples = np.concatenate((samples, points[min_idx]))
 
                 # Replace the point with lowest likelihood with a new sample from the proposal distribution
-                points[min_idx], values[min_idx] = self.resample(points[min_idx], L[i], pdf, c_ellipsoid)
+                points[min_idx], values[min_idx] = self.resample(L[i], pdf, c_ellipsoid, timeout)
 
         self.ellipsoids = c_ellipsoids
         samples = samples.reshape(n_samples * len(c_ellipsoids), -1)

@@ -8,6 +8,8 @@ class CSamplingMethod:
         self.space_min = space_min
         self.space_max = space_max
 
+    def reset(self):
+        raise NotImplementedError()
 
     def sample(self, n_samples):
         raise NotImplementedError()
