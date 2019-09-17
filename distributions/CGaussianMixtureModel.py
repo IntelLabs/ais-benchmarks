@@ -22,6 +22,9 @@ class CGaussianMixtureModel:
     def log_prob(self, samples):
         return self.gmm.log_prob(samples)
 
+    def prob(self, samples):
+        return self.gmm.prob(samples)
+
 
 def generateRandomGMM(space_min, space_max, num_gaussians, sigma_min=(0.04,0.04,0.04), sigma_max=(0.05,0.05,0.05)):
     means = []

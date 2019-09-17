@@ -28,8 +28,8 @@ def display_samples(samples, samples_prob, ax=None, marker="x", alpha=1.0):
 # Left: Ground truth PDF.
 fig = plt.figure(figsize=(10, 3.5))
 ax1 = plt.subplot(131)
-ax2 = plt.subplot(132, sharey=ax1)
-ax3 = plt.subplot(133, sharey=ax1)
+ax2 = plt.subplot(132, sharey=ax1, sharex=ax1)
+ax3 = plt.subplot(133, sharey=ax1, sharex=ax1)
 
 space_min = t_tensor([0])
 space_max = t_tensor([1])
@@ -43,20 +43,12 @@ displayPDF_1D(target_dist, space_min, space_max, ax=ax1)
 # Middle: Samples generated from TP sampling algorithm and approximated PDF.
 tp_sampling_method = CTreePyramidSampling(space_min, space_max)
 
-max_samples = 20
-samples_acc = t_tensor([])
-samples_logprob_acc = t_tensor([])
-while len(samples_acc) < max_samples:
-    samples, samples_logprob = tp_sampling_method .sample_with_likelihood(pdf=target_dist, n_samples=2)
-    if len(samples_acc) > 0:
-        samples_acc = np.vstack((samples_acc, samples))
-    else:
-        samples_acc = samples
-    samples_logprob_acc = np.concatenate((samples_logprob_acc, samples_logprob))
+max_samples = 25
+samples_acc, samples_w = tp_sampling_method.importance_sample(target_d=target_dist, n_samples=max_samples, resampling="full")
 
-approximate_pdf = CKernelDensity(samples_acc, np.exp(samples_logprob_acc), bw=0.05)
+approximate_pdf = CKernelDensity(samples_acc, samples_w, bw=0.06)
 # approximate_pdf = CNearestNeighbor(samples_acc, samples_logprob_acc)
-display_samples(samples_acc, np.zeros_like(samples_logprob_acc), ax=ax2, marker="r|")
+display_samples(samples_acc, np.zeros_like(samples_w), ax=ax2, marker="r|")
 displayPDF_1D(approximate_pdf, space_min, space_max, ax=ax2, color="g")
 display_samples(samples_acc, np.exp(approximate_pdf.log_prob(samples_acc)), ax=ax2, marker="rx")
 
@@ -80,6 +72,7 @@ ax1.set_ylabel("Density")
 ax1.set_xlabel("(a) Ground truth \ndistribution p(x)")
 ax2.set_xlabel("(b) Samples and approximated\n distribution: q(x)")
 ax3.set_xlabel("(c) KL(p||q)")
+ax3.set_xlim(0,1)
 plt.gcf().subplots_adjust(bottom=0.2)
 plt.tight_layout()
 plt.show(block=True)

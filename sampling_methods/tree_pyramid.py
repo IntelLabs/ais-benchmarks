@@ -2,21 +2,64 @@ import time
 import numpy as np
 from numpy import array as t_tensor
 import itertools
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 
 from sampling_methods.base import CSamplingMethod
+from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.CMultivariateUniform import CMultivariateUniform
+
 
 class CTreePyramidNode:
-    def __init__(self, center, idx, radius, level, nidx):
-        self.center = center
-        self.radius = radius
-        self.children = [None] * (2**len(center))
-        self.value = t_tensor([0])
-        self.leaf_idx = idx
-        self.node_idx = nidx
-        self.coords = t_tensor(center)
+    def __init__(self, center, radius, node_idx, leaf_idx, level, kernel="haar"):
+        """
+        A node of a tree pyramid contains information about its location
+        :param center: location of the center of the node (In the paper: n_c)
+        :param radius: radius of the node (In the paper: n_r)
+        :param leaf_idx: Index of the node in the tree leaf list. If the node is not a leaf this index is -1
+        :param node_idx: Index of the node in the tree node list
+        :param level: Distance of the node to the root. Must be consistent with the children and parents.
+        """
+        self.center = center                        # n_c
+        self.radius = radius                        # n_r
+        self.children = [None] * (2**len(center))   # n_s
+        self.weight = t_tensor(0)                   # n_w
+        self.coords = t_tensor([0] * len(center))   # n_x
+        self.leaf_idx = leaf_idx
+        self.node_idx = node_idx
         self.level = level
+        self.value = self.weight * self.radius ** len(center)  # Importance volume used to sort nodes
+        self.coords_hist = []
+        self.weight_hist = []
+
+        """
+        Sampling kernel distribution. This shapes the proposal distribution represented by the tree pyramid.
+        """
+        self.sampler = CMultivariateUniform(self.center, self.radius)
+        if kernel == "normal":
+            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius] * len(self.center))))
+        elif kernel == "haar":
+            self.sampler = CMultivariateUniform(self.center, self.radius)
+        else:
+            raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
+
+    def sample(self):
+        """
+        This is the Monte Carlo portion of the Quasi-Monte Carlo approach. The sample location (n_x) is obtained
+        by a proposal distribution parameterized by the node center (n_c) and radius (n_r).
+        """
+        self.coords = self.sampler.sample()[0]  # Samplers return a batch of samples. This removes the batch dimension.
+        self.coords_hist.append(self.coords)
+
+    def weigh(self, target_d, importance_d, target_f=lambda x: 1):
+        """
+        This is the importance sampling part where the weight of the sample is updated.
+
+        :param target_d: Target distribution to compute the importance weight. In the paper: \pi(x)
+        :param importance_d: Importance distribution used to generate the sample. In the paper: q(x)
+        :param target_f: Target f(x) used for importance sampling.
+        """
+        self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance_d.prob(self.coords)
+        self.value = self.weight * (self.radius ** len(self.center))
+        self.weight_hist.append(self.weight)
 
     def __lt__(self, other):
         return self.value < other.value
@@ -28,146 +71,196 @@ class CTreePyramidNode:
         return self.value
 
     def __repr__(self):
-        return "[ " + str(self.leaf_idx) +" , "+ str(self.radius) +  " ]"
+        return "[ l_idx:" + str(self.leaf_idx) + " , nidx:" + str(self.node_idx) + " , c:" + str(self.center) + " , r:" + str(self.radius) + " , w:" + str(self.weight) + " ]"
 
 
 class CTreePyramid:
     def __init__(self, dmin, dmax):
-        self.root = CTreePyramidNode(center=(dmin + dmax) / 2, idx=0, radius=np.max((dmax - dmin) / 2), level=0, nidx=0)
+        self.root = CTreePyramidNode(center=(dmin + dmax) / 2, radius=np.max((dmax - dmin) / 2),
+                                     leaf_idx=0, node_idx=0, level=0)
         self.nodes = [self.root]
         self.leaves = [self.root]
-        self.axis = None
         self.ndims = len(dmin)
 
-    def expand(self, particle):
+    def expand(self, node):
+        assert node.is_leaf(), "Non leaf node expansion is not allowed: " + repr(node)
 
-        # Mark the particle to expand
-        if self.axis is not None and self.ndims==1:
-            x = particle.center - particle.radius
-            rect = patches.Rectangle([x, 0], particle.radius*2, particle.value / (particle.radius*2), fill=False, linewidth=3, linestyle="--", alpha=1, color="g", zorder=10)
-            self.axis.add_patch(rect)
+        ################################################
+        # Compute new node centers and radii
+        ################################################
+        center_coeffs = itertools.product([-1, 1], repeat=len(node.center))
 
-        center_coeffs = itertools.product([-1,1], repeat=len(particle.center))
-
+        # TODO: Vectorize this operation
         p_centers = []
         for coeff in center_coeffs:
-            offset = (particle.radius/2) * t_tensor(coeff)
-            p_centers.append(particle.center + offset)
+            offset = (node.radius / 2) * t_tensor(coeff)
+            p_centers.append(node.center + offset)
 
-        # The first new leaf particle replaces the expanding leaf particle in the leaves list and indices
-        p1 = CTreePyramidNode(center=p_centers[0], idx=particle.leaf_idx, radius=particle.radius/2, level=particle.level+1, nidx=len(self.nodes))
-        self.leaves[particle.leaf_idx] = p1
-        self.nodes.append(p1)
-        particle.children = [p1]
-        particle.leaf_idx = -1
+        new_radius = node.radius / 2
+        ################################################
+        ################################################
 
-        # The rest of the particles are new and appended to the tree lists
-        new_particles = []
-        for i,center in enumerate(p_centers[1:]):
-            new_particles.append(CTreePyramidNode(center=center, idx=len(self.leaves) + i, radius=particle.radius/2, level=particle.level+1, nidx=len(self.nodes)))
+        ################################################
+        # Create the new child nodes and update the tree
+        ################################################
+        # Create the new child nodes
+        new_nodes = []
+        for i, center in enumerate(p_centers):
+            new_nodes.append(CTreePyramidNode(center=center, radius=new_radius,
+                                              leaf_idx=len(self.leaves) + i - 1, node_idx=len(self.nodes) + i,
+                                              level=node.level + 1))
 
-        for new_p in new_particles:
-            self.leaves.append(new_p)
-            self.nodes.append(new_p)
-            particle.children.append(new_p)
+        # The first new node replaces the expanding leaf node in the leaves list
+        new_nodes[0].leaf_idx = node.leaf_idx
+        self.leaves[node.leaf_idx] = new_nodes[0]
+        self.nodes.append(new_nodes[0])
+        node.children[0] = new_nodes[0]
+        node.leaf_idx = -1
 
-        return particle.children
+        # The rest get inserted into the tree
+        for i, new_n in enumerate(new_nodes[1:]):
+            node.children[i+1] = new_n
+            new_n.leaf_idx = len(self.leaves)
+            self.leaves.append(new_n)
+            self.nodes.append(new_n)
+        ################################################
+        ################################################
 
-    @staticmethod
-    def draw_node(axis, x, y, label="x", color="b"):
-        axis.add_patch(patches.Circle((x,y), 0.1, facecolor="w", linewidth=1, edgecolor=color))
-        axis.annotate(label, xy=(x, y), fontsize=12, ha="center", va="center")
-        axis.plot(x,y)
-
-    @staticmethod
-    def plot_node(axis, node, x, y):
-        plot_span = 10
-        if node.is_leaf():
-            CTreePyramid.draw_node(axis,x,y, "$x_{%d}$" % node.node_idx, color="r")
-        else:
-            CTreePyramid.draw_node(axis, x, y, "$x_{%d}$" % node.node_idx, color="b")
-            for idx,ch in enumerate(node.children):
-                nodes_in_level = 2 ** (len(node.coords) * ch.level)
-                if nodes_in_level>1:
-                    increment = plot_span / nodes_in_level
-                else:
-                    increment = 0
-                x_ch = x + increment * idx - (plot_span/nodes_in_level) / 2
-                y_ch = -ch.level
-                axis.arrow(x, y, x_ch - x, y_ch - y, alpha=0.2, zorder=0)
-                CTreePyramid.plot_node(axis, ch, x_ch, y_ch)
-
-    def plot(self, axis):
-        axis.cla()
-        self.plot_node(axis, self.root, 0, 0)
+        # Return the newly created nodes
+        return new_nodes
 
 
 class CTreePyramidSampling(CSamplingMethod):
     def __init__(self, space_min, space_max):
         super(self.__class__, self).__init__(space_min, space_max)
-        self.range = space_max - space_min
         self.T = CTreePyramid(space_min, space_max)
-        self.particles_to_expand = [self.T.root]
         self.ndims = len(space_min)
-        self.integral = 0
 
     def reset(self):
         self.T = CTreePyramid(self.space_min, self.space_max)
-        self.particles_to_expand = [self.T.root]
 
-    def expand_particles(self, particles, max_parts):
+    def importance_sample(self, target_d, n_samples, timeout=60, method="simple", resampling="ancestral"):
+        """
+        Generate n_samples using the selected importance sampling method
+        :param target_d: Target distribution. Required to compute importance weights.
+        :param n_samples: Desired number of samples to generate.
+        :param timeout: Time-budget to generate the samples.
+        :param method: Importance sampling method used. Options are: "simple", "dm" and "mixture":
+            simple: Simple tree pyramid IS. Uses the simple muti-importance sampling approach by generating samples from
+            all the isolated proposal distributions and computes weights with the individual distributions
+
+            TODO: dm: Deterministic mixture tree pyramid IS. Uses the DM sampling approach by generating samples from the
+            all the isolated proposal distributions but computes weights with the single distribution formed by the
+            iso-weighted mixture model of all the proposals.
+
+            TODO: mixture: Mixture tree pyramid IS. Uses the mixture sampling approach by generating samples
+            from a single distribution formed by a weighted mixture of all the proposals. Importance weights are
+            computed according to the same weighted mixture.
+
+        :param resampling: Type of resampling used, options are: "none", "ancestral", "leaf", "full".
+            none: No resampling. All samples drawn are kept. Outputs samples from leaves and intermediate nodes.
+            ancestral: Samples from parent nodes are removed from the sample set. Outputs only samples from leaves.
+            leaf: At every sampling step, all leaves are resampled. Outputs samples from leaves and intermediate nodes.
+            full: Perform leaf resampling and outputs samples only from leaves.
+        :return: samples and weights
+        """
+        assert resampling in ["leaf", "none", "ancestral", "full"], "Unknown resampling strategy"
+
+        if method == "simple":
+            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout, resampling)
+        elif method == "dm":
+            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout, resampling)
+        elif method == "mixture":
+            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout, resampling)
+        else:
+            raise ValueError("Unknown method or resampling")
+
+        return samples, weights
+
+    def sample(self, n_samples):
+        # Select n_samples leaf nodes weighted by their importance weight
+        # Generate a sample from each selected leaf node
+        raise NotImplementedError
+
+    def _expand_nodes(self, particles, max_parts):
         new_particles = []
-        remaining_particles = []
-        particles_coords = t_tensor([])
-        processed_particles = 0
         for p in particles:
             new_parts = self.T.expand(p)
-            for npart in new_parts:
-                particles_coords = np.concatenate((particles_coords, npart.coords))
             new_particles.extend(new_parts)
-            processed_particles = processed_particles + 1
             if len(new_particles) > max_parts:
-                break
+                return new_particles
 
-        if len(new_particles) > max_parts:
-            remaining_particles = particles[processed_particles:]
+        return new_particles
 
-        return new_particles, particles_coords, remaining_particles
+    def _get_nsamples(self, resampling):
+        res = len(self.T.leaves)
+        if resampling == "none" or resampling == "leaf":
+            res = len(self.T.nodes)
+        return res
 
-    def sampleTPyramidPDF(self, pdf, n_samples=10000, timeout=60):
-        # Expand particles and stop after n_samples have been taken
-        values_acc = t_tensor([])
-        samples_acc = t_tensor([])
-        num_evals = 0
+    def _importance_sample_stp(self, target_d, n_samples=10000, timeout=60, resampling="none"):
+        """
+
+        :param target_d:
+        :param n_samples:
+        :param timeout:
+        :return:
+        """
         elapsed_time = 0
         t_ini = time.time()
-        while len(self.particles_to_expand) > 0 and n_samples > len(values_acc) and elapsed_time < timeout:
-            self.particles_to_expand.sort(reverse=True)
-            eval_parts, samples, self.particles_to_expand = self.expand_particles(self.particles_to_expand, n_samples)
-            num_evals = num_evals + len(eval_parts)
 
-            values = np.exp(pdf.log_prob(samples.reshape(-1, self.ndims)))
-            samples_acc = np.concatenate((samples_acc, samples))
-            values_acc = np.concatenate((values_acc, values))
+        # When the tree is created the root node is not sampled. Make sure it has one sample.
+        if len(self.T.root.weight_hist) == 0:
+            self.T.root.sample()
+            self.T.root.weigh(target_d, self.T.root.sampler)
 
-            # Compute the density for each particle and add it to the expansion set
-            for idx_int in range(len(eval_parts)):
-                eval_parts[idx_int].value = values[idx_int] * ((eval_parts[idx_int].radius*2) ** self.ndims)
-                self.particles_to_expand.append(eval_parts[idx_int])
+        while n_samples > self._get_nsamples(resampling) and elapsed_time < timeout:
+            if resampling == "leaf" or resampling == "full":        # If leaf resampling is enabled
+                for node in self.T.leaves:                              # For each leaf node
+                    node.sample()                                       # Generate a sample
+                    node.weigh(target_d, node.sampler)                  # Compute its importance weight
+
+            lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
+            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples(resampling))       # Generate the new nodes to sample
+
+            for node in new_nodes:
+                node.sample()                                           # Generate a sample for each new node,
+                node.weigh(target_d, node.sampler)                      # Compute its importance weight
 
             elapsed_time = time.time() - t_ini
 
-        volume = 0
-        for n in self.T.leaves:
-            volume = volume + n.value
-        self.integral = volume
+        return self._get_samples(resampling == "ancestral" or resampling == "full")
 
-        return samples_acc.reshape((-1, self.ndims)), np.log(values_acc)
-
-    def sample(self, n_samples):
+    def _sample_stpr(self, target_d, n_samples, timeout):
         raise NotImplementedError
 
-    def sample_with_likelihood(self, pdf, n_samples, timeout=60):
-        samples, values = self.sampleTPyramidPDF(pdf, n_samples, timeout)
-        return samples, values
+    def _sample_dmtp(self, target_d, n_samples, timeout):
+        raise NotImplementedError
 
+    def _sample_dmtpr(self, target_d, n_samples, timeout):
+        raise NotImplementedError
+
+    def _sample_mtp(self, target_d, n_samples, timeout):
+        raise NotImplementedError
+
+    def _sample_mtpr(self, target_d, n_samples, timeout):
+        raise NotImplementedError
+
+    def _get_samples(self, only_leaves=True):
+        """
+        Traverse the tree nodes and return samples depending on the resampling setting
+        - No resampling, return all samples
+        - Ancestral or full, return samples of leaves only
+        :param only_leaves: return samples only from leaves
+        :return:
+        """
+        values_acc = t_tensor([])
+        samples_acc = t_tensor([])
+        for node in self.T.nodes:
+            n_x = t_tensor(node.coords)
+            n_w = node.weight
+            if node.is_leaf() or not only_leaves and len(node.coords_hist) > 0:
+                samples_acc = np.concatenate((samples_acc, n_x)) if samples_acc.size else n_x
+                values_acc = np.concatenate((values_acc, n_w)) if values_acc.size else n_w
+
+        return samples_acc.reshape(-1, self.ndims), values_acc

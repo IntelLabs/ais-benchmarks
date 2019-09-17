@@ -16,6 +16,9 @@ class CMixtureModel:
         self.weights = weights
 
     def log_prob(self, data):
+        return np.log(self.prob(data))
+
+    def prob(self, data):
         likelihood = np.zeros(len(data))
         if len(data.shape) == 1:
             likelihood = 0
@@ -26,4 +29,4 @@ class CMixtureModel:
         zero_mask = likelihood < np.finfo(likelihood.dtype).eps
         likelihood[zero_mask] = np.finfo(likelihood.dtype).eps
 
-        return np.log(likelihood)
+        return likelihood

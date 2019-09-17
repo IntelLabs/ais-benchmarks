@@ -9,13 +9,13 @@ class CSamplingMethod:
         self.space_max = space_max
 
     def reset(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def sample(self, n_samples):
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def sample_with_likelihood(self, pdf, n_samples):
-        raise NotImplementedError()
+    def importance_sample(self, target_d, n_samples):
+        raise NotImplementedError
 
 
 def make_grid(space_min, space_max, resolution):

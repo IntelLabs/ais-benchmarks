@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import sys
+import random
 
 from sampling_methods.base import t_tensor
 from distributions.CMultivariateNormal import CMultivariateNormal
@@ -21,18 +22,24 @@ def log_print(text, file, mode='a+'):
 
 
 if __name__ == "__main__":
-    ndims_list = [i for i in range(1, 10)]  # Number of dimensions of the space to test
+    ndims_list = [i for i in range(1, 3)]  # Number of dimensions of the space to test
     space_size = 1          # Size of the domain for each dimension [0, n)
     num_gaussians_gmm = 5   # Number of mixture components in the GMM model
-    gmm_sigma_min = 0.01    # Miminum sigma value for the Normal family models
-    gmm_sigma_max = 0.05    # Maximum sigma value for the Normal family models
+    gmm_sigma_min = 0.001    # Miminum sigma value for the Normal family models
+    gmm_sigma_max = 0.01    # Maximum sigma value for the Normal family models
     max_samples = 2000      # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 10000  # Number fo samples from the true distribution used for comparison
-    output_file = "test_results.txt"
-    debug = False           # Show plot with GT and sampling process for the 1D case
+    output_file = "test2_results.txt"
+    debug = True           # Show plot with GT and sampling process for the 1D case
+
+    rand_seed = 3
+    random.seed(rand_seed)
+    np.random.seed(rand_seed)
 
     if len(sys.argv) == 2:
         output_file = sys.argv[1]
+
+    random.seed(0)
 
     log_print("dims samples kl_kde bhat_kde kl_nn bhat_nn time method output_samples", file=output_file, mode="w")
     for ndims in ndims_list:
@@ -42,15 +49,15 @@ if __name__ == "__main__":
 
         # Target distribution. A.k.a ground truth
         target_dists = list()
-        # Multivariate normal (equivalent to a 1 component GMM)
-        normal_dist = generateRandomGMM(space_min, space_max, 1, sigma_min=[gmm_sigma_min] * ndims, sigma_max=[gmm_sigma_max] * ndims)
-        normal_dist.name = "normal"
-        target_dists.append(normal_dist)
-
         # GMM with the desired number of components
         gmm = generateRandomGMM(space_min, space_max, num_gaussians_gmm, sigma_min=[gmm_sigma_min] * ndims, sigma_max=[gmm_sigma_max] * ndims)
         gmm.name = "gmm"
         target_dists.append(gmm)
+
+        # Multivariate normal (equivalent to a 1 component GMM)
+        normal_dist = generateRandomGMM(space_min, space_max, 1, sigma_min=[gmm_sigma_min] * ndims, sigma_max=[gmm_sigma_max] * ndims)
+        normal_dist.name = "normal"
+        target_dists.append(normal_dist)
 
         # Egg box distribution with GMMs
         egg = generateEggBoxGMM(space_min + 0.2, space_max - 0.2, space_size / 3, 0.01)
@@ -69,9 +76,9 @@ if __name__ == "__main__":
             sampling_method_list.append(tp_sampling_method)
 
             # Grid sampling
-            grid_sampling_method = CGridSampling(space_min, space_max)
-            grid_sampling_method.name = "grid"
-            sampling_method_list.append(grid_sampling_method)
+            # grid_sampling_method = CGridSampling(space_min, space_max)
+            # grid_sampling_method.name = "grid"
+            # sampling_method_list.append(grid_sampling_method)
 
             # Metropolis-Hastings
             mh_sampling_method = CMetropolisHastings(space_min, space_max, MCMC_proposal_dist)
@@ -79,14 +86,14 @@ if __name__ == "__main__":
             sampling_method_list.append(mh_sampling_method)
 
             # Nested sampling
-            nested_sampling_method = CNestedSampling(space_min, space_max, MCMC_proposal_dist, num_points=30)
-            nested_sampling_method.name = "nested"
-            sampling_method_list.append(nested_sampling_method)
+            # nested_sampling_method = CNestedSampling(space_min, space_max, MCMC_proposal_dist, num_points=30)
+            # nested_sampling_method.name = "nested"
+            # sampling_method_list.append(nested_sampling_method)
 
             # Multi-Nested sampling
-            mnested_sampling_method = CMultiNestedSampling(space_min, space_max, num_points=30)
-            mnested_sampling_method.name = "multi-nested"
-            sampling_method_list.append(mnested_sampling_method)
+            # mnested_sampling_method = CMultiNestedSampling(space_min, space_max, num_points=30)
+            # mnested_sampling_method.name = "multi-nested"
+            # sampling_method_list.append(mnested_sampling_method)
 
             # Evaluation loop
             for sampling_method in sampling_method_list:

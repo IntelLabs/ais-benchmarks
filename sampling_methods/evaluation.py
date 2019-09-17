@@ -11,6 +11,8 @@ from sampling_methods.base import grid_sample_distribution
 from distributions.CKernelDensity import CKernelDensity
 from distributions.CNearestNeighbor import CNearestNeighbor
 from utils.plot_utils import plot_grid_sampled_pdfs
+from utils.plot_utils import plot_tpyramid_area
+
 
 def log_print(text, file, mode='a+'):
     with open(file, mode=mode) as f:
@@ -31,7 +33,6 @@ def kl_divergence_components(p_samples_prob, q_samples_prob):
 
 
 def kl_divergence(p_samples_prob, q_samples_prob):
-
     # p_samples_prob_norm = p_samples_prob / np.sum(p_samples_prob)
     # q_samples_prob_norm = q_samples_prob / np.sum(q_samples_prob)
     # res = (p_samples_prob_norm * np.log(p_samples_prob_norm / q_samples_prob_norm)).sum()
@@ -82,6 +83,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     samples_logprob_acc = np.exp(target_dist.log_prob(samples_acc))
 
     if debug:
+        pts = []
         if ndims == 1:
             fig = plt.figure(figsize=(10, 8))
             ax = plt.subplot(111)
@@ -91,6 +93,8 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             x = np.linspace(space_min, space_max, int((space_max-space_min)/resolution)).reshape(-1,1)
             y = np.exp(target_dist.log_prob(x))
             ax.plot(x, y, "-b", alpha=0.2)
+            plt.xlim(space_min, space_max)
+            plt.ylim(0, 2)
 
         elif ndims == 2:
             fig = plt.figure(figsize=(10, 8))
@@ -103,23 +107,17 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     # Perform sampling
     sampling_time = 0
     sampling_method.reset()
-    grid_samples = batch_samples
     pts = []
+    n_samples = batch_samples
     while len(samples_acc) < max_samples:
         t_ini = time.time()
 
-        # Grid sampling is not incremental
-        if sampling_method.name == "grid":
-            samples, samples_logprob = sampling_method.sample_with_likelihood(pdf=target_dist, n_samples=grid_samples,
-                                                                              timeout=max_sampling_time - sampling_time)
-            samples_acc = samples
-            samples_logprob_acc = samples_logprob
-            grid_samples += batch_samples
-        else:
-            samples, samples_logprob = sampling_method.sample_with_likelihood(pdf=target_dist, n_samples=batch_samples,
-                                                                              timeout=max_sampling_time - sampling_time)
-            samples_acc = np.vstack((samples_acc, samples))
-            samples_logprob_acc = np.hstack((samples_logprob_acc, samples_logprob))
+        samples_acc, samples_logprob_acc = sampling_method.importance_sample(target_d=target_dist,
+                                                                             n_samples=n_samples,
+                                                                             timeout=max_sampling_time - sampling_time,
+                                                                             resampling="ancestral")
+
+        n_samples = len(samples_acc) + batch_samples
 
         sampling_time += time.time()-t_ini
 
@@ -133,17 +131,22 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             ndims, max_samples, kl_div_kde, bhattacharyya_dist_kde, kl_div_nn, bhattacharyya_dist_nn, sampling_time,
             sampling_method.name, len(samples_acc), target_dist.name), file=filename)
 
+            if debug:
+                plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde))
+
         if sampling_time > max_sampling_time:
             break
 
         # DEBUG CODE HERE
         if debug:
+            # Remove previous points
             for element in pts:
                 element.remove()
             pts.clear()
             if ndims == 1:
-                pts.append(ax.plot(samples, np.exp(samples_logprob), "r."))
-                pts.append(ax.plot(samples, np.zeros_like(samples_logprob), "r|"))
+                pts.extend(plot_tpyramid_area(ax, sampling_method.T))
+                pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
+                pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "r|"))
                 plt.pause(0.01)
             if ndims == 2:
                 pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], -1, label="samples", c="r", marker="o"))
