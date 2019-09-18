@@ -10,6 +10,7 @@ from distributions.CGaussianMixtureModel import generateEggBoxGMM
 from sampling_methods.metropolis_hastings import CMetropolisHastings
 from sampling_methods.tree_pyramid import CTreePyramidSampling
 from sampling_methods.dm_ais import CDeterministicMixtureAIS
+from sampling_methods.layered_ais import CLayeredAIS
 
 from sampling_methods.nested import CNestedSampling
 from sampling_methods.multi_nested import CMultiNestedSampling
@@ -24,15 +25,15 @@ def log_print(text, file, mode='a+'):
 
 
 if __name__ == "__main__":
-    ndims_list = [i for i in range(1, 3)]  # Number of dimensions of the space to test
-    space_size = 1          # Size of the domain for each dimension [0, n)
-    num_gaussians_gmm = 5   # Number of mixture components in the GMM model
-    gmm_sigma_min = 0.001    # Miminum sigma value for the Normal family models
-    gmm_sigma_max = 0.01    # Maximum sigma value for the Normal family models
-    max_samples = 1000      # Number of maximum samples to obtain from the algorithm
-    sampling_eval_samples = 1000  # Number fo samples from the true distribution used for comparison
-    output_file = "test2_results.txt"
-    debug = False           # Show plot with GT and sampling process for the 1D case
+    ndims_list = [i for i in range(1, 3)]   # Number of dimensions of the space to test
+    space_size = 1                          # Size of the domain for each dimension [0, n)
+    num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
+    gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
+    gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
+    max_samples = 1000                      # Number of maximum samples to obtain from the algorithm
+    sampling_eval_samples = 1000            # Number fo samples from the true distribution used for comparison
+    output_file = "test3_results.txt"       # Results log file
+    debug = True                           # Show plot with GT and sampling process for the 1D case
 
     rand_seed = 3
     random.seed(rand_seed)
@@ -43,7 +44,7 @@ if __name__ == "__main__":
 
     random.seed(0)
 
-    log_print("dims samples kl_kde bhat_kde kl_nn bhat_nn time method output_samples target_d accept_rate", file=output_file, mode="w")
+    log_print("dims samples kl_kde bhat_kde kl_nn bhat_nn time method output_samples target_d accept_rate q_samples q_evals pi_evals", file=output_file, mode="w")
     for ndims in ndims_list:
         space_min = t_tensor([-space_size] * ndims)
         space_max = t_tensor([space_size] * ndims)
@@ -72,7 +73,19 @@ if __name__ == "__main__":
             sampling_method_list = list()
             MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
 
-            # Tree pyramids (simple, full, haar)
+            # Layered Deterministic Mixture Adaptive Importance Sampling
+            params = dict()
+            params["K"] = 5    # Number of samples per proposal distribution
+            params["N"] = 10    # Number of proposal distributions
+            params["J"] = 1000
+            params["L"] = 10
+            params["sigma"] = 0.01      # Scaling parameter of the proposal distributions
+            params["mh_sigma"] = 0.001  # Scaling parameter of the mcmc proposal distributions moment update
+            tp_sampling_method = CLayeredAIS(space_min, space_max, params)
+            tp_sampling_method.name = "LAIS"
+            sampling_method_list.append(tp_sampling_method)
+
+            # Deterministic Mixture Adaptive Importance Sampling
             params = dict()
             params["K"] = 5    # Number of samples per proposal distribution
             params["N"] = 10    # Number of proposal distributions
@@ -133,9 +146,9 @@ if __name__ == "__main__":
             # sampling_method_list.append(grid_sampling_method)
 
             # Metropolis-Hastings
-            mh_sampling_method = CMetropolisHastings(space_min, space_max, MCMC_proposal_dist)
-            mh_sampling_method.name = "MCMC-MH"
-            sampling_method_list.append(mh_sampling_method)
+            # mh_sampling_method = CMetropolisHastings(space_min, space_max, MCMC_proposal_dist)
+            # mh_sampling_method.name = "MCMC-MH"
+            # sampling_method_list.append(mh_sampling_method)
 
             # Nested sampling
             # nested_sampling_method = CNestedSampling(space_min, space_max, MCMC_proposal_dist, num_points=30)

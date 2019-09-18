@@ -7,7 +7,7 @@ from distributions.CMultivariateNormal import CMultivariateNormal
 from utils.plot_utils import plot_pdf
 
 
-class CDeterministicMixtureAIS(CSamplingMethod):
+class CLayeredAIS(CSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
         Implementation of Deterministic Mixture Adaptive Importance Sampling algorithm
@@ -22,7 +22,10 @@ class CDeterministicMixtureAIS(CSamplingMethod):
         self.K = params["K"]
         self.N = params["N"]
         self.J = params["J"]
+        self.L = params["L"]
         self.sigma = params["sigma"]
+        self.mhsigma = params["mh_sigma"]
+        self.mhproposal = CMultivariateNormal(np.zeros_like(self.space_max), np.diag(t_tensor([self.mhsigma] * len(self.space_max))))
         self.proposals = []
         self.reset()
 
@@ -47,15 +50,22 @@ class CDeterministicMixtureAIS(CSamplingMethod):
 
         return prob / len(self.proposals)
 
-    def resample(self, samples, weights):
-        # Normalize weights
-        norm_weights = weights / weights.sum()
+    def mcmc_mh(self, x, prop_d, target_d, n_steps):
+        for _ in range(n_steps):
+            old_val = target_d.prob(x)
+            x_hat = x + self.mhproposal.sample()
+            new_val = target_d.prob(x_hat)
+            alpha = np.random.rand()
+            ratio = new_val / old_val
 
-        # Update all N proposals with the DM-PMC update rule
+            x = x_hat if ratio > alpha else x
+            prop_d.mean = x
+        return prop_d.mean
+
+    def resample(self, target_d):
+        # Update all N proposals by performing L MCMC steps
         for prop_d in self.proposals:
-            idx = np.random.multinomial(1, norm_weights)
-            new_mean = samples[idx == 1]
-            prop_d.mean = new_mean
+            prop_d.mean = self.mcmc_mh(prop_d.mean, prop_d, target_d, self.L)
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         elapsed_time = 0
@@ -79,7 +89,7 @@ class CDeterministicMixtureAIS(CSamplingMethod):
                 new_weights = np.concatenate((new_weights, w)) if new_weights.size else w
 
             # Adaptation
-            self.resample(new_samples, new_weights)
+            self.resample(target_d)
 
             self.samples = np.concatenate((self.samples, new_samples)) if self.samples.size else new_samples
             self.weights = np.concatenate((self.weights, new_weights)) if self.weights.size else new_weights
@@ -91,7 +101,7 @@ class CDeterministicMixtureAIS(CSamplingMethod):
     def draw(self, ax):
         res = []
         for q in self.proposals:
-            res.extend(ax.plot(q.mean, 0, "gx", markersize=20))
+            res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
             res.extend(plot_pdf(ax, q, self.space_min, self.space_max,
                                 alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
 

@@ -1,25 +1,50 @@
 import numpy as np
 from numpy import array as t_tensor
+from abc import ABCMeta, abstractmethod
 
 
-class CSamplingMethod:
+class CSamplingMethod(metaclass=ABCMeta):
     def __init__(self, space_min, space_max):
         assert space_max.shape == space_min.shape
         self.space_min = space_min
         self.space_max = space_max
+        self._num_pi_evals = 0
+        self._num_q_evals = 0
+        self._num_q_samples = 0
+        self.samples = t_tensor([])
+        self.weights = t_tensor([])
 
     def reset(self):
-        raise NotImplementedError
+        self._num_pi_evals = 0
+        self._num_q_evals = 0
+        self._num_q_samples = 0
+        self.samples = t_tensor([])
+        self.weights = t_tensor([])
 
+    def get_acceptance_rate(self):
+        return self._num_q_samples / len(self.samples)
+
+    @property
+    def num_proposal_samples(self):
+        return self._num_q_samples
+
+    @property
+    def num_target_evals(self):
+        return self._num_pi_evals
+
+    @property
+    def num_proposal_evals(self):
+        return self._num_q_evals
+
+    @abstractmethod
     def sample(self, n_samples):
         raise NotImplementedError
 
+    @abstractmethod
     def importance_sample(self, target_d, n_samples):
         raise NotImplementedError
 
-    def get_acceptance_rate(self):
-        raise NotImplementedError
-
+    @abstractmethod
     def draw(self, ax):
         pass
 

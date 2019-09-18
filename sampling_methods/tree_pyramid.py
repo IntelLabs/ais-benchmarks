@@ -174,14 +174,9 @@ class CTreePyramidSampling(CSamplingMethod):
         self.T = CTreePyramid(space_min, space_max, kernel=self.kernel)
         self.ndims = len(space_min)
 
-        self._n_sample_ops = 0  # Total number of sample operations. Including rejected samples.
-
-    def get_acceptance_rate(self):
-        return self._get_nsamples() / self._n_sample_ops
-
     def reset(self):
+        super(self.__class__, self).reset()
         self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
-        self._n_sample_ops = 0
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         """
@@ -225,6 +220,9 @@ class CTreePyramidSampling(CSamplingMethod):
 
         return new_particles
 
+    def get_acceptance_rate(self):
+        return self._get_nsamples() / self._num_q_samples
+
     def _get_nsamples(self):
         res = len(self.T.leaves)
         if self.resampling == "none" or self.resampling == "leaf":
@@ -238,23 +236,27 @@ class CTreePyramidSampling(CSamplingMethod):
         # When the tree is created the root node is not sampled. Make sure it has one sample.
         if len(self.T.root.weight_hist) == 0:
             self.T.root.sample()
-            self._n_sample_ops += 1
+            self._num_q_samples += 1
             self.T.root.weigh(target_d, self.T.root.sampler)
 
         while n_samples > self._get_nsamples() and elapsed_time < timeout:
             if self.resampling == "leaf" or self.resampling == "full":  # If leaf resampling is enabled
                 for node in self.T.leaves:                              # For each leaf node
                     node.sample()                                       # Generate a sample
+                    self._num_q_samples += 1                            # Count the sample operation
                     node.weigh(target_d, node.sampler)                  # Compute its importance weight
-                    self._n_sample_ops += 1                             # Count the sample operation
+                    self._num_pi_evals += 1                             # Count the evaluation operation
+                    self._num_q_evals += 1                              # Count the evaluation operation
 
             lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
             new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
 
             for node in new_nodes:
                 node.sample()                                           # Generate a sample for each new node,
+                self._num_q_samples += 1  # Count the sample operation
                 node.weigh(target_d, node.sampler)                      # Compute its importance weight
-                self._n_sample_ops += 1                                 # Count the sample operation
+                self._num_pi_evals += 1  # Count the evaluation operation
+                self._num_q_evals += 1  # Count the evaluation operation
 
             elapsed_time = time.time() - t_ini
 

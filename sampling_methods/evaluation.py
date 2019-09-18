@@ -123,9 +123,10 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                 evaluate_samples(samples_acc, samples_logprob_acc, target_dist, space_min, space_max, sampling_eval_samples)
             print("Evaluation time: %3.3f nsamples: %d samples/sec: %3.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
 
-            log_print("  %02d %08d %7.4f %.5f %.5f %.5f %6.3f %s %d %s %3.3f" % (
+            log_print("  %02d %08d %7.4f %.5f %.5f %.5f %6.3f %s %d %s %3.3f %d %d %d" % (
             ndims, max_samples, kl_div_kde, bhattacharyya_dist_kde, kl_div_nn, bhattacharyya_dist_nn, sampling_time,
-            sampling_method.name, len(samples_acc), target_dist.name, sampling_method.get_acceptance_rate()), file=filename)
+            sampling_method.name, len(samples_acc), target_dist.name, sampling_method.get_acceptance_rate(),
+            sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
 
             if debug:
                 plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde))
