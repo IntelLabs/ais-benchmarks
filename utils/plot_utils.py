@@ -6,6 +6,12 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.patches as patches
 
 
+def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-b", alpha=0.2, scale=1.0):
+    x = np.linspace(space_min, space_max, int((space_max - space_min) / resolution)).reshape(-1, 1)
+    y = pdf.prob(x) * scale
+    return ax.plot(x, y, options, alpha=alpha)
+
+
 def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes = None):
     prob_p_margin = prob_p.reshape(shape)
     if marginalize_axes is not None:

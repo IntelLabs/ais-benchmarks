@@ -93,9 +93,13 @@ path = "results/"
 dpi = 1600
 for dist in dists:
     for dims in dimensions:
-        methods = ["TP", "MCMC-MH", "nested", "multi-nested"]
-        bar_points = [5, 10, 25, 50, 100, 200, 500, 1000, 2000]
-        make_2d_barplot(data, "output_samples", "time", methods, bar_points=bar_points, selector=["dims", "target_dist"], selector_val=[dims, dist])
+        methods = ["DM_AIS", "TP_simple_full_normal", "TP_simple_full_haar", "TP_simple_none_haar",
+                   "TP_simple_ancestral_haar", "TP_simple_leaf_haar"]
+        bar_points = [5, 10, 25, 50, 100, 200, 500, 1000]
+
+        make_2d_barplot(data, "output_samples", "time", methods, bar_points=bar_points,
+                        selector=["dims", "target_dist"], selector_val=[dims, dist])
+
         plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
         plt.gca().set_ylabel("time(s)")
         plt.gca().set_xlabel("# samples")
@@ -107,6 +111,7 @@ for dist in dists:
         # make_2d_plot(data, "output_samples", "kl_nn", methods, selector=["dims", "target_dist"], selector_val=[dims, dist])
         make_2d_barplot(data, "output_samples", "kl_nn", methods, bar_points=bar_points,
                         selector=["dims", "target_dist"], selector_val=[dims, dist])
+
         plt.gca().set_title("Target distribution: %s, Dimensions: %d, Approximation: NN" % (dist, dims))
         plt.gca().set_ylabel("KL Divergence")
         plt.gca().set_xlabel("# samples")

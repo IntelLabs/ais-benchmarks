@@ -17,6 +17,12 @@ class CSamplingMethod:
     def importance_sample(self, target_d, n_samples):
         raise NotImplementedError
 
+    def get_acceptance_rate(self):
+        raise NotImplementedError
+
+    def draw(self, ax):
+        pass
+
 
 def make_grid(space_min, space_max, resolution):
     dim_range = space_max - space_min

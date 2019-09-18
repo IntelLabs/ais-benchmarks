@@ -6,6 +6,7 @@ import itertools
 from sampling_methods.base import CSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMultivariateUniform import CMultivariateUniform
+from utils.plot_utils import plot_tpyramid_area
 
 
 class CTreePyramidNode:
@@ -33,11 +34,10 @@ class CTreePyramidNode:
         """
         Sampling kernel distribution. This shapes the proposal distribution represented by the tree pyramid.
         """
-        self.sampler = CMultivariateUniform(self.center, self.radius)
-        if kernel == "normal":
-            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius] * len(self.center))))
-        elif kernel == "haar":
+        if kernel == "haar":
             self.sampler = CMultivariateUniform(self.center, self.radius)
+        elif kernel == "normal":
+            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/4] * len(self.center))))
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
@@ -75,12 +75,13 @@ class CTreePyramidNode:
 
 
 class CTreePyramid:
-    def __init__(self, dmin, dmax):
+    def __init__(self, dmin, dmax, kernel):
         self.root = CTreePyramidNode(center=(dmin + dmax) / 2, radius=np.max((dmax - dmin) / 2),
-                                     leaf_idx=0, node_idx=0, level=0)
+                                     leaf_idx=0, node_idx=0, level=0, kernel=kernel)
         self.nodes = [self.root]
         self.leaves = [self.root]
         self.ndims = len(dmin)
+        self.kernel = kernel
 
     def expand(self, node):
         assert node.is_leaf(), "Non leaf node expansion is not allowed: " + repr(node)
@@ -108,7 +109,7 @@ class CTreePyramid:
         for i, center in enumerate(p_centers):
             new_nodes.append(CTreePyramidNode(center=center, radius=new_radius,
                                               leaf_idx=len(self.leaves) + i - 1, node_idx=len(self.nodes) + i,
-                                              level=node.level + 1))
+                                              level=node.level + 1, kernel=self.kernel))
 
         # The first new node replaces the expanding leaf node in the leaves list
         new_nodes[0].leaf_idx = node.leaf_idx
@@ -131,56 +132,88 @@ class CTreePyramid:
 
 
 class CTreePyramidSampling(CSamplingMethod):
-    def __init__(self, space_min, space_max):
+    def __init__(self, space_min, space_max, params):
+        """
+        Initialize the Tree Pyramid sampling with the specific parameters
+        :param space_min: Lower space domain values
+        :param space_max: Upper space domain values
+        :param params: Dictionary with sampling algorithm specific parameters
+            method: Importance sampling method used. Options are: "simple", "dm" and "mixture":
+                - simple: Simple tree pyramid IS. Uses the simple muti-importance sampling approach by generating
+                samples from all the isolated proposal distributions and computes weights with the individual
+                distributions.
+
+                - TODO: dm: Deterministic mixture tree pyramid IS. Uses the DM sampling approach by generating samples
+                from the all the isolated proposal distributions but computes weights with the single distribution
+                formed by the iso-weighted mixture model of all the proposals.
+
+                - TODO: mixture: Mixture tree pyramid IS. Uses the mixture sampling approach by generating samples
+                from a single distribution formed by a weighted mixture of all the proposals. Importance weights are
+                computed according to the same weighted mixture.
+
+            resampling: Type of resampling used, options are: "none", "ancestral", "leaf", "full".
+                - none: No resampling. All samples drawn are kept. Outputs samples from leaves and intermediate nodes.
+                - ancestral: Samples from parent nodes are removed from the sample set. Output only samples from leaves.
+                - leaf: At every sampling step, all leaves are resampled. Output from leaves and intermediate nodes.
+                - full: Perform leaf resampling and outputs samples only from leaves.
+
+            kernel: Kernel type used for the proposal distributions represented by the tree nodes (i.e. subspaces)
+                - haar: Uniform distribution with min=node.center-node.radius and max=node.center-node.radius.
+                - normal: Normal distribution with mean=node.center and std=node.radius.
+        """
         super(self.__class__, self).__init__(space_min, space_max)
-        self.T = CTreePyramid(space_min, space_max)
+        self.method = params["method"]
+        assert self.method in ["simple", "dm", "mixture"], "Invalid method."
+
+        self.resampling = params["resampling"]
+        assert self.resampling in ["leaf", "none", "ancestral", "full"], "Invalid resampling strategy"
+
+        self.kernel = params["kernel"]
+        assert self.kernel in ["normal", "haar"], "Invalid kernel type."
+
+        self.T = CTreePyramid(space_min, space_max, kernel=self.kernel)
         self.ndims = len(space_min)
 
+        self._n_sample_ops = 0  # Total number of sample operations. Including rejected samples.
+
+    def get_acceptance_rate(self):
+        return self._get_nsamples() / self._n_sample_ops
+
     def reset(self):
-        self.T = CTreePyramid(self.space_min, self.space_max)
+        self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
+        self._n_sample_ops = 0
 
-    def importance_sample(self, target_d, n_samples, timeout=60, method="simple", resampling="ancestral"):
+    def importance_sample(self, target_d, n_samples, timeout=60):
         """
-        Generate n_samples using the selected importance sampling method
-        :param target_d: Target distribution. Required to compute importance weights.
-        :param n_samples: Desired number of samples to generate.
-        :param timeout: Time-budget to generate the samples.
-        :param method: Importance sampling method used. Options are: "simple", "dm" and "mixture":
-            simple: Simple tree pyramid IS. Uses the simple muti-importance sampling approach by generating samples from
-            all the isolated proposal distributions and computes weights with the individual distributions
-
-            TODO: dm: Deterministic mixture tree pyramid IS. Uses the DM sampling approach by generating samples from the
-            all the isolated proposal distributions but computes weights with the single distribution formed by the
-            iso-weighted mixture model of all the proposals.
-
-            TODO: mixture: Mixture tree pyramid IS. Uses the mixture sampling approach by generating samples
-            from a single distribution formed by a weighted mixture of all the proposals. Importance weights are
-            computed according to the same weighted mixture.
-
-        :param resampling: Type of resampling used, options are: "none", "ancestral", "leaf", "full".
-            none: No resampling. All samples drawn are kept. Outputs samples from leaves and intermediate nodes.
-            ancestral: Samples from parent nodes are removed from the sample set. Outputs only samples from leaves.
-            leaf: At every sampling step, all leaves are resampled. Outputs samples from leaves and intermediate nodes.
-            full: Perform leaf resampling and outputs samples only from leaves.
+        Obtain n_samples importance samples with their importance weights
+        :param target_d: target distribution. Must implement the target_d.prob(samples) method that returns the prob for
+        a batch of samples.
+        :param n_samples: total number of samples to obtain, considering the samples already generated from prior calls
+        :param timeout: maximum time allowed to obtain the required number of samples
         :return: samples and weights
         """
-        assert resampling in ["leaf", "none", "ancestral", "full"], "Unknown resampling strategy"
 
-        if method == "simple":
-            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout, resampling)
-        elif method == "dm":
-            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout, resampling)
-        elif method == "mixture":
-            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout, resampling)
+        assert self.resampling in ["leaf", "none", "ancestral", "full"], "Unknown resampling strategy"
+
+        if self.method == "simple":
+            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout)
+        elif self.method == "dm":
+            samples, weights = self._importance_sample_dmtp(target_d, n_samples, timeout)
+        elif self.method == "mixture":
+            samples, weights = self._importance_sample_mtp(target_d, n_samples, timeout)
         else:
             raise ValueError("Unknown method or resampling")
 
         return samples, weights
 
     def sample(self, n_samples):
+        # TODO: Implement the sample method
         # Select n_samples leaf nodes weighted by their importance weight
         # Generate a sample from each selected leaf node
         raise NotImplementedError
+
+    def draw(self, ax):
+        return plot_tpyramid_area(ax, self.T)
 
     def _expand_nodes(self, particles, max_parts):
         new_particles = []
@@ -192,68 +225,55 @@ class CTreePyramidSampling(CSamplingMethod):
 
         return new_particles
 
-    def _get_nsamples(self, resampling):
+    def _get_nsamples(self):
         res = len(self.T.leaves)
-        if resampling == "none" or resampling == "leaf":
+        if self.resampling == "none" or self.resampling == "leaf":
             res = len(self.T.nodes)
         return res
 
-    def _importance_sample_stp(self, target_d, n_samples=10000, timeout=60, resampling="none"):
-        """
-
-        :param target_d:
-        :param n_samples:
-        :param timeout:
-        :return:
-        """
+    def _importance_sample_stp(self, target_d, n_samples=10000, timeout=60):
         elapsed_time = 0
         t_ini = time.time()
 
         # When the tree is created the root node is not sampled. Make sure it has one sample.
         if len(self.T.root.weight_hist) == 0:
             self.T.root.sample()
+            self._n_sample_ops += 1
             self.T.root.weigh(target_d, self.T.root.sampler)
 
-        while n_samples > self._get_nsamples(resampling) and elapsed_time < timeout:
-            if resampling == "leaf" or resampling == "full":        # If leaf resampling is enabled
+        while n_samples > self._get_nsamples() and elapsed_time < timeout:
+            if self.resampling == "leaf" or self.resampling == "full":  # If leaf resampling is enabled
                 for node in self.T.leaves:                              # For each leaf node
                     node.sample()                                       # Generate a sample
                     node.weigh(target_d, node.sampler)                  # Compute its importance weight
+                    self._n_sample_ops += 1                             # Count the sample operation
 
             lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
-            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples(resampling))       # Generate the new nodes to sample
+            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
 
             for node in new_nodes:
                 node.sample()                                           # Generate a sample for each new node,
                 node.weigh(target_d, node.sampler)                      # Compute its importance weight
+                self._n_sample_ops += 1                                 # Count the sample operation
 
             elapsed_time = time.time() - t_ini
 
-        return self._get_samples(resampling == "ancestral" or resampling == "full")
+        return self._get_samples()
 
-    def _sample_stpr(self, target_d, n_samples, timeout):
+    def _importance_sample_dmtp(self, target_d, n_samples, timeout):
         raise NotImplementedError
 
-    def _sample_dmtp(self, target_d, n_samples, timeout):
+    def _importance_sample_mtp(self, target_d, n_samples, timeout):
         raise NotImplementedError
 
-    def _sample_dmtpr(self, target_d, n_samples, timeout):
-        raise NotImplementedError
-
-    def _sample_mtp(self, target_d, n_samples, timeout):
-        raise NotImplementedError
-
-    def _sample_mtpr(self, target_d, n_samples, timeout):
-        raise NotImplementedError
-
-    def _get_samples(self, only_leaves=True):
+    def _get_samples(self):
         """
         Traverse the tree nodes and return samples depending on the resampling setting
         - No resampling, return all samples
         - Ancestral or full, return samples of leaves only
-        :param only_leaves: return samples only from leaves
-        :return:
+        :return: samples, importance_weights
         """
+        only_leaves = self.resampling == "ancestral" or self.resampling == "full"
         values_acc = t_tensor([])
         samples_acc = t_tensor([])
         for node in self.T.nodes:

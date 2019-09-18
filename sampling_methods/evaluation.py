@@ -11,8 +11,7 @@ from sampling_methods.base import grid_sample_distribution
 from distributions.CKernelDensity import CKernelDensity
 from distributions.CNearestNeighbor import CNearestNeighbor
 from utils.plot_utils import plot_grid_sampled_pdfs
-from utils.plot_utils import plot_tpyramid_area
-
+from utils.plot_utils import plot_pdf
 
 def log_print(text, file, mode='a+'):
     with open(file, mode=mode) as f:
@@ -89,10 +88,8 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             ax = plt.subplot(111)
             plt.hold(True)
             plt.show(block=False)
-            resolution = 0.02
-            x = np.linspace(space_min, space_max, int((space_max-space_min)/resolution)).reshape(-1,1)
-            y = np.exp(target_dist.log_prob(x))
-            ax.plot(x, y, "-b", alpha=0.2)
+            plot_pdf(ax,target_dist,space_min,space_max, alpha=1.0, options="b-", resolution=0.01)
+
             plt.xlim(space_min, space_max)
             plt.ylim(0, 2)
 
@@ -114,8 +111,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
         samples_acc, samples_logprob_acc = sampling_method.importance_sample(target_d=target_dist,
                                                                              n_samples=n_samples,
-                                                                             timeout=max_sampling_time - sampling_time,
-                                                                             resampling="ancestral")
+                                                                             timeout=max_sampling_time - sampling_time)
 
         n_samples = len(samples_acc) + batch_samples
 
@@ -127,9 +123,9 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                 evaluate_samples(samples_acc, samples_logprob_acc, target_dist, space_min, space_max, sampling_eval_samples)
             print("Evaluation time: %3.3f nsamples: %d samples/sec: %3.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
 
-            log_print("  %02d %08d %7.4f %.5f %.5f %.5f %6.3f %s %d %s" % (
+            log_print("  %02d %08d %7.4f %.5f %.5f %.5f %6.3f %s %d %s %3.3f" % (
             ndims, max_samples, kl_div_kde, bhattacharyya_dist_kde, kl_div_nn, bhattacharyya_dist_nn, sampling_time,
-            sampling_method.name, len(samples_acc), target_dist.name), file=filename)
+            sampling_method.name, len(samples_acc), target_dist.name, sampling_method.get_acceptance_rate()), file=filename)
 
             if debug:
                 plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde))
@@ -144,8 +140,8 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                 element.remove()
             pts.clear()
             if ndims == 1:
-                pts.extend(plot_tpyramid_area(ax, sampling_method.T))
-                pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
+                pts.extend(sampling_method.draw(ax))
+                # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
                 pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "r|"))
                 plt.pause(0.01)
             if ndims == 2:

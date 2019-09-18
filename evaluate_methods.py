@@ -9,6 +9,8 @@ from distributions.CGaussianMixtureModel import generateRandomGMM
 from distributions.CGaussianMixtureModel import generateEggBoxGMM
 from sampling_methods.metropolis_hastings import CMetropolisHastings
 from sampling_methods.tree_pyramid import CTreePyramidSampling
+from sampling_methods.dm_ais import CDeterministicMixtureAIS
+
 from sampling_methods.nested import CNestedSampling
 from sampling_methods.multi_nested import CMultiNestedSampling
 from sampling_methods.grid import CGridSampling
@@ -27,10 +29,10 @@ if __name__ == "__main__":
     num_gaussians_gmm = 5   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001    # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01    # Maximum sigma value for the Normal family models
-    max_samples = 2000      # Number of maximum samples to obtain from the algorithm
-    sampling_eval_samples = 10000  # Number fo samples from the true distribution used for comparison
+    max_samples = 1000      # Number of maximum samples to obtain from the algorithm
+    sampling_eval_samples = 1000  # Number fo samples from the true distribution used for comparison
     output_file = "test2_results.txt"
-    debug = True           # Show plot with GT and sampling process for the 1D case
+    debug = False           # Show plot with GT and sampling process for the 1D case
 
     rand_seed = 3
     random.seed(rand_seed)
@@ -41,7 +43,7 @@ if __name__ == "__main__":
 
     random.seed(0)
 
-    log_print("dims samples kl_kde bhat_kde kl_nn bhat_nn time method output_samples", file=output_file, mode="w")
+    log_print("dims samples kl_kde bhat_kde kl_nn bhat_nn time method output_samples target_d accept_rate", file=output_file, mode="w")
     for ndims in ndims_list:
         space_min = t_tensor([-space_size] * ndims)
         space_max = t_tensor([space_size] * ndims)
@@ -70,9 +72,59 @@ if __name__ == "__main__":
             sampling_method_list = list()
             MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
 
-            # Tree pyramids
-            tp_sampling_method = CTreePyramidSampling(space_min, space_max)
-            tp_sampling_method.name = "TP"
+            # Tree pyramids (simple, full, haar)
+            params = dict()
+            params["K"] = 5    # Number of samples per proposal distribution
+            params["N"] = 10    # Number of proposal distributions
+            params["J"] = 1000
+            params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+            tp_sampling_method = CDeterministicMixtureAIS(space_min, space_max, params)
+            tp_sampling_method.name = "DM_AIS"
+            sampling_method_list.append(tp_sampling_method)
+
+            # Tree pyramids (simple, full, haar)
+            params = dict()
+            params["method"] = "simple"
+            params["resampling"] = "full"
+            params["kernel"] = "haar"
+            tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+            tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+            sampling_method_list.append(tp_sampling_method)
+
+            # Tree pyramids (simple, full, normal)
+            params = dict()
+            params["method"] = "simple"
+            params["resampling"] = "full"
+            params["kernel"] = "normal"
+            tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+            tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+            sampling_method_list.append(tp_sampling_method)
+
+            # Tree pyramids (simple, none, haar)
+            params = dict()
+            params["method"] = "simple"
+            params["resampling"] = "none"
+            params["kernel"] = "haar"
+            tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+            tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+            sampling_method_list.append(tp_sampling_method)
+
+            # Tree pyramids (simple, ancestral, haar)
+            params = dict()
+            params["method"] = "simple"
+            params["resampling"] = "ancestral"
+            params["kernel"] = "haar"
+            tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+            tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+            sampling_method_list.append(tp_sampling_method)
+
+            # Tree pyramids (simple, leaves, haar)
+            params = dict()
+            params["method"] = "simple"
+            params["resampling"] = "leaf"
+            params["kernel"] = "haar"
+            tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+            tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
             sampling_method_list.append(tp_sampling_method)
 
             # Grid sampling
