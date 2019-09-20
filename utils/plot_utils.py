@@ -6,10 +6,10 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.patches as patches
 
 
-def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-b", alpha=0.2, scale=1.0):
+def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-b", alpha=0.2, scale=1.0, label=None):
     x = np.linspace(space_min, space_max, int((space_max - space_min) / resolution)).reshape(-1, 1)
     y = pdf.prob(x) * scale
-    return ax.plot(x, y, options, alpha=alpha)
+    return ax.plot(x, y, options, alpha=alpha, label=label)
 
 
 def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes = None):
@@ -53,7 +53,7 @@ def plot_ellipsoids1D(axis, ellipsoids, points):
         axis.plot(points[e.indices, 0], np.zeros(np.count_nonzero(e.indices)), marker="o", alpha=1, c=c)
 
 
-def plot_tpyramid_area(axis, T, scale=10):
+def plot_tpyramid_area(axis, T, scale=10, label=None):
     rects = []
     weights = []
     for n in T.leaves:
@@ -63,7 +63,9 @@ def plot_tpyramid_area(axis, T, scale=10):
         x = n.center - n.radius
         height = norm_weights[i] * scale
         rect = patches.Rectangle([x,0], n.radius*2, height, linewidth=0, linestyle="--", alpha=0.4, color=cm.cool(height))
+
         rects.append(axis.add_patch(rect))
+    rect.set_label(label)
     return rects
 
 

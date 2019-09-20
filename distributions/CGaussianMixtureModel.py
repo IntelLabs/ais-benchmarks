@@ -19,8 +19,8 @@ class CGaussianMixtureModel:
 
         self.gmm = CMixtureModel(self.models, self.weights)
 
-    def log_prob(self, samples):
-        return self.gmm.log_prob(samples)
+    def logprob(self, samples):
+        return self.gmm.logprob(samples)
 
     def prob(self, samples):
         return self.gmm.prob(samples)

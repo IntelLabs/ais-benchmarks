@@ -7,6 +7,7 @@ from sampling_methods.base import CSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMultivariateUniform import CMultivariateUniform
 from utils.plot_utils import plot_tpyramid_area
+from utils.plot_utils import plot_pdf
 
 
 class CTreePyramidNode:
@@ -201,6 +202,14 @@ class CTreePyramidSampling(CSamplingMethod):
 
         return samples, weights
 
+    def prob(self, s):
+        prob = 0
+        for n in self.T.leaves:
+            prob += n.sampler.prob(s)
+            self._num_q_evals += 1
+
+        return prob / len(self.T.leaves)
+
     def sample(self, n_samples):
         # TODO: Implement the sample method
         # Select n_samples leaf nodes weighted by their importance weight
@@ -208,7 +217,10 @@ class CTreePyramidSampling(CSamplingMethod):
         raise NotImplementedError
 
     def draw(self, ax):
-        return plot_tpyramid_area(ax, self.T)
+        res = plot_tpyramid_area(ax, self.T, label="$w(x) = \pi(x)/q(x)$")
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max,resolution=0.01,
+                            options="-r", alpha=1.0, label="$q(x)$"))
+        return res
 
     def _expand_nodes(self, particles, max_parts):
         new_particles = []

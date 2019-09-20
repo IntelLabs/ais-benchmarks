@@ -13,6 +13,7 @@ from distributions.CNearestNeighbor import CNearestNeighbor
 from utils.plot_utils import plot_grid_sampled_pdfs
 from utils.plot_utils import plot_pdf
 
+
 def log_print(text, file, mode='a+'):
     with open(file, mode=mode) as f:
         f.write(text + "\n")
@@ -79,7 +80,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     space_max = t_tensor([space_size] * ndims)
 
     samples_acc = np.random.uniform(space_min, space_max).reshape(-1, ndims)
-    samples_logprob_acc = np.exp(target_dist.log_prob(samples_acc))
+    samples_logprob_acc = np.exp(target_dist.logprob(samples_acc))
 
     if debug:
         pts = []
@@ -88,7 +89,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             ax = plt.subplot(111)
             plt.hold(True)
             plt.show(block=False)
-            plot_pdf(ax,target_dist,space_min,space_max, alpha=1.0, options="b-", resolution=0.01)
+            plot_pdf(ax,target_dist,space_min,space_max, alpha=1.0, options="b-", resolution=0.01, label="$\pi(x)$")
 
             plt.xlim(space_min, space_max)
             plt.ylim(0, 2)
@@ -130,6 +131,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
             if debug:
                 plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde))
+                plt.legend()
 
         if sampling_time > max_sampling_time:
             break

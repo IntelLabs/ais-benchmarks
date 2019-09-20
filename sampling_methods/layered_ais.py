@@ -105,9 +105,15 @@ class CLayeredAIS(CSamplingMethod):
             res.extend(plot_pdf(ax, q, self.space_min, self.space_max,
                                 alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
 
+        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
+        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
+                            alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
+
         for s, w in zip(self.samples, self.weights):
             res.append(ax.vlines(s, 0, w, "g", alpha=0.1))
 
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01))
+        res.append(ax.vlines(s, 0, w, "g", alpha=0.1, label="$w_k = \pi(x_k) / \\frac{1}{N}\sum_{n=0}^N q_n(x_k)$"))
+
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
 
         return res

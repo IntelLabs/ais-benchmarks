@@ -87,18 +87,19 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
 # dims samples kl_kde bhat_kde kl_nn bhat_nn time method final_samples
 data = pd.read_table("results.txt", delim_whitespace=True)
 
-dimensions = [1,2,3,4,5,6,7,8,9]
+methods = ["DM_AIS", "TP_simple_full_normal", "TP_simple_full_haar", "TP_simple_none_haar",
+           "TP_simple_ancestral_haar", "TP_simple_leaf_haar"]
+# dimensions = [1,2,3,4,5,6,7,8,9]
+dimensions = [1]
 dists = ["gmm", "normal", "egg"]
 path = "results/"
 dpi = 1600
 for dist in dists:
     for dims in dimensions:
-        methods = ["DM_AIS", "TP_simple_full_normal", "TP_simple_full_haar", "TP_simple_none_haar",
-                   "TP_simple_ancestral_haar", "TP_simple_leaf_haar"]
         bar_points = [5, 10, 25, 50, 100, 200, 500, 1000]
 
         make_2d_barplot(data, "output_samples", "time", methods, bar_points=bar_points,
-                        selector=["dims", "target_dist"], selector_val=[dims, dist])
+                        selector=["dims", "target_d"], selector_val=[dims, dist])
 
         plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
         plt.gca().set_ylabel("time(s)")
@@ -110,7 +111,7 @@ for dist in dists:
 
         # make_2d_plot(data, "output_samples", "kl_nn", methods, selector=["dims", "target_dist"], selector_val=[dims, dist])
         make_2d_barplot(data, "output_samples", "kl_nn", methods, bar_points=bar_points,
-                        selector=["dims", "target_dist"], selector_val=[dims, dist])
+                        selector=["dims", "target_d"], selector_val=[dims, dist])
 
         plt.gca().set_title("Target distribution: %s, Dimensions: %d, Approximation: NN" % (dist, dims))
         plt.gca().set_ylabel("KL Divergence")
@@ -122,7 +123,7 @@ for dist in dists:
 
         # make_2d_plot(data, "output_samples", "kl_kde", methods, selector=["dims", "target_dist"], selector_val=[dims, dist])
         make_2d_barplot(data, "output_samples", "kl_kde", methods, bar_points=bar_points,
-                        selector=["dims", "target_dist"], selector_val=[dims, dist])
+                        selector=["dims", "target_d"], selector_val=[dims, dist])
         plt.gca().set_title("Target distribution: %s, Dimensions: %d, Approximation: KDE" % (dist, dims))
         plt.gca().set_ylabel("KL Divergence")
         plt.gca().set_xlabel("# samples")

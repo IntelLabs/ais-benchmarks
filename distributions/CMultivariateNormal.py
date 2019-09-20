@@ -11,16 +11,27 @@ class CMultivariateNormal:
 
         self.mean = mean.reshape(1,self.dims,1)
         self.cov = cov
-        self.inv_cov = np.linalg.inv(cov).reshape((1,self.dims, self.dims))
+        self.inv_cov = np.linalg.inv(cov).reshape((1, self.dims, self.dims))
         self.log_det = np.log(self.det)
 
         self.term1 = - 0.5 * self.dims * np.log(np.pi * 2)
         self.term2 = - 0.5 * self.log_det
 
+    def set_moments(self, mean, cov):
+        assert cov.shape == (self.dims, self.dims)
+
+        self.det = np.linalg.det(cov)
+        assert self.det > 0
+
+        self.mean = mean.reshape(1,self.dims,1)
+        self.cov = cov
+        self.inv_cov = np.linalg.inv(cov).reshape((1, self.dims, self.dims))
+        self.log_det = np.log(self.det)
+
     def sample(self, n_samples=1):
         return np.random.multivariate_normal(self.mean.flatten(), self.cov, size=n_samples)
 
-    def log_prob(self, samples):
+    def logprob(self, samples):
         if len(samples.shape) == 1:
             samples = samples.reshape(1,-1,1)
         elif len(samples.shape) == 2:
@@ -33,7 +44,7 @@ class CMultivariateNormal:
         return self.term1 + self.term2 + term3
 
     def prob(self, samples):
-        return np.exp(self.log_prob(samples))
+        return np.exp(self.logprob(samples))
 
 
 if __name__ == "__main__":

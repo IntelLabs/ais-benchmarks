@@ -11,6 +11,7 @@ from sampling_methods.metropolis_hastings import CMetropolisHastings
 from sampling_methods.tree_pyramid import CTreePyramidSampling
 from sampling_methods.dm_ais import CDeterministicMixtureAIS
 from sampling_methods.layered_ais import CLayeredAIS
+from sampling_methods.m_pmc import CMixturePMC
 
 from sampling_methods.nested import CNestedSampling
 from sampling_methods.multi_nested import CMultiNestedSampling
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
     max_samples = 1000                      # Number of maximum samples to obtain from the algorithm
-    sampling_eval_samples = 1000            # Number fo samples from the true distribution used for comparison
+    sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
     debug = True                           # Show plot with GT and sampling process for the 1D case
 
@@ -73,26 +74,36 @@ if __name__ == "__main__":
             sampling_method_list = list()
             MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
 
-            # Layered Deterministic Mixture Adaptive Importance Sampling
+            # Metropolis-Hastings
             params = dict()
-            params["K"] = 5    # Number of samples per proposal distribution
-            params["N"] = 10    # Number of proposal distributions
-            params["J"] = 1000
-            params["L"] = 10
-            params["sigma"] = 0.01      # Scaling parameter of the proposal distributions
-            params["mh_sigma"] = 0.001  # Scaling parameter of the mcmc proposal distributions moment update
-            tp_sampling_method = CLayeredAIS(space_min, space_max, params)
-            tp_sampling_method.name = "LAIS"
-            sampling_method_list.append(tp_sampling_method)
+            params["proposal_d"] = MCMC_proposal_dist   # MC move proposal distribution p(x'|x)
+            params["n_steps"] = 2                       # Num of decorrelation steps: discarded samples upon new accept
+            params["n_burnin"] = 10                     # Number of samples considered as burn-in
+            params["target_d"] = target_dist            # Target distribution to compute acceptance rates
+            params["kde_bw"] = 0.01                     # Bandwidth of the KDE approximation to evaluate the prob of the
+                                                        #  distribution approximated by the set of generated samples
+
+            mh_sampling_method = CMetropolisHastings(space_min, space_max, params)
+            mh_sampling_method.name = "MCMC-MH"
+            sampling_method_list.append(mh_sampling_method)
 
             # Deterministic Mixture Adaptive Importance Sampling
-            params = dict()
             params["K"] = 5    # Number of samples per proposal distribution
             params["N"] = 10    # Number of proposal distributions
             params["J"] = 1000
             params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
             tp_sampling_method = CDeterministicMixtureAIS(space_min, space_max, params)
             tp_sampling_method.name = "DM_AIS"
+            sampling_method_list.append(tp_sampling_method)
+
+            # M-PMC
+            params = dict()
+            params["K"] = 10    # Number of samples per proposal distribution
+            params["N"] = 10    # Number of proposal distributions
+            params["J"] = 1000
+            params["sigma"] = 0.001  # Scaling parameter of the proposal distributions
+            tp_sampling_method = CMixturePMC(space_min, space_max, params)
+            tp_sampling_method.name = "M-PMC"
             sampling_method_list.append(tp_sampling_method)
 
             # Tree pyramids (simple, full, haar)
@@ -102,6 +113,18 @@ if __name__ == "__main__":
             params["kernel"] = "haar"
             tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
             tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+            sampling_method_list.append(tp_sampling_method)
+
+            # Layered Deterministic Mixture Adaptive Importance Sampling
+            params = dict()
+            params["K"] = 5    # Number of samples per proposal distribution
+            params["N"] = 10    # Number of proposal distributions
+            params["J"] = 1000
+            params["L"] = 10
+            params["sigma"] = 0.01      # Scaling parameter of the proposal distributions
+            params["mh_sigma"] = 0.005  # Scaling parameter of the mcmc proposal distributions moment update
+            tp_sampling_method = CLayeredAIS(space_min, space_max, params)
+            tp_sampling_method.name = "LAIS"
             sampling_method_list.append(tp_sampling_method)
 
             # Tree pyramids (simple, full, normal)
@@ -144,11 +167,6 @@ if __name__ == "__main__":
             # grid_sampling_method = CGridSampling(space_min, space_max)
             # grid_sampling_method.name = "grid"
             # sampling_method_list.append(grid_sampling_method)
-
-            # Metropolis-Hastings
-            # mh_sampling_method = CMetropolisHastings(space_min, space_max, MCMC_proposal_dist)
-            # mh_sampling_method.name = "MCMC-MH"
-            # sampling_method_list.append(mh_sampling_method)
 
             # Nested sampling
             # nested_sampling_method = CNestedSampling(space_min, space_max, MCMC_proposal_dist, num_points=30)

@@ -22,7 +22,8 @@ class CSamplingMethod(metaclass=ABCMeta):
         self.weights = t_tensor([])
 
     def get_acceptance_rate(self):
-        return self._num_q_samples / len(self.samples)
+        assert self.samples.size, "Invalid number of samples to compute acceptance rate"
+        return len(self.samples) / self._num_q_samples
 
     @property
     def num_proposal_samples(self):
@@ -69,13 +70,13 @@ def make_grid(space_min, space_max, resolution):
 
 def grid_sample_distribution(dist, space_min, space_max, resolution):
     grid, dims, shape= make_grid(space_min, space_max, resolution)
-    log_prob = dist.log_prob(t_tensor(grid))
+    log_prob = dist.logprob(t_tensor(grid))
     return grid, log_prob, dims, shape
 
 
 def uniform_sample_distribution(dist, space_min, space_max, nsamples):
     samples = np.random.uniform(space_min, space_max, size=(nsamples,len(space_max)))
-    log_prob = dist.log_prob(samples.reshape(nsamples,len(space_max)))
+    log_prob = dist.logprob(samples.reshape(nsamples,len(space_max)))
     return samples.reshape(nsamples, len(space_max)), log_prob
 
 

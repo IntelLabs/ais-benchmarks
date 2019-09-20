@@ -18,11 +18,16 @@ class CMultivariateUniform:
          res = np.vstack((res, np.random.uniform(low=minval, high=maxval, size=None)))
         return res.reshape(n_samples, self.dims)
 
-    def log_prob(self, samples):
+    def logprob(self, samples):
         return np.log(self.prob(samples))
 
     def prob(self, samples):
-        return np.ones_like(samples) / self.volume
+        min_val = self.center - self.radius
+        max_val = self.center + self.radius
+        inliers = np.logical_and(min_val < samples, samples < max_val)
+        res = np.ones_like(samples) / self.volume
+        res[np.logical_not(inliers)] = 0
+        return res
 
 
 if __name__ == "__main__":
