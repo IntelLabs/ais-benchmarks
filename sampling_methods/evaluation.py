@@ -12,6 +12,7 @@ from distributions.CKernelDensity import CKernelDensity
 from distributions.CNearestNeighbor import CNearestNeighbor
 from utils.plot_utils import plot_grid_sampled_pdfs
 from utils.plot_utils import plot_pdf
+from utils.video_writer import CVideoWriter
 
 
 def log_print(text, file, mode='a+'):
@@ -73,7 +74,7 @@ def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max
     return kl_div_kde, kl_div_nn, bhattacharyya_dist_kde, bhattacharyya_dist_nn, ev_mse
 
 
-def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples, debug=True, filename=None, max_sampling_time=600):
+def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples, debug=True, filename=None, max_sampling_time=600, videofile=None):
     batch_samples = int(ndims ** 2)  # Number of samples per batch of samples
     # batch_samples = 10
     space_min = t_tensor([-space_size] * ndims)
@@ -81,6 +82,10 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
     samples_acc = np.random.uniform(space_min, space_max).reshape(-1, ndims)
     samples_logprob_acc = np.exp(target_dist.logprob(samples_acc))
+
+    # Frame collection for the videofile
+    if videofile is not None:
+        vid_writer = CVideoWriter(videofile, fps=3)
 
     if debug:
         pts = []
@@ -92,15 +97,20 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             plot_pdf(ax,target_dist,space_min,space_max, alpha=1.0, options="b-", resolution=0.01, label="$\pi(x)$")
 
             plt.xlim(space_min, space_max)
-            plt.ylim(0, 2)
+            plt.ylim(ax.get_ylim())
 
         elif ndims == 2:
             fig = plt.figure(figsize=(10, 8))
             ax = plt.subplot(111, projection='3d')
             plt.hold(True)
             plt.show(block=False)
+
             grid, log_prob, dims, shape = grid_sample_distribution(target_dist, space_min, space_max, resolution=0.02)
-            plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob), shape=shape, alpha=0.4)
+            plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob), shape=shape, alpha=0.5, label="$\pi(x)$")
+
+            plt.xlim(space_min[0], space_max[0])
+            plt.ylim(space_min[1], space_max[1])
+            ax.set_zlim(ax.get_zlim())
 
     # Perform sampling
     sampling_time = 0
@@ -130,8 +140,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
 
             if debug:
-                plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde))
-                plt.legend()
+                plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f, Acc:%3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde, sampling_method.get_acceptance_rate()))
 
         if sampling_time > max_sampling_time:
             break
@@ -145,19 +154,24 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             if ndims == 1:
                 pts.extend(sampling_method.draw(ax))
                 # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
-                pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "r|"))
+                pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "ro"))
                 plt.pause(0.01)
+                if videofile is not None:
+                    vid_writer.add_frame(fig)
+                    # vid_writer.show()
             if ndims == 2:
-                pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], -1, label="samples", c="r", marker="o"))
+                pts.extend(sampling_method.draw(ax))
+                # pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], -1, label="samples", c="r", marker="o"))
+                if videofile is not None:
+                    vid_writer.add_frame(fig)
                 plt.pause(0.01)
+            plt.legend()
 
     res = evaluate_samples(samples_acc, samples_logprob_acc, target_dist, space_min, space_max, sampling_eval_samples)
     res = list(res)
     res.append(len(samples_acc))
     if debug:
-        if ndims == 1:
-            plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f" % (sampling_method.name, max_samples, res[0], res[2]))
-            plt.pause(0.01)
-            plt.close()
-
+        plt.close()
+        if videofile is not None and (ndims == 1 or ndims == 2):
+            vid_writer.save()
     return res

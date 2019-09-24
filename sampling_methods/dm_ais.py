@@ -2,12 +2,15 @@ import numpy as np
 import time
 
 from numpy import array as t_tensor
-from sampling_methods.base import CSamplingMethod
+from sampling_methods.base import CMixtureSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.CMixtureModel import CMixtureModel
 from utils.plot_utils import plot_pdf
+from utils.plot_utils import plot_pdf2d
+import matplotlib.cm as cm
 
 
-class CDeterministicMixtureAIS(CSamplingMethod):
+class CDeterministicMixtureAIS(CMixtureSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
         Implementation of Deterministic Mixture Adaptive Importance Sampling algorithm
@@ -24,6 +27,7 @@ class CDeterministicMixtureAIS(CSamplingMethod):
         self.J = params["J"]
         self.sigma = params["sigma"]
         self.proposals = []
+        self.model = None
         self.reset()
 
     def reset(self):
@@ -36,16 +40,8 @@ class CDeterministicMixtureAIS(CSamplingMethod):
             prop_d = CMultivariateNormal(prop_center, np.diag(t_tensor([self.sigma] * len(self.space_max))))
             self.proposals.append(prop_d)
 
-    def sample(self, n_samples):
-        raise NotImplementedError
-
-    def prob(self, s):
-        prob = 0
-        for q in self.proposals:
-            prob += q.prob(s)
-            self._num_q_evals += 1
-
-        return prob / len(self.proposals)
+        # Generate the mixture model induced by the LAIS proposals
+        self.model = CMixtureModel(self.proposals, t_tensor([1 / len(self.proposals)] * len(self.proposals)))
 
     def resample(self, samples, weights):
         # Normalize weights
@@ -54,8 +50,9 @@ class CDeterministicMixtureAIS(CSamplingMethod):
         # Update all N proposals with the DM-PMC update rule
         for prop_d in self.proposals:
             idx = np.random.multinomial(1, norm_weights)
-            new_mean = samples[idx == 1]
-            prop_d.mean = new_mean
+            idx = np.argmax(idx)
+            new_mean = samples[idx]
+            prop_d.set = new_mean
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         elapsed_time = 0
@@ -66,10 +63,9 @@ class CDeterministicMixtureAIS(CSamplingMethod):
             new_samples = t_tensor([])
             for q in self.proposals:
                 for _ in range(self.K):
-                    s = q.sample()
+                    s = q.sample()[0]
                     self._num_q_samples += 1
-
-                    new_samples = np.concatenate((new_samples, s)) if new_samples.size else s
+                    new_samples = np.vstack((new_samples, s)) if new_samples.size else s
 
             # Weight samples
             new_weights = t_tensor([])
@@ -87,23 +83,3 @@ class CDeterministicMixtureAIS(CSamplingMethod):
             elapsed_time = time.time() - t_ini
 
         return self.samples, self.weights / self.weights.sum()
-
-    def draw(self, ax):
-        res = []
-        for q in self.proposals:
-            res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
-            res.extend(plot_pdf(ax, q, self.space_min, self.space_max,
-                                alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
-
-        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
-        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
-                            alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
-
-        for s, w in zip(self.samples, self.weights):
-            res.append(ax.vlines(s, 0, w, "g", alpha=0.1))
-
-        res.append(ax.vlines(s, 0, w, "g", alpha=0.1, label="$w_k = \pi(x_k) / \\frac{1}{N}\sum_{n=0}^N q_n(x_k)$"))
-
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
-
-        return res

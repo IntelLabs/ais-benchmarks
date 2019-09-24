@@ -15,17 +15,18 @@ class CMultivariateUniform:
         # TODO: Fix the size problem here and sample in one instruction
         res = np.random.uniform(low=minval, high=maxval, size=None)
         for i in range(1, n_samples):
-         res = np.vstack((res, np.random.uniform(low=minval, high=maxval, size=None)))
+            res = np.vstack((res, np.random.uniform(low=minval, high=maxval, size=None)))
         return res.reshape(n_samples, self.dims)
 
     def logprob(self, samples):
         return np.log(self.prob(samples))
 
+    # TODO: MAKE THIS WORK FOR THE MULTIDIMENSIONAL CASE.
     def prob(self, samples):
         min_val = self.center - self.radius
         max_val = self.center + self.radius
-        inliers = np.logical_and(min_val < samples, samples < max_val)
-        res = np.ones_like(samples) / self.volume
+        inliers = np.all(np.logical_and(min_val < samples, samples < max_val), axis=1)  # Select the inliers if all the coordinates are in range
+        res = np.ones(len(samples)) / self.volume
         res[np.logical_not(inliers)] = 0
         return res
 

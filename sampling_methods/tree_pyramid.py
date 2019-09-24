@@ -8,6 +8,8 @@ from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMultivariateUniform import CMultivariateUniform
 from utils.plot_utils import plot_tpyramid_area
 from utils.plot_utils import plot_pdf
+from utils.plot_utils import plot_pdf2d
+import matplotlib.cm as cm
 
 
 class CTreePyramidNode:
@@ -24,7 +26,7 @@ class CTreePyramidNode:
         self.radius = radius                        # n_r
         self.children = [None] * (2**len(center))   # n_s
         self.weight = t_tensor(0)                   # n_w
-        self.coords = t_tensor([0] * len(center))   # n_x
+        self.coords = t_tensor([[0] * len(center)]) # n_x
         self.leaf_idx = leaf_idx
         self.node_idx = node_idx
         self.level = level
@@ -47,7 +49,7 @@ class CTreePyramidNode:
         This is the Monte Carlo portion of the Quasi-Monte Carlo approach. The sample location (n_x) is obtained
         by a proposal distribution parameterized by the node center (n_c) and radius (n_r).
         """
-        self.coords = self.sampler.sample()[0]  # Samplers return a batch of samples. This removes the batch dimension.
+        self.coords = self.sampler.sample()
         self.coords_hist.append(self.coords)
 
     def weigh(self, target_d, importance_d, target_f=lambda x: 1):
@@ -207,8 +209,10 @@ class CTreePyramidSampling(CSamplingMethod):
         for n in self.T.leaves:
             prob += n.sampler.prob(s)
             self._num_q_evals += 1
-
         return prob / len(self.T.leaves)
+
+    def logprob(self, s):
+        return self.prob(s)
 
     def sample(self, n_samples):
         # TODO: Implement the sample method
@@ -217,9 +221,13 @@ class CTreePyramidSampling(CSamplingMethod):
         raise NotImplementedError
 
     def draw(self, ax):
-        res = plot_tpyramid_area(ax, self.T, label="$w(x) = \pi(x)/q(x)$")
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max,resolution=0.01,
-                            options="-r", alpha=1.0, label="$q(x)$"))
+        res = []
+        if self.ndims == 1:
+            res = plot_tpyramid_area(ax, self.T, label="$w(x) = \pi(x)/q(x)$")
+            res.extend(plot_pdf(ax, self, self.space_min, self.space_max,resolution=0.01,
+                                options="-r", alpha=1.0, label="$q(x)$"))
+        elif self.ndims == 2:
+            res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
         return res
 
     def _expand_nodes(self, particles, max_parts):

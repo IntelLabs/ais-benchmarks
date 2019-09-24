@@ -1,6 +1,9 @@
 import numpy as np
 from numpy import array as t_tensor
 from abc import ABCMeta, abstractmethod
+from utils.plot_utils import plot_pdf
+from utils.plot_utils import plot_pdf2d
+import matplotlib.cm as cm
 
 
 class CSamplingMethod(metaclass=ABCMeta):
@@ -50,6 +53,64 @@ class CSamplingMethod(metaclass=ABCMeta):
         pass
 
 
+class CMixtureSamplingMethod(CSamplingMethod):
+    def __init__(self, space_min, space_max):
+        super(CMixtureSamplingMethod, self).__init__(space_min, space_max)
+
+    def sample(self, n_samples):
+        self._num_q_samples += n_samples
+        return self.model.sample(n_samples)
+
+    def prob(self, s):
+        return self.model.prob(s)
+
+    def logprob(self, s):
+        return self.model.logprob(s)
+
+    def draw(self, ax):
+        if len(self.space_max) == 1:
+            return self.draw1d(ax)
+        elif len(self.space_max) == 2:
+            return self.draw2d(ax)
+        return []
+
+    def draw1d(self, ax):
+        res = []
+        for q in self.proposals:
+            res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
+            res.extend(plot_pdf(ax, q, self.space_min, self.space_max,
+                                alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
+
+        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
+        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
+                            alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
+
+        for s, w in zip(self.samples, self.weights):
+            res.append(ax.vlines(s, 0, w, "g", alpha=0.1))
+
+        res.append(ax.vlines(s, 0, w, "g", alpha=0.1, label="$w_k = \pi(x_k) / \\frac{1}{N}\sum_{n=0}^N q_n(x_k)$"))
+
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
+
+        return res
+
+    def draw2d(self, ax):
+        res = []
+        for q in self.proposals:
+            res.append(ax.scatter(q.mean[0], q.mean[1], 0, c="g", marker="o"))
+            # res.append(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, scale=1/len(self.proposals)))
+
+        for s, w in zip(self.samples, self.weights):
+            res.append(ax.scatter(s[0], s[1], w, c="g", marker="o", alpha=0.2))
+        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
+        # res.append(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q_n(x)$", scale=1/len(self.proposals)))
+
+
+        res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+
+        return res
+
+
 def make_grid(space_min, space_max, resolution):
     dim_range = space_max - space_min
     num_samples = (dim_range / resolution).tolist()
@@ -78,5 +139,4 @@ def uniform_sample_distribution(dist, space_min, space_max, nsamples):
     samples = np.random.uniform(space_min, space_max, size=(nsamples,len(space_max)))
     log_prob = dist.logprob(samples.reshape(nsamples,len(space_max)))
     return samples.reshape(nsamples, len(space_max)), log_prob
-
 

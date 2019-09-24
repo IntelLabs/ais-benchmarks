@@ -1,9 +1,34 @@
 import numpy as np
+from numpy import array as t_tensor
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.patches as patches
+
+
+def make_grid(space_min, space_max, resolution):
+    dim_range = space_max - space_min
+    num_samples = (dim_range / resolution).tolist()
+    for i in range(len(num_samples)):
+        num_samples[i] = int(num_samples[i])
+        if num_samples[i] < 1:
+            num_samples[i] = 1
+
+    dimensions = []
+    shape = t_tensor([0] * len(num_samples))
+    for i in range(len(num_samples)):
+        dimensions.append(np.linspace(space_min[i], space_max[i], num_samples[i]))
+        shape[i] = len(dimensions[i])
+
+    samples = np.array(np.meshgrid(*dimensions)).T.reshape(-1, len(space_min))
+    return samples, dimensions, shape
+
+
+def grid_sample_distribution(dist, space_min, space_max, resolution):
+    grid, dims, shape= make_grid(space_min, space_max, resolution)
+    log_prob = dist.logprob(t_tensor(grid))
+    return grid, log_prob, dims, shape
 
 
 def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-b", alpha=0.2, scale=1.0, label=None):
@@ -21,20 +46,28 @@ def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes = None):
     ax.scatter(samples[:, 0], samples[:, 1], prob_p_margin, c=prob_p_margin_color, cmap=plt.cm.hot)
 
 
-def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes = None, alpha=1):
+def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes=None, alpha=1.0, cmap=plt.cm.hot, label=None):
     prob_p_margin = prob_p.reshape(shape).transpose()
     if marginalize_axes is not None:
         prob_p_margin = np.sum(prob_p_margin, axis=marginalize_axes)
 
-    X = np.array(dims[0]).reshape(1,-1)
-    Y = np.array(dims[1]).reshape(-1,1)
+    X = np.array(dims[0]).reshape(1, -1)
+    Y = np.array(dims[1]).reshape(-1, 1)
 
     # prob_p_margin_color = prob_p_margin / np.max(prob_p_margin)
 
-    ax.plot_surface(X, Y, prob_p_margin, cmap=plt.cm.hot, linewidth=0, antialiased=True, shade=True, rstride=2, cstride=2, zorder=1, alpha=alpha)
+    # return ax.plot_surface(X, Y, prob_p_margin, cmap=cmap, linewidth=0, antialiased=True, shade=True, rstride=2,
+    #                        cstride=2, zorder=1, alpha=alpha, label=label)
+    return ax.plot_surface(X, Y, prob_p_margin, cmap=cmap, linewidth=0, antialiased=True, shade=True, rstride=2,
+                           cstride=2, alpha=alpha, label=label)
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='z', offset=-1.9, cmap=plt.cm.Reds)
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='x', offset=-1, cmap=plt.cm.Reds)
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='y', offset=1, cmap=plt.cm.Reds)
+
+
+def plot_pdf2d(ax, pdf, space_min, space_max, resolution=0.1, alpha=0.2, scale=1.0, label=None, colormap=plt.cm.hot):
+    grid, log_prob, dims, shape = grid_sample_distribution(pdf, space_min, space_max, resolution=resolution)
+    return plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob) * scale, shape=shape, alpha=alpha, cmap=colormap, label=label)
 
 
 def plot_ellipsoids(axis, ellipsoids, points):

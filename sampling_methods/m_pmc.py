@@ -2,12 +2,12 @@ import numpy as np
 import time
 
 from numpy import array as t_tensor
-from sampling_methods.base import CSamplingMethod
+from sampling_methods.base import CMixtureSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
-from utils.plot_utils import plot_pdf
+from distributions.CMixtureModel import CMixtureModel
 
 
-class CMixturePMC(CSamplingMethod):
+class CMixturePMC(CMixtureSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
         Implementation of Mixture Particle Monte Carlo Adaptive Importance Sampling algorithm
@@ -27,6 +27,8 @@ class CMixturePMC(CSamplingMethod):
         self.sigma = params["sigma"]
         self.proposals = []             # q_d(\theta_d)
         self.wproposals = []            # \alpha_d
+        self.model = None
+        self.dims = len(space_max)
         self.reset()
 
     def reset(self):
@@ -42,47 +44,30 @@ class CMixturePMC(CSamplingMethod):
         # Set uniform weights
         self.wproposals = t_tensor([1/self.N] * self.N)
 
-    def sample(self, n_samples):
-        res = t_tensor([])
-        for _ in range(n_samples):
-            idx = np.argmax(np.random.multinomial(1, self.wproposals))  # Select the sampling proposal
-            q = self.proposals[idx]
-            x = q.sample(1)                                   # Sample from the sampling proposal
-            res = np.concatenate((res, x)) if res.size else x
-        return res
-
-    def logprob(self, s):
-        prob = np.zeros_like(s.flatten())
-        for alpha, q in zip(self.wproposals, self.proposals):
-            pval = alpha * q.logprob(s)
-            prob = prob + pval.flatten()
-            # prob = prob + pval if np.all(pval > 0) else prob
-            self._num_q_evals += 1
-        return prob
-
-    def prob(self, s):
-        prob = np.zeros_like(s.flatten())
-        for alpha, q in zip(self.wproposals, self.proposals):
-            pval = alpha * q.prob(s)
-            prob = prob + pval.flatten()
-            self._num_q_evals += 1
-        return prob
+        # Generate the mixture model induced by the M-PMC proposals
+        self.model = CMixtureModel(self.proposals, self.wproposals)
 
     def adapt(self, samples, weights, posteriors):
-
         # Update all N proposals and proposal weights with the M-PMC update rule
         for d in range(self.N):
-            # Update mixture weights (alpha_d)
+            # Update mixture weights (alpha_d) eq. 14.1
             self.wproposals[d] = np.sum(weights * posteriors[d])
 
             # Update proposal parameters (gaussian proposal)
-            mu = np.sum(weights * posteriors[d] * samples) / self.wproposals[d]
-            cov = (samples - mu).T @ (samples - mu)
-            sigma = np.sum(weights * posteriors[d] * cov, axis=1) / self.wproposals[d]
-            # if np.any(np.isnan(sigma)):
-            sigma = np.ones_like(sigma) * 0.01
+            # Mean eq. 14.2
+            mu = np.sum(weights.reshape(-1, 1) * posteriors[d].reshape(-1, 1) * samples, axis=0) / self.wproposals[d]
 
-            self.proposals[d].set_moments(mu, np.diag(sigma))
+            # Covariance eq. 14.3
+            cov_val = (samples - mu).T @ (samples - mu)
+            cov = np.zeros_like(cov_val)
+            for i in range(self.K):
+                cov += weights[i] * posteriors[d][i] * cov_val
+            cov /= self.wproposals[d]
+
+            if np.any(np.isnan(cov)):
+                cov = np.diag(np.ones(self.dims) * 0.01)
+
+            self.proposals[d].set_moments(mu, cov)
 
         # Renormalize proposals weights
         self.wproposals = self.wproposals / self.wproposals.sum()
@@ -106,12 +91,14 @@ class CMixturePMC(CSamplingMethod):
                 new_weights[i] = pi_x / q_x if q_x > 0 else 0
 
                 self._num_pi_evals += 1
+                self._num_q_evals += 1
 
                 # Compute mixture posteriors (eq. 7)
                 for d in range(self.N):
                     alpha_d = self.wproposals[d]
                     q_d = self.proposals[d].prob(new_samples[i])
                     rho[d][i] = (alpha_d * q_d) / q_x
+                    self._num_q_evals += 1
 
             new_weights = new_weights / new_weights.sum()
 
@@ -124,23 +111,3 @@ class CMixturePMC(CSamplingMethod):
             elapsed_time = time.time() - t_ini
 
         return self.samples, self.weights
-
-    def draw(self, ax):
-        res = []
-        for q in self.proposals:
-            res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
-            res.extend(plot_pdf(ax, q, self.space_min, self.space_max,
-                                alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
-
-        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
-        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
-                            alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
-
-        for s, w in zip(self.samples, self.weights):
-            res.append(ax.vlines(s, 0, w, "g", alpha=0.1))
-
-        res.append(ax.vlines(s, 0, w, "g", alpha=0.1, label="$w_k = \pi(x_k) / \\frac{1}{N}\sum_{n=0}^N q_n(x_k)$"))
-
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
-
-        return res

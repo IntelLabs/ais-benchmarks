@@ -2,12 +2,12 @@ import numpy as np
 import time
 
 from numpy import array as t_tensor
-from sampling_methods.base import CSamplingMethod
+from sampling_methods.base import CMixtureSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
-from utils.plot_utils import plot_pdf
+from distributions.CMixtureModel import CMixtureModel
 
 
-class CLayeredAIS(CSamplingMethod):
+class CLayeredAIS(CMixtureSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
         Implementation of Deterministic Mixture Adaptive Importance Sampling algorithm
@@ -17,6 +17,7 @@ class CLayeredAIS(CSamplingMethod):
             - K: Number of samples per proposal
             - N: Number of proposals
             - J: Maximum number of iterations when sampling
+            - L: Number of MCMC moves during the proposal adaptation
         """
         super(self.__class__, self).__init__(space_min, space_max)
         self.K = params["K"]
@@ -27,6 +28,7 @@ class CLayeredAIS(CSamplingMethod):
         self.mhsigma = params["mh_sigma"]
         self.mhproposal = CMultivariateNormal(np.zeros_like(self.space_max), np.diag(t_tensor([self.mhsigma] * len(self.space_max))))
         self.proposals = []
+        self.model = None
         self.reset()
 
     def reset(self):
@@ -39,21 +41,14 @@ class CLayeredAIS(CSamplingMethod):
             prop_d = CMultivariateNormal(prop_center, np.diag(t_tensor([self.sigma] * len(self.space_max))))
             self.proposals.append(prop_d)
 
-    def sample(self, n_samples):
-        raise NotImplementedError
-
-    def prob(self, s):
-        prob = 0
-        for q in self.proposals:
-            prob += q.prob(s)
-            self._num_q_evals += 1
-
-        return prob / len(self.proposals)
+        # Generate the mixture model induced by the LAIS proposals
+        self.model = CMixtureModel(self.proposals, t_tensor([1 / len(self.proposals)] * len(self.proposals)))
 
     def mcmc_mh(self, x, prop_d, target_d, n_steps):
         for _ in range(n_steps):
             old_val = target_d.prob(x)
-            x_hat = x + self.mhproposal.sample()
+            x_delta = self.mhproposal.sample()[0]  # Discard batch dimension from batch sampler
+            x_hat = x + x_delta
             new_val = target_d.prob(x_hat)
             alpha = np.random.rand()
             ratio = new_val / old_val
@@ -76,10 +71,9 @@ class CLayeredAIS(CSamplingMethod):
             new_samples = t_tensor([])
             for q in self.proposals:
                 for _ in range(self.K):
-                    s = q.sample()
-                    self._num_q_samples += 1
-
-                    new_samples = np.concatenate((new_samples, s)) if new_samples.size else s
+                    s = q.sample()[0]           # Samplers generate samples in a batch. Here we are generating just
+                    self._num_q_samples += 1    # one sample and discard the batch dimension
+                    new_samples = np.vstack((new_samples, s)) if new_samples.size else s
 
             # Weight samples
             new_weights = t_tensor([])
@@ -97,23 +91,3 @@ class CLayeredAIS(CSamplingMethod):
             elapsed_time = time.time() - t_ini
 
         return self.samples, self.weights / self.weights.sum()
-
-    def draw(self, ax):
-        res = []
-        for q in self.proposals:
-            res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
-            res.extend(plot_pdf(ax, q, self.space_min, self.space_max,
-                                alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
-
-        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
-        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
-                            alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
-
-        for s, w in zip(self.samples, self.weights):
-            res.append(ax.vlines(s, 0, w, "g", alpha=0.1))
-
-        res.append(ax.vlines(s, 0, w, "g", alpha=0.1, label="$w_k = \pi(x_k) / \\frac{1}{N}\sum_{n=0}^N q_n(x_k)$"))
-
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
-
-        return res
