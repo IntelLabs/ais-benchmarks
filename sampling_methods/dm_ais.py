@@ -5,9 +5,6 @@ from numpy import array as t_tensor
 from sampling_methods.base import CMixtureSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMixtureModel import CMixtureModel
-from utils.plot_utils import plot_pdf
-from utils.plot_utils import plot_pdf2d
-import matplotlib.cm as cm
 
 
 class CDeterministicMixtureAIS(CMixtureSamplingMethod):

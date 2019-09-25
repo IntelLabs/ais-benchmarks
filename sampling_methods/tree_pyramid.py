@@ -207,9 +207,9 @@ class CTreePyramidSampling(CSamplingMethod):
     def prob(self, s):
         prob = 0
         for n in self.T.leaves:
-            prob += n.sampler.prob(s)
+            prob = prob + n.sampler.prob(s) * n.weight# if self.kernel == "haar" else prob + n.sampler.prob(s)
             self._num_q_evals += 1
-        return prob / len(self.T.leaves)
+        return prob if self.kernel == "haar" else prob / len(self.T.leaves)
 
     def logprob(self, s):
         return self.prob(s)
@@ -224,7 +224,7 @@ class CTreePyramidSampling(CSamplingMethod):
         res = []
         if self.ndims == 1:
             res = plot_tpyramid_area(ax, self.T, label="$w(x) = \pi(x)/q(x)$")
-            res.extend(plot_pdf(ax, self, self.space_min, self.space_max,resolution=0.01,
+            res.extend(plot_pdf(ax, self, self.space_min, self.space_max, resolution=0.01,
                                 options="-r", alpha=1.0, label="$q(x)$"))
         elif self.ndims == 2:
             res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))

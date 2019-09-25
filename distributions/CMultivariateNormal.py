@@ -58,14 +58,15 @@ if __name__ == "__main__":
     dist1 = torch.distributions.MultivariateNormal(t_tensor(mean), t_tensor(cov))
     dist2 = CMultivariateNormal(mean, cov)
 
-    sample = dist2.sample(10000)
+    sample1 = dist1.sample(torch.Size([10000]))
+    sample2 = sample1.numpy()
     t1 = time.time()
-    probs1 = dist1.log_prob(sample)
+    probs1 = dist1.log_prob(sample1)
     probs1_time = time.time() - t1
     # print("Logprob torch:",probs1)
     print("Logprob torch time: ", probs1_time)
     t1 = time.time()
-    probs2 = dist2.logprob(sample)
+    probs2 = dist2.logprob(sample2)
     probs2_time = time.time() - t1
     # print("Logprob np:",probs2)
     print("Logprob np time: ", probs2_time)

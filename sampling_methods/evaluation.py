@@ -120,9 +120,11 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     while len(samples_acc) < max_samples:
         t_ini = time.time()
 
-        samples_acc, samples_logprob_acc = sampling_method.importance_sample(target_d=target_dist,
+        samples_acc, samples_weights_acc = sampling_method.importance_sample(target_d=target_dist,
                                                                              n_samples=n_samples,
                                                                              timeout=max_sampling_time - sampling_time)
+
+        samples_logprob_acc = sampling_method.logprob(samples_acc)
 
         n_samples = len(samples_acc) + batch_samples
 

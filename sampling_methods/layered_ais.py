@@ -18,6 +18,8 @@ class CLayeredAIS(CMixtureSamplingMethod):
             - N: Number of proposals
             - J: Maximum number of iterations when sampling
             - L: Number of MCMC moves during the proposal adaptation
+            - sigma: Initial sigma for the mixture components
+            - mh_sigma: Sigma for the transition distribution used for the mcmc adaptation steps
         """
         super(self.__class__, self).__init__(space_min, space_max)
         self.K = params["K"]

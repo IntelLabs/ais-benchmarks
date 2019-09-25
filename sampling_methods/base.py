@@ -65,7 +65,7 @@ class CMixtureSamplingMethod(CSamplingMethod):
         return self.model.prob(s)
 
     def logprob(self, s):
-        return self.model.logprob(s)
+        return self.prob(s)
 
     def draw(self, ax):
         if len(self.space_max) == 1:

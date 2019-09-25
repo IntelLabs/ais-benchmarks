@@ -19,6 +19,7 @@ class CMixturePMC(CMixtureSamplingMethod):
             - K: Number of samples per proposal
             - N: Number of proposals
             - J: Maximum number of iterations when sampling
+            - sigma: Initial sigma for the mixture components
         """
         super(self.__class__, self).__init__(space_min, space_max)
         self.K = params["K"]            # in the paper N
@@ -30,6 +31,7 @@ class CMixturePMC(CMixtureSamplingMethod):
         self.model = None
         self.dims = len(space_max)
         self.reset()
+        raise NotImplementedError("This class is a tentative implementation. Is not finalized or tested")
 
     def reset(self):
         super(self.__class__, self).reset()
@@ -54,8 +56,14 @@ class CMixturePMC(CMixtureSamplingMethod):
             self.wproposals[d] = np.sum(weights * posteriors[d])
 
             # Update proposal parameters (gaussian proposal)
-            # Mean eq. 14.2
-            mu = np.sum(weights.reshape(-1, 1) * posteriors[d].reshape(-1, 1) * samples, axis=0) / self.wproposals[d]
+            # Mean eq. 14.2. TODO: Vectorize this calculation
+            mu = np.zeros(self.dims)
+            for i in range(len(weights)):
+                w = weights[i]
+                s = samples[i]
+                rho = posteriors[d][i]
+                mu += w * rho * s
+            mu /= self.wproposals[d]
 
             # Covariance eq. 14.3
             cov_val = (samples - mu).T @ (samples - mu)
