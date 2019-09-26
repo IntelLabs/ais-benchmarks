@@ -56,16 +56,15 @@ if __name__ == "__main__":
         # Generate the target distributions. A.k.a ground truth
         #######################################################
         target_dists = list()
-        # Multivariate normal (equivalent to a 1 component GMM)
-        normal_dist = generateRandomGMM(space_min, space_max, 1, sigma_min=[gmm_sigma_min] * ndims, sigma_max=[gmm_sigma_max] * ndims)
-        normal_dist.name = "normal"
-        target_dists.append(normal_dist)
-
         # GMM with the desired number of components
         gmm = generateRandomGMM(space_min, space_max, num_gaussians_gmm, sigma_min=[gmm_sigma_min] * ndims, sigma_max=[gmm_sigma_max] * ndims)
         gmm.name = "gmm"
         target_dists.append(gmm)
 
+        # Multivariate normal (equivalent to a 1 component GMM)
+        normal_dist = generateRandomGMM(space_min, space_max, 1, sigma_min=[gmm_sigma_min] * ndims, sigma_max=[gmm_sigma_max] * ndims)
+        normal_dist.name = "normal"
+        target_dists.append(normal_dist)
 
         # Egg box distribution with GMMs
         egg = generateEggBoxGMM(space_min + 0.2, space_max - 0.2, space_size / 3, 0.01)
@@ -80,6 +79,16 @@ if __name__ == "__main__":
         # Configure sampling methods
         sampling_method_list = list()
         params = dict()
+
+        # M-PMC
+        params = dict()
+        params["K"] = 15  # Number of samples per proposal distribution
+        params["N"] = 20  # Number of proposal distributions
+        params["J"] = 1000
+        params["sigma"] = 0.001  # Scaling parameter of the proposal distributions
+        tp_sampling_method = CMixturePMC(space_min, space_max, params)
+        tp_sampling_method.name = "M-PMC"
+        sampling_method_list.append(tp_sampling_method)
 
         # Tree pyramids (simple, full, normal)
         params = dict()
@@ -98,16 +107,6 @@ if __name__ == "__main__":
         tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
         tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         sampling_method_list.append(tp_sampling_method)
-
-        # M-PMC
-        # params = dict()
-        # params["K"] = 10  # Number of samples per proposal distribution
-        # params["N"] = 10  # Number of proposal distributions
-        # params["J"] = 1000
-        # params["sigma"] = 0.001  # Scaling parameter of the proposal distributions
-        # tp_sampling_method = CMixturePMC(space_min, space_max, params)
-        # tp_sampling_method.name = "M-PMC"
-        # sampling_method_list.append(tp_sampling_method)
 
         # Deterministic Mixture Adaptive Importance Sampling
         params["K"] = 5  # Number of samples per proposal distribution

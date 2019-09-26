@@ -65,7 +65,7 @@ class CMixtureSamplingMethod(CSamplingMethod):
         return self.model.prob(s)
 
     def logprob(self, s):
-        return self.prob(s)
+        return np.log(self.prob(s))
 
     def draw(self, ax):
         if len(self.space_max) == 1:
@@ -76,14 +76,14 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
     def draw1d(self, ax):
         res = []
-        for q in self.proposals:
+        for q, w in zip(self.model.models, self.model.weights):
             res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
-            res.extend(plot_pdf(ax, q, self.space_min, self.space_max,
-                                alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
+            res.extend(plot_pdf(ax, q, self.space_min, self.space_max, alpha=1.0,
+                                options="r--", resolution=0.01, scale=w))
 
         # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
         res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
-                            alpha=1.0, options="r--", resolution=0.01, scale=1/len(self.proposals)))
+                            alpha=1.0, options="r--", resolution=0.01, scale=w))
 
         for s, w in zip(self.samples, self.weights):
             res.append(ax.vlines(s, 0, w, "g", alpha=0.1))

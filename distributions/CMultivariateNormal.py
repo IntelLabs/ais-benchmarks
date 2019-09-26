@@ -27,6 +27,7 @@ class CMultivariateNormal:
         self.cov = cov
         self.inv_cov = np.linalg.inv(cov)
         self.log_det = np.log(self.det)
+        self.term2 = - 0.5 * self.log_det
 
     def sample(self, n_samples=1):
         return np.random.multivariate_normal(self.mean.flatten(), self.cov, size=n_samples)

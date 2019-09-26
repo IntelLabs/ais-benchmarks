@@ -31,7 +31,6 @@ class CMixturePMC(CMixtureSamplingMethod):
         self.model = None
         self.dims = len(space_max)
         self.reset()
-        raise NotImplementedError("This class is a tentative implementation. Is not finalized or tested")
 
     def reset(self):
         super(self.__class__, self).reset()
@@ -56,14 +55,8 @@ class CMixturePMC(CMixtureSamplingMethod):
             self.wproposals[d] = np.sum(weights * posteriors[d])
 
             # Update proposal parameters (gaussian proposal)
-            # Mean eq. 14.2. TODO: Vectorize this calculation
-            mu = np.zeros(self.dims)
-            for i in range(len(weights)):
-                w = weights[i]
-                s = samples[i]
-                rho = posteriors[d][i]
-                mu += w * rho * s
-            mu /= self.wproposals[d]
+            # Mean eq. 14.2
+            mu = np.sum(weights.reshape(-1, 1) * posteriors[d].reshape(-1, 1) * samples, axis=0) / self.wproposals[d]
 
             # Covariance eq. 14.3
             cov_val = (samples - mu).T @ (samples - mu)
@@ -72,13 +65,15 @@ class CMixturePMC(CMixtureSamplingMethod):
                 cov += weights[i] * posteriors[d][i] * cov_val
             cov /= self.wproposals[d]
 
-            if np.any(np.isnan(cov)):
+            # Failsafe for collapsing or exploding covariances
+            if np.any(np.isnan(cov)) or np.any(cov > 1):
                 cov = np.diag(np.ones(self.dims) * 0.01)
 
             self.proposals[d].set_moments(mu, cov)
 
         # Renormalize proposals weights
         self.wproposals = self.wproposals / self.wproposals.sum()
+        self.model.weights = self.wproposals
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         elapsed_time = 0
