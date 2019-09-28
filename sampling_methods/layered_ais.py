@@ -56,13 +56,14 @@ class CLayeredAIS(CMixtureSamplingMethod):
             ratio = new_val / old_val
 
             x = x_hat if ratio > alpha else x
-            prop_d.mean = x
+            prop_d.set_moments(x, np.diag(t_tensor([self.sigma] * len(self.space_max))))
         return prop_d.mean
 
     def resample(self, target_d):
         # Update all N proposals by performing L MCMC steps
         for prop_d in self.proposals:
-            prop_d.mean = self.mcmc_mh(prop_d.mean, prop_d, target_d, self.L)
+            new_mean = self.mcmc_mh(prop_d.mean, prop_d, target_d, self.L)
+            prop_d.set_moments(new_mean, np.diag(t_tensor([self.sigma] * len(self.space_max))))
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         elapsed_time = 0

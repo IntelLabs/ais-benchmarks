@@ -7,10 +7,10 @@ from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMixtureModel import CMixtureModel
 
 
-class CAdaptiveMulitipleIS(CMixtureSamplingMethod):
+class CAdaptivePopulationIS(CMixtureSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
-        Implementation of Adaptive Multiple Importance Sampling (AMIS) algorithm
+        Implementation of Adaptive Population Importance Sampling (APIS) algorithm
         :param space_min: Space lower boundary
         :param space_max: Space upper boundary
         :param params:

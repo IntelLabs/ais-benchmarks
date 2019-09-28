@@ -1,4 +1,6 @@
 import numpy as np
+import scipy
+import scipy.linalg
 
 
 class CMultivariateNormal:
@@ -13,6 +15,7 @@ class CMultivariateNormal:
         self.cov = cov
         self.inv_cov = np.linalg.inv(cov)
         self.log_det = np.log(self.det)
+        self.chol = scipy.linalg.cholesky(cov)
 
         self.term1 = - 0.5 * self.dims * np.log(np.pi * 2)
         self.term2 = - 0.5 * self.log_det
@@ -28,6 +31,7 @@ class CMultivariateNormal:
         self.inv_cov = np.linalg.inv(cov)
         self.log_det = np.log(self.det)
         self.term2 = - 0.5 * self.log_det
+        self.chol = scipy.linalg.cholesky(cov)
 
     def sample(self, n_samples=1):
         return np.random.multivariate_normal(self.mean.flatten(), self.cov, size=n_samples)
@@ -43,6 +47,12 @@ class CMultivariateNormal:
         diff = self.mean.reshape(1, self.dims, 1) - samples
         term3 = -0.5 * (np.transpose(diff, axes=(0, 2, 1)) @ self.inv_cov @ diff)
         return (self.term1 + self.term2 + term3).reshape(len(samples))
+
+    def logprob_chol(self, samples):
+        diff = self.mean - samples
+        vec = scipy.linalg.solve_triangular(self.chol, diff.T, trans="T")
+        term3 = np.sum(vec*vec, axis=0)
+        return self.term1 + self.term2 + term3
 
     def prob(self, samples):
         return np.exp(self.logprob(samples))

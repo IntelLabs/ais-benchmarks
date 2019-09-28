@@ -80,42 +80,14 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
-        # M-PMC
-        params = dict()
-        params["K"] = 15  # Number of samples per proposal distribution
-        params["N"] = 20  # Number of proposal distributions
-        params["J"] = 1000
-        params["sigma"] = 0.001  # Scaling parameter of the proposal distributions
-        tp_sampling_method = CMixturePMC(space_min, space_max, params)
-        tp_sampling_method.name = "M-PMC"
-        sampling_method_list.append(tp_sampling_method)
-
-        # Tree pyramids (simple, full, normal)
-        params = dict()
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "normal"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
-        # Tree pyramids (simple, full, haar)
-        params = dict()
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "haar"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
-        # Deterministic Mixture Adaptive Importance Sampling
-        params["K"] = 5  # Number of samples per proposal distribution
-        params["N"] = 10  # Number of proposal distributions
-        params["J"] = 1000
-        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
-        tp_sampling_method = CDeterministicMixtureAIS(space_min, space_max, params)
-        tp_sampling_method.name = "DM_AIS"
-        sampling_method_list.append(tp_sampling_method)
+        # Nested sampling
+        MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
+        params["proposal"] = MCMC_proposal_dist
+        params["N"] = 30
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        nested_sampling_method = CNestedSampling(space_min, space_max, params)
+        nested_sampling_method.name = "nested"
+        sampling_method_list.append(nested_sampling_method)
 
         # Layered Deterministic Mixture Adaptive Importance Sampling
         params["K"] = 3  # Number of samples per proposal distribution
@@ -128,9 +100,42 @@ if __name__ == "__main__":
         tp_sampling_method.name = "LAIS"
         sampling_method_list.append(tp_sampling_method)
 
+        # Deterministic Mixture Adaptive Importance Sampling
+        params["K"] = 5  # Number of samples per proposal distribution
+        params["N"] = 10  # Number of proposal distributions
+        params["J"] = 1000
+        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        tp_sampling_method = CDeterministicMixtureAIS(space_min, space_max, params)
+        tp_sampling_method.name = "DM_AIS"
+        sampling_method_list.append(tp_sampling_method)
+
+        # M-PMC
+        params["K"] = 20  # Number of samples per proposal distribution
+        params["N"] = 10  # Number of proposal distributions
+        params["J"] = 1000
+        params["sigma"] = 0.001  # Scaling parameter of the proposal distributions
+        tp_sampling_method = CMixturePMC(space_min, space_max, params)
+        tp_sampling_method.name = "M-PMC"
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (simple, full, normal)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "normal"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (simple, full, haar)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
         # Metropolis-Hastings
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
-        params = dict()
         params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
         params["n_steps"] = 2  # Num of decorrelation steps: discarded samples upon new accept
         params["n_burnin"] = 10  # Number of samples considered as burn-in
@@ -141,7 +146,6 @@ if __name__ == "__main__":
         sampling_method_list.append(mh_sampling_method)
 
         # Tree pyramids (simple, none, haar)
-        params = dict()
         params["method"] = "simple"
         params["resampling"] = "none"
         params["kernel"] = "haar"
@@ -159,7 +163,6 @@ if __name__ == "__main__":
         sampling_method_list.append(tp_sampling_method)
 
         # Tree pyramids (simple, leaves, haar)
-        params = dict()
         params["method"] = "simple"
         params["resampling"] = "leaf"
         params["kernel"] = "haar"
@@ -171,11 +174,6 @@ if __name__ == "__main__":
         # grid_sampling_method = CGridSampling(space_min, space_max)
         # grid_sampling_method.name = "grid"
         # sampling_method_list.append(grid_sampling_method)
-
-        # Nested sampling
-        # nested_sampling_method = CNestedSampling(space_min, space_max, MCMC_proposal_dist, num_points=30)
-        # nested_sampling_method.name = "nested"
-        # sampling_method_list.append(nested_sampling_method)
 
         # Multi-Nested sampling
         # mnested_sampling_method = CMultiNestedSampling(space_min, space_max, num_points=30)

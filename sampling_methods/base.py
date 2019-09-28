@@ -45,7 +45,15 @@ class CSamplingMethod(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def importance_sample(self, target_d, n_samples):
+    def importance_sample(self, target_d, n_samples, timeout):
+        raise NotImplementedError
+
+    @abstractmethod
+    def prob(self, samples):
+        raise NotImplementedError
+
+    @abstractmethod
+    def logprob(self, samples):
         raise NotImplementedError
 
     @abstractmethod

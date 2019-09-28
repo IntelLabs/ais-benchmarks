@@ -7,6 +7,7 @@ from distributions.CMultivariateNormal import CMultivariateNormal
 from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
 
+
 class CMetropolisHastings(CSamplingMethod):
     """
     Class implementing metropolis-hastings algorithm. Usages:

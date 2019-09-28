@@ -49,7 +49,7 @@ class CDeterministicMixtureAIS(CMixtureSamplingMethod):
             idx = np.random.multinomial(1, norm_weights)
             idx = np.argmax(idx)
             new_mean = samples[idx]
-            prop_d.set = new_mean
+            prop_d.set_moments(new_mean, np.diag(t_tensor([self.sigma] * len(self.space_max))))
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         elapsed_time = 0

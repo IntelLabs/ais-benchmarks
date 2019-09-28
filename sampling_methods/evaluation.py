@@ -75,7 +75,7 @@ def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max
 
 
 def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples, debug=True, filename=None, max_sampling_time=600, videofile=None):
-    batch_samples = int(ndims ** 2)  # Number of samples per batch of samples
+    batch_samples = int(ndims ** 2) + 1  # Number of samples per batch of samples
     # batch_samples = 10
     space_min = t_tensor([-space_size] * ndims)
     space_max = t_tensor([space_size] * ndims)
@@ -94,7 +94,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             ax = plt.subplot(111)
             plt.hold(True)
             plt.show(block=False)
-            plot_pdf(ax,target_dist,space_min,space_max, alpha=1.0, options="b-", resolution=0.01, label="$\pi(x)$")
+            plot_pdf(ax, target_dist, space_min, space_max, alpha=1.0, options="b-", resolution=0.01, label="$\pi(x)$")
 
             plt.xlim(space_min, space_max)
             plt.ylim(ax.get_ylim())
@@ -115,7 +115,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     # Perform sampling
     sampling_time = 0
     sampling_method.reset()
-    pts = []
+    # pts = []
     n_samples = batch_samples
     while len(samples_acc) < max_samples:
         t_ini = time.time()
