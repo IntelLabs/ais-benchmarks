@@ -7,7 +7,7 @@ class CMultivariateUniform:
 
         self.center = center
         self.radius = radius
-        self.volume = np.prod(radius*2)
+        self.volume = np.prod(np.array([radius*2]*len(center)))
 
     def sample(self, n_samples=1):
         minval = self.center - self.radius
@@ -21,12 +21,11 @@ class CMultivariateUniform:
     def logprob(self, samples):
         return np.log(self.prob(samples))
 
-    # TODO: MAKE THIS WORK FOR THE MULTIDIMENSIONAL CASE.
     def prob(self, samples):
         if len(samples.shape) == 1:
-            samples = samples.reshape(1, self.dims, 1)
+            samples = samples.reshape(1, self.dims)
         elif len(samples.shape) == 2:
-            samples = samples.reshape(len(samples), self.dims, 1)
+            samples = samples.reshape(len(samples), self.dims)
         else:
             raise ValueError("Shape of samples does not match self.dims")
 

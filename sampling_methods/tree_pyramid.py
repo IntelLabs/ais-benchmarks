@@ -44,7 +44,7 @@ class CTreePyramidNode:
         if kernel == "haar":
             self.sampler = CMultivariateUniform(self.center, self.radius)
         elif kernel == "normal":
-            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/self.bw_div])))
+            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/self.bw_div] * len(self.center))))
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
@@ -64,8 +64,8 @@ class CTreePyramidNode:
         :param importance_d: Importance distribution used to generate the sample. In the paper: q(x)
         :param target_f: Target f(x) used for importance sampling.
         """
-        # self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance_d.prob(self.coords)
-        self.weight = (target_f(self.center) * target_d.prob(self.center)) / importance_d.prob(self.center)
+        self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance_d.prob(self.coords)
+        # self.weight = (target_f(self.center) * target_d.prob(self.center)) / importance_d.prob(self.center)
         self.value = self.weight * (self.radius ** len(self.center))
         self.weight_hist.append(self.weight)
 
@@ -210,7 +210,7 @@ class CTreePyramidSampling(CSamplingMethod):
         return samples, weights
 
     def prob(self, s):
-        prob = 0
+        prob = np.zeros(len(s))
         for i, n in enumerate(self.T.leaves):
             prob = prob + n.sampler.prob(s) * n.weight
             self._num_q_evals += 1

@@ -26,9 +26,9 @@ def make_grid(space_min, space_max, resolution):
 
 
 def grid_sample_distribution(dist, space_min, space_max, resolution):
-    grid, dims, shape= make_grid(space_min, space_max, resolution)
-    log_prob = dist.logprob(t_tensor(grid))
-    return grid, log_prob, dims, shape
+    grid, dims, shape = make_grid(space_min, space_max, resolution)
+    prob = dist.prob(t_tensor(grid))
+    return grid, prob, dims, shape
 
 
 def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-b", alpha=0.2, scale=1.0, label=None):
@@ -66,8 +66,8 @@ def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes=None, 
 
 
 def plot_pdf2d(ax, pdf, space_min, space_max, resolution=0.1, alpha=0.2, scale=1.0, label=None, colormap=plt.cm.hot):
-    grid, log_prob, dims, shape = grid_sample_distribution(pdf, space_min, space_max, resolution=resolution)
-    return plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob) * scale, shape=shape, alpha=alpha, cmap=colormap, label=label)
+    grid, prob, dims, shape = grid_sample_distribution(pdf, space_min, space_max, resolution=resolution)
+    return plot_grid_sampled_pdfs(ax, dims, prob * scale, shape=shape, alpha=alpha, cmap=colormap, label=label)
 
 
 def plot_ellipsoids(axis, ellipsoids, points):
@@ -124,8 +124,8 @@ def plot_tpyramid_volume(axis, T):
         min_coord = n.center - n.radius
         max_coord = n.center + n.radius
         z0 = 0
-        z1 = n.value/((2*n.radius)**len(n.center))
-        rect_prism(axis, [min_coord[0],max_coord[0]], [min_coord[1],max_coord[1]], [z0,z1])
+        height = n.weight * n.sampler.prob(n.center)
+        rect_prism(axis, [min_coord[0],max_coord[0]], [min_coord[1],max_coord[1]], [z0,height])
 
 
 def plot_grid_area(axis, samples, values, resolution):

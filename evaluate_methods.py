@@ -26,7 +26,7 @@ def log_print(text, file, mode='a+'):
 
 
 if __name__ == "__main__":
-    ndims_list = [i for i in range(1, 4)]   # Number of dimensions of the space to test
+    ndims_list = [i for i in range(2, 4)]   # Number of dimensions of the space to test
     space_size = 1                          # Size of the domain for each dimension [0, n)
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
@@ -80,18 +80,18 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
-        # Tree pyramids (simple, full, normal)
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "normal"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
         # Tree pyramids (simple, full, haar)
         params["method"] = "simple"
         params["resampling"] = "full"
         params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (simple, full, normal)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "normal"
         tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
         tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         sampling_method_list.append(tp_sampling_method)
