@@ -88,15 +88,32 @@ def plot_ellipsoids1D(axis, ellipsoids, points):
 
 def plot_tpyramid_area(axis, T, scale=1, label=None):
     rects = []
-    weights = []
-    for n in T.leaves:
-        weights.append(float(n.weight))
-    norm_weights = np.array(weights) / np.array(weights).sum()
     for i, n in enumerate(T.leaves):
         x = n.center - n.radius
-        height = norm_weights[i] * scale
-        rect = patches.Rectangle([x,0], n.radius*2, height, linewidth=0, linestyle="--", alpha=0.4, color=cm.cool(height))
 
+        heightw = n.weight * scale
+
+        # area
+        height = n.weight * n.sampler.prob(n.center) * scale - heightw
+        color = cm.cool(height).flatten()
+        rect = patches.Rectangle([x,heightw], n.radius*2, height.flatten(), linewidth=1, linestyle="--", alpha=0.4, color=color)
+        rects.append(axis.add_patch(rect))
+
+        # weights
+        rect = patches.Rectangle([x, 0], n.radius * 2, heightw, linewidth=0, linestyle="--", alpha=0.8, color="r")
+        rects.append(axis.add_patch(rect))
+
+    rect.set_label(label)
+    return rects
+
+
+def plot_tpyramid_weights(axis, T, scale=1, label=None):
+    rects = []
+    for i, n in enumerate(T.leaves):
+        x = n.center - n.radius
+        # height = n.weight * n.sampler.prob(n.center) * scale
+        height = n.weight * scale
+        rect = patches.Rectangle([x,0], n.radius*2, height.flatten(), linewidth=0, linestyle="--", alpha=0.4, color="r")
         rects.append(axis.add_patch(rect))
     rect.set_label(label)
     return rects

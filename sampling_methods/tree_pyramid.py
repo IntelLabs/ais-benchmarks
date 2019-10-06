@@ -40,7 +40,7 @@ class CTreePyramidNode:
         if kernel == "haar":
             self.sampler = CMultivariateUniform(self.center, self.radius)
         elif kernel == "normal":
-            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius])))
+            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/4])))
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 

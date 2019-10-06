@@ -80,18 +80,18 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
-        # Tree pyramids (simple, full, haar)
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "haar"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
         # Tree pyramids (simple, full, normal)
         params["method"] = "simple"
         params["resampling"] = "full"
         params["kernel"] = "normal"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (simple, full, haar)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "haar"
         tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
         tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         sampling_method_list.append(tp_sampling_method)
