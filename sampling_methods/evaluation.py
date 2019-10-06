@@ -42,6 +42,12 @@ def kl_divergence(p_samples_prob, q_samples_prob):
     return res
 
 
+def js_divergence(p_samples_prob, q_samples_prob):
+    m_samples_prob = 0.5 * (p_samples_prob + q_samples_prob)
+    res = 0.5 * kl_divergence(p_samples_prob, m_samples_prob) + 0.5 * kl_divergence(q_samples_prob, m_samples_prob)
+    return res
+
+
 def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max, sampling_eval_samples=1000):
 
     # Generate random samples and obtain its true density from the target distribution
@@ -56,8 +62,10 @@ def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max
     nn_samples_logprob = approximate_pdf2.log_prob(eval_samples)
 
     # Compute the kl divergence of the densities obtained from both sample sets
-    kl_div_kde = kl_divergence(np.exp(p_samples_logprob), np.exp(kde_samples_logprob))
-    kl_div_nn = kl_divergence(np.exp(p_samples_logprob), np.exp(nn_samples_logprob))
+    # kl_div_kde = kl_divergence(np.exp(p_samples_logprob), np.exp(kde_samples_logprob))
+    # kl_div_nn = kl_divergence(np.exp(p_samples_logprob), np.exp(nn_samples_logprob))
+    kl_div_kde = js_divergence(np.exp(p_samples_logprob), np.exp(kde_samples_logprob))
+    kl_div_nn = js_divergence(np.exp(p_samples_logprob), np.exp(nn_samples_logprob))
 
     # Compute the bhattacharyya distance of the two sample sets
     bhattacharyya_dist_kde = bhattacharyya_distance(np.exp(p_samples_logprob), np.exp(kde_samples_logprob))
@@ -142,7 +150,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
 
             if debug:
-                plt.suptitle("%s | #smpl: %d | KL: %3.3f BHT: %3.3f, Acc:%3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde, sampling_method.get_acceptance_rate()))
+                plt.suptitle("%s | #smpl: %d | JSD: %3.3f BHT: %3.3f, Acc:%3.3f" % (sampling_method.name, n_samples, kl_div_kde, bhattacharyya_dist_kde, sampling_method.get_acceptance_rate()))
 
         if sampling_time > max_sampling_time:
             break
