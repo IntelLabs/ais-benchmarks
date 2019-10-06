@@ -13,7 +13,7 @@ import matplotlib.cm as cm
 
 
 class CTreePyramidNode:
-    def __init__(self, center, radius, node_idx, leaf_idx, level, kernel="haar"):
+    def __init__(self, center, radius, node_idx, leaf_idx, level, kernel="haar", bw_div=4):
         """
         A node of a tree pyramid contains information about its location
         :param center: location of the center of the node (In the paper: n_c)
@@ -21,6 +21,9 @@ class CTreePyramidNode:
         :param leaf_idx: Index of the node in the tree leaf list. If the node is not a leaf this index is -1
         :param node_idx: Index of the node in the tree node list
         :param level: Distance of the node to the root. Must be consistent with the children and parents.
+        :param kernel: Kernel type to be used for this node sampler
+        :param bw_div: The kernel bandwidth is computed as radius/bw_div. This param slightly tunes the amount of
+                       smoothing because it is automatically adapted by being proportional to the node radii.
         """
         self.center = center                        # n_c
         self.radius = radius                        # n_r
@@ -33,6 +36,7 @@ class CTreePyramidNode:
         self.value = self.weight * self.radius ** len(center)  # Importance volume used to sort nodes
         self.coords_hist = []
         self.weight_hist = []
+        self.bw_div = bw_div
 
         """
         Sampling kernel distribution. This shapes the proposal distribution represented by the tree pyramid.
@@ -40,7 +44,7 @@ class CTreePyramidNode:
         if kernel == "haar":
             self.sampler = CMultivariateUniform(self.center, self.radius)
         elif kernel == "normal":
-            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/4])))
+            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/self.bw_div])))
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
