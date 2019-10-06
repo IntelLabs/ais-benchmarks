@@ -31,7 +31,7 @@ if __name__ == "__main__":
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
-    max_samples = 1000                      # Number of maximum samples to obtain from the algorithm
+    max_samples = 200                      # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
     debug = True                           # Show plot with GT and sampling process for the 1D case
@@ -80,6 +80,22 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
+        # Tree pyramids (simple, full, haar)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (simple, full, normal)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "normal"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
         # Nested sampling
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
         params["proposal"] = MCMC_proposal_dist
@@ -116,22 +132,6 @@ if __name__ == "__main__":
         params["sigma"] = 0.001  # Scaling parameter of the proposal distributions
         tp_sampling_method = CMixturePMC(space_min, space_max, params)
         tp_sampling_method.name = "M-PMC"
-        sampling_method_list.append(tp_sampling_method)
-
-        # Tree pyramids (simple, full, normal)
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "normal"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
-        # Tree pyramids (simple, full, haar)
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "haar"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         sampling_method_list.append(tp_sampling_method)
 
         # Metropolis-Hastings
@@ -192,5 +192,5 @@ if __name__ == "__main__":
                 t_ini = time.time()
                 [kl_div_kde, kl_div_nn, bhattacharyya_dist_kde, bhattacharyya_dist_nn, ev_mse, total_samples] = \
                     evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples,
-                                    debug=debug, filename=output_file, videofile="videos/"+sampling_method.name+"_"+target_dist.name+"_"+str(ndims)+"d_vid.mp4")
+                                    debug=debug, filename=output_file, videofile="videos\\"+sampling_method.name+"_"+target_dist.name+"_"+str(ndims)+"d_vid.mp4")
                 t_elapsed = time.time() - t_ini

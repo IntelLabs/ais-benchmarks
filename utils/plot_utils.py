@@ -86,7 +86,7 @@ def plot_ellipsoids1D(axis, ellipsoids, points):
         axis.plot(points[e.indices, 0], np.zeros(np.count_nonzero(e.indices)), marker="o", alpha=1, c=c)
 
 
-def plot_tpyramid_area(axis, T, scale=10, label=None):
+def plot_tpyramid_area(axis, T, scale=1, label=None):
     rects = []
     weights = []
     for n in T.leaves:

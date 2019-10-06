@@ -4,6 +4,7 @@ from sampling_methods.base import CSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
+import matplotlib.cm as cm
 
 
 class CNestedSampling(CSamplingMethod):
@@ -94,19 +95,9 @@ class CNestedSampling(CSamplingMethod):
 
     def draw2d(self, ax):
         res = []
-        for sample, type in zip(self.trajectory_samples, self.trajectory_types):
-            if type == self.BURN_IN:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker="o", alpha=0.2))
-            elif type == self.REJECT:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker=".", alpha=0.2))
-            elif type == self.DECORRELATION:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker=".", alpha=0.2))
-            elif type == self.SAMPLE:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o"))
+        for sample in self.live_points:
+            res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2))
+        res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2, label="live points"))
 
         res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
-        res.extend(ax.plot([0], [0], 0, "ro", c="r", marker="o", label="burn-in"))
-        res.extend(ax.plot([0], [0], 0, "r.", c="r", marker="x", label="rejected"))
-        res.extend(ax.plot([0], [0], 0, "g.", c="g", marker="o", label="intermediate"))
-        res.extend(ax.plot([0], [0], 0, "go", c="g", marker="x", label="sample"))
         return res

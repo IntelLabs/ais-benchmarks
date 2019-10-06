@@ -1,8 +1,6 @@
 import numpy as np
 from PIL import Image
 import cv2
-from matplotlib.animation import FFMpegWriter
-from matplotlib import pyplot as plt
 
 
 class CVideoWriter:

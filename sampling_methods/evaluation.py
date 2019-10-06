@@ -92,7 +92,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
         if ndims == 1:
             fig = plt.figure(figsize=(10, 8))
             ax = plt.subplot(111)
-            plt.hold(True)
+            # plt.hold(True)
             plt.show(block=False)
             plot_pdf(ax, target_dist, space_min, space_max, alpha=1.0, options="b-", resolution=0.01, label="$\pi(x)$")
 
@@ -102,7 +102,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
         elif ndims == 2:
             fig = plt.figure(figsize=(10, 8))
             ax = plt.subplot(111, projection='3d')
-            plt.hold(True)
+            # plt.hold(True)
             plt.show(block=False)
 
             grid, log_prob, dims, shape = grid_sample_distribution(target_dist, space_min, space_max, resolution=0.02)

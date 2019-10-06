@@ -40,7 +40,7 @@ class CTreePyramidNode:
         if kernel == "haar":
             self.sampler = CMultivariateUniform(self.center, self.radius)
         elif kernel == "normal":
-            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/4] * len(self.center))))
+            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius])))
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
@@ -60,7 +60,8 @@ class CTreePyramidNode:
         :param importance_d: Importance distribution used to generate the sample. In the paper: q(x)
         :param target_f: Target f(x) used for importance sampling.
         """
-        self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance_d.prob(self.coords)
+        # self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance_d.prob(self.coords)
+        self.weight = (target_f(self.center) * target_d.prob(self.center)) / importance_d.prob(self.center)
         self.value = self.weight * (self.radius ** len(self.center))
         self.weight_hist.append(self.weight)
 
@@ -206,13 +207,13 @@ class CTreePyramidSampling(CSamplingMethod):
 
     def prob(self, s):
         prob = 0
-        for n in self.T.leaves:
-            prob = prob + n.sampler.prob(s) * n.weight# if self.kernel == "haar" else prob + n.sampler.prob(s)
+        for i, n in enumerate(self.T.leaves):
+            prob = prob + n.sampler.prob(s) * n.weight
             self._num_q_evals += 1
-        return prob if self.kernel == "haar" else prob / len(self.T.leaves)
+        return prob
 
     def logprob(self, s):
-        return self.prob(s)
+        return np.log(self.prob(s))
 
     def sample(self, n_samples):
         # TODO: Implement the sample method
@@ -226,6 +227,12 @@ class CTreePyramidSampling(CSamplingMethod):
             res = plot_tpyramid_area(ax, self.T, label="$w(x) = \pi(x)/q(x)$")
             res.extend(plot_pdf(ax, self, self.space_min, self.space_max, resolution=0.01,
                                 options="-r", alpha=1.0, label="$q(x)$"))
+
+            if self.kernel == "normal":
+                for n in self.T.leaves:
+                    res.extend(plot_pdf(ax, n.sampler, self.space_min, self.space_max, scale=n.weight,
+                                        resolution=0.01, options="--r", alpha=0.5))
+
         elif self.ndims == 2:
             res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
         return res
@@ -278,6 +285,9 @@ class CTreePyramidSampling(CSamplingMethod):
                 self._num_pi_evals += 1  # Count the evaluation operation
                 self._num_q_evals += 1  # Count the evaluation operation
 
+            # Self-normalization of importance weights
+            self._self_normalize()
+
             elapsed_time = time.time() - t_ini
 
         return self._get_samples()
@@ -306,3 +316,10 @@ class CTreePyramidSampling(CSamplingMethod):
                 values_acc = np.concatenate((values_acc, n_w)) if values_acc.size else n_w
 
         return samples_acc.reshape(-1, self.ndims), values_acc
+
+    def _self_normalize(self):
+        norm = 0
+        for n in self.T.leaves:
+            norm += n.weight
+        for n in self.T.leaves:
+            n.weight /= norm
