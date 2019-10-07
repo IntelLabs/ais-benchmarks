@@ -26,12 +26,12 @@ def log_print(text, file, mode='a+'):
 
 
 if __name__ == "__main__":
-    ndims_list = [i for i in range(2, 4)]   # Number of dimensions of the space to test
+    ndims_list = [i for i in range(1, 4)]   # Number of dimensions of the space to test
     space_size = 1                          # Size of the domain for each dimension [0, n)
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
-    max_samples = 200                      # Number of maximum samples to obtain from the algorithm
+    max_samples = 100                      # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
     debug = True                           # Show plot with GT and sampling process for the 1D case
