@@ -2,6 +2,7 @@ import numpy as np
 from sampling_methods.base import CSamplingMethod
 
 
+# TODO: Implement importance sampling  for this case
 class CRejectionSampling(CSamplingMethod):
     def __init__(self, space_min, space_max, proposal_dist, scaling=1):
         super(self.__class__, self).__init__(space_min, space_max)

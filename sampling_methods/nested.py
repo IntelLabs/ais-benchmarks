@@ -7,6 +7,7 @@ from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
 
 
+# TODO: Implement convergence test and futher generate samples from the approximated distribution
 class CNestedSampling(CSamplingMethod):
     def __init__(self, space_min, space_max, params):
         super(self.__class__, self).__init__(space_min, space_max)
@@ -19,6 +20,7 @@ class CNestedSampling(CSamplingMethod):
         # Obtain initial samples from a uniform prior distribution
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
+    # TODO: Implement sample method
     def sample(self, n_samples):
         raise NotImplementedError
 

@@ -14,8 +14,6 @@ from sampling_methods.layered_ais import CLayeredAIS
 from sampling_methods.m_pmc import CMixturePMC
 
 from sampling_methods.nested import CNestedSampling
-from sampling_methods.multi_nested import CMultiNestedSampling
-from sampling_methods.grid import CGridSampling
 from sampling_methods.evaluation import evaluate_method
 
 
@@ -31,7 +29,7 @@ if __name__ == "__main__":
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
-    max_samples = 100                      # Number of maximum samples to obtain from the algorithm
+    max_samples = 200                      # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
     debug = True                           # Show plot with GT and sampling process for the 1D case

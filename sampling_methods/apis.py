@@ -7,6 +7,7 @@ from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMixtureModel import CMixtureModel
 
 
+# TODO: Implement this method properly from the paper
 class CAdaptivePopulationIS(CMixtureSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """

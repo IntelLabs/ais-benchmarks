@@ -6,6 +6,8 @@ from sklearn.cluster import KMeans
 import time
 
 
+# TODO: Implement importance sampling method
+# TODO: Implement convergence test and futher generate samples from the approximated distribution
 class CEllipsoid:
     def __init__(self, loc, scale, indices=[]):
 
@@ -63,6 +65,7 @@ class CMultiNestedSampling(CSamplingMethod):
         # Obtain initial samples from a uniform prior distribution
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
+    # TODO: Implement sample method
     def sample(self, n_samples):
         raise NotImplementedError
 

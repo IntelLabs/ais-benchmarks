@@ -2,12 +2,9 @@ import time
 import numpy as np
 from numpy import array as t_tensor
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from mpl_toolkits.mplot3d import Axes3D
 import sys
 
 # PROBABILITY DISTRIBUTION FUNCTIONS
-from distributions.CGaussianMixtureModel import CGaussianMixtureModel
 from distributions.CGaussianMixtureModel import generateRandomGMM
 from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CRosenbrockPDF import CRosenbrock
@@ -16,16 +13,15 @@ from distributions.CKernelDensity import CKernelDensity
 from distributions.CNearestNeighbor import CNearestNeighbor
 
 # SAMPLING METHODS
-from sampling_methods.random_uniform import CRandomUniformSampling
+from sampling_methods.deprecated.random_uniform import CRandomUniformSampling
 from sampling_methods.tree_pyramid import CTreePyramidSampling
 from sampling_methods.metropolis_hastings import CMetropolisHastings
 from sampling_methods.rejection import CRejectionSampling
-from sampling_methods.grid import CGridSampling
+from sampling_methods.deprecated.grid import CGridSampling
 from sampling_methods.nested import CNestedSampling
 from sampling_methods.multi_nested import CMultiNestedSampling
 
 # UTILS FOR SAMPLING
-from sampling_methods.base import uniform_sample_distribution
 from sampling_methods.base import grid_sample_distribution
 from sampling_methods.base import kl_divergence
 from sampling_methods.base import bhattacharyya_distance
