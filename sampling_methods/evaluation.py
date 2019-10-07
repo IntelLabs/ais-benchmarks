@@ -171,7 +171,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                     # vid_writer.show()
             if ndims == 2:
                 pts.extend(sampling_method.draw(ax))
-                # pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], -1, label="samples", c="r", marker="o"))
+                pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], -1, label="samples", c="r", marker="o"))
                 if videofile is not None:
                     vid_writer.add_frame(fig)
                 plt.pause(0.01)
@@ -181,6 +181,11 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     res = list(res)
     res.append(len(samples_acc))
     if debug:
+        drawsamples = sampling_method.sample(1000)
+        if ndims == 1:
+            pts.extend(ax.plot(drawsamples, np.zeros(1000), "bo"))
+        if ndims == 2:
+            pts.append(ax.scatter(drawsamples[:, 0], drawsamples[:, 1], 0, label="samples", c="b", marker="o"))
         plt.close()
         if videofile is not None and (ndims == 1 or ndims == 2):
             vid_writer.save()

@@ -10,7 +10,7 @@ from utils.plot_utils import plot_tpyramid_area
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
-
+from distributions.CMixtureModel import CMixtureModel
 
 class CTreePyramidNode:
     def __init__(self, center, radius, node_idx, leaf_idx, level, kernel="haar", bw_div=4):
@@ -182,9 +182,12 @@ class CTreePyramidSampling(CSamplingMethod):
         self.T = CTreePyramid(space_min, space_max, kernel=self.kernel)
         self.ndims = len(space_min)
 
+        self.sampling_dist = None
+
     def reset(self):
         super(self.__class__, self).reset()
         self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
+        self.sampling_dist = None
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         """
@@ -219,11 +222,18 @@ class CTreePyramidSampling(CSamplingMethod):
     def logprob(self, s):
         return np.log(self.prob(s))
 
-    def sample(self, n_samples):
-        # TODO: Implement the sample method
-        # Select n_samples leaf nodes weighted by their importance weight
-        # Generate a sample from each selected leaf node
-        raise NotImplementedError
+    def sample(self, n_samples, timeout=60):
+        """
+        Generate n_samples from the target distribution
+        :param n_samples:
+        :param timeout: not used in this function. Sample time is deterministic.
+        :return: generated samples
+        """
+        # Check if the sampling distribution is updated
+        if self.sampling_dist is None:
+            self._update_sampling_dist()
+
+        return self.sampling_dist.sample(n_samples)
 
     def draw(self, ax):
         res = []
@@ -292,6 +302,9 @@ class CTreePyramidSampling(CSamplingMethod):
             # Self-normalization of importance weights
             self._self_normalize()
 
+            # Sampling distribution must be updated
+            self.sampling_dist = None
+
             elapsed_time = time.time() - t_ini
 
         return self._get_samples()
@@ -327,3 +340,11 @@ class CTreePyramidSampling(CSamplingMethod):
             norm += n.weight
         for n in self.T.leaves:
             n.weight /= norm
+
+    def _update_sampling_dist(self):
+        weights = np.array([])
+        models = []
+        for n in self.T.leaves:
+            weights = np.concatenate((weights, n.weight))
+            models.append(n.sampler)
+        self.sampling_dist = CMixtureModel(models, weights)
