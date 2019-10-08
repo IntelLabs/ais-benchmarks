@@ -4,6 +4,8 @@ from abc import ABCMeta, abstractmethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
+from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.CMixtureModel import CMixtureModel
 
 
 class CSamplingMethod(metaclass=ABCMeta):
@@ -75,6 +77,16 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
     def logprob(self, s):
         return np.log(self.prob(s))
+
+    def _update_model(self):
+        models = []
+        for x in self.samples:
+            cov = np.ones(len(self.space_max)) * self.bw
+            if x.shape:
+                models.append(CMultivariateNormal(x, np.diag(cov)))
+            else:
+                models.append(CMultivariateNormal(np.array([x]), np.diag(cov)))
+        self.model = CMixtureModel(models, np.exp(self.weights))
 
     def draw(self, ax):
         if len(self.space_max) == 1:

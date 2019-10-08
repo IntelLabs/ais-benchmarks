@@ -5,6 +5,7 @@ import random
 
 from sampling_methods.base import t_tensor
 from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.CMultivariateUniform import CMultivariateUniform
 from distributions.CGaussianMixtureModel import generateRandomGMM
 from distributions.CGaussianMixtureModel import generateEggBoxGMM
 from sampling_methods.metropolis_hastings import CMetropolisHastings
@@ -13,6 +14,7 @@ from sampling_methods.dm_ais import CDeterministicMixtureAIS
 from sampling_methods.layered_ais import CLayeredAIS
 from sampling_methods.m_pmc import CMixturePMC
 
+from sampling_methods.rejection import CRejectionSampling
 from sampling_methods.nested import CNestedSampling
 from sampling_methods.multi_nested import CMultiNestedSampling
 from sampling_methods.evaluation import evaluate_method
@@ -78,6 +80,15 @@ if __name__ == "__main__":
         # Configure sampling methods
         sampling_method_list = list()
         params = dict()
+
+        # Rejection sampling
+        reject_proposal_dist = CMultivariateUniform(center=origin, radius=(space_max-space_min)/2)
+        params["proposal"] = reject_proposal_dist
+        params["scaling"] = 100
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        rejection_sampling_method = CRejectionSampling(space_min, space_max, params)
+        rejection_sampling_method.name = "rejection"
+        sampling_method_list.append(rejection_sampling_method)
 
         # Multi-Nested sampling
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)

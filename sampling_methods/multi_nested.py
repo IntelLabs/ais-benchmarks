@@ -9,7 +9,6 @@ from sklearn.cluster import KMeans
 import time
 
 
-# TODO: Implement importance sampling method
 # TODO: Implement convergence test and futher generate samples from the approximated distribution
 class CEllipsoid:
     def __init__(self, loc, scale, indices=[]):
@@ -73,16 +72,6 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
 
     def reset(self):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
-
-    def _update_model(self):
-        models = []
-        for x in self.samples:
-            cov = np.ones(len(self.space_max)) * self.bw
-            if x.shape:
-                models.append(CMultivariateNormal(x, np.diag(cov)))
-            else:
-                models.append(CMultivariateNormal(np.array([x]), np.diag(cov)))
-        self.model = CMixtureModel(models, np.exp(self.weights))
 
     def resample(self, value, pdf, ellipsoid, timeout=60):
         new_sample = ellipsoid.sample()

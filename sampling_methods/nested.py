@@ -1,8 +1,6 @@
 import numpy as np
 import time
 from sampling_methods.base import CMixtureSamplingMethod
-from distributions.CMultivariateNormal import CMultivariateNormal
-from distributions.CMixtureModel import CMixtureModel
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
@@ -23,16 +21,6 @@ class CNestedSampling(CMixtureSamplingMethod):
 
     def reset(self):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
-
-    def _update_model(self):
-        models = []
-        for x in self.samples:
-            cov = np.ones(len(self.space_max)) * self.bw
-            if x.shape:
-                models.append(CMultivariateNormal(x, np.diag(cov)))
-            else:
-                models.append(CMultivariateNormal(np.array([x]), np.diag(cov)))
-        self.model = CMixtureModel(models, np.exp(self.weights))
 
     def resample(self, sample, value, pdf, timeout):
         new_sample = self.proposal_dist.sample() + sample
