@@ -64,6 +64,7 @@ class CSamplingMethod(metaclass=ABCMeta):
 class CMixtureSamplingMethod(CSamplingMethod):
     def __init__(self, space_min, space_max):
         super(CMixtureSamplingMethod, self).__init__(space_min, space_max)
+        self.model = None
 
     def sample(self, n_samples):
         self._num_q_samples += n_samples
