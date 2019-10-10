@@ -67,9 +67,12 @@ class CMetropolisHastings(CSamplingMethod):
         self.trajectory_samples = []
         self.trajectory_types = []
 
-    def mcmc_step(self, x_old):
+    def mcmc_step(self, x_old, timeout=60):
         accepted = False
-        while not accepted:
+        t_elapsed = 0
+        t_ini = time.time()
+        while not accepted and timeout > t_elapsed:
+            t_elapsed = time.time() - t_ini
             # Sample from the proposal distribution to obtain the proposed sample x' ~ p(x'|x)
             x_new = x_old + self.proposal_d.sample()
             self._num_q_samples += 1
@@ -102,12 +105,13 @@ class CMetropolisHastings(CSamplingMethod):
         self.trajectory_types.append(self.ACCEPT)
         return x_old
 
-    # TODO: Implement timeout
     def mcmc(self, n_samples, n_steps, timeout=60):
+        t_ini = time.time()
         samples = t_tensor([])
         for _ in range(n_samples):
             for _ in range(n_steps):
-                self.current_sample = self.mcmc_step(self.current_sample)
+                t_elapsed = time.time() - t_ini
+                self.current_sample = self.mcmc_step(self.current_sample, timeout=timeout-t_elapsed)
                 self.trajectory_types[-1] = self.DECORRELATION
             self.trajectory_types[-1] = self.SAMPLE
             samples = np.concatenate((samples, self.current_sample)) if samples.size else self.current_sample

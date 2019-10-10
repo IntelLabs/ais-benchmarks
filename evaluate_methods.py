@@ -81,10 +81,20 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
+        # Metropolis-Hastings
+        MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
+        params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
+        params["n_steps"] = 2  # Num of decorrelation steps: discarded samples upon new accept
+        params["n_burnin"] = 10  # Number of samples considered as burn-in
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        mh_sampling_method = CMetropolisHastings(space_min, space_max, params)
+        mh_sampling_method.name = "MCMC-MH"
+        sampling_method_list.append(mh_sampling_method)
+
         # Rejection sampling
         reject_proposal_dist = CMultivariateUniform(center=origin, radius=(space_max-space_min)/2)
         params["proposal"] = reject_proposal_dist
-        params["scaling"] = 100
+        params["scaling"] = 1
         params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
         rejection_sampling_method = CRejectionSampling(space_min, space_max, params)
         rejection_sampling_method.name = "rejection"
@@ -153,17 +163,6 @@ if __name__ == "__main__":
         tp_sampling_method.name = "M-PMC"
         sampling_method_list.append(tp_sampling_method)
 
-        # Metropolis-Hastings
-        MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
-        params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
-        params["n_steps"] = 2  # Num of decorrelation steps: discarded samples upon new accept
-        params["n_burnin"] = 10  # Number of samples considered as burn-in
-        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
-
-        mh_sampling_method = CMetropolisHastings(space_min, space_max, params)
-        mh_sampling_method.name = "MCMC-MH"
-        sampling_method_list.append(mh_sampling_method)
-
         # Tree pyramids (simple, none, haar)
         params["method"] = "simple"
         params["resampling"] = "none"
@@ -188,12 +187,6 @@ if __name__ == "__main__":
         tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
         tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         sampling_method_list.append(tp_sampling_method)
-
-        # Grid sampling
-        # grid_sampling_method = CGridSampling(space_min, space_max)
-        # grid_sampling_method.name = "grid"
-        # sampling_method_list.append(grid_sampling_method)
-
         #######################################################
         #######################################################
 
