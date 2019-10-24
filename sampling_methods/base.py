@@ -28,6 +28,11 @@ class CSamplingMethod(metaclass=ABCMeta):
         assert self.samples.size, "Invalid number of samples to compute acceptance rate"
         return len(self.samples) / self._num_q_samples
 
+    def get_NESS(self):
+        normweights = self.weights / np.sum(self.weights)
+        ESS = 1 / np.sum(normweights*normweights)
+        return ESS / len(self.samples)
+
     @property
     def num_proposal_samples(self):
         return self._num_q_samples

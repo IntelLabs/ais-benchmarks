@@ -264,6 +264,12 @@ class CTreePyramidSampling(CSamplingMethod):
     def get_acceptance_rate(self):
         return self._get_nsamples() / self._num_q_samples
 
+    def get_NESS(self):
+        self._self_normalize()
+        samples, weights = self._get_samples()
+        ESS = 1 / np.sum(weights*weights)
+        return ESS / len(samples)
+
     def _get_nsamples(self):
         res = len(self.T.leaves)
         if self.resampling == "none" or self.resampling == "leaf":

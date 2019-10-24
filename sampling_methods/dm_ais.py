@@ -10,7 +10,7 @@ from distributions.CMixtureModel import CMixtureModel
 class CDeterministicMixtureAIS(CMixtureSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
-        Implementation of Deterministic Mixture Adaptive Importance Sampling algorithm
+        Implementation of Deterministic Mixture Adaptive Importance Sampling algorithm DM-PMC
         :param space_min: Space lower boundary
         :param space_max: Space upper boundary
         :param params:
