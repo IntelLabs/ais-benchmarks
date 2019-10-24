@@ -7,7 +7,7 @@ class CMixtureModel:
         assert len(models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(models), len(weights))
 
         # Make sure all weights are positive
-        assert np.all(weights > 0), "There are non-positive weights"
+        assert np.all(weights >= 0), "There are non-positive weights"
 
         # Make sure weights are normalized
         weights = weights / weights.sum()

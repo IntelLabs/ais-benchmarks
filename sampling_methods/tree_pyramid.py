@@ -12,8 +12,9 @@ from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
 from distributions.CMixtureModel import CMixtureModel
 
+
 class CTreePyramidNode:
-    def __init__(self, center, radius, node_idx, leaf_idx, level, kernel="haar", bw_div=4):
+    def __init__(self, center, radius, node_idx, leaf_idx, level, kernel="haar", bw_div=4, weight=t_tensor(0)):
         """
         A node of a tree pyramid contains information about its location
         :param center: location of the center of the node (In the paper: n_c)
@@ -28,7 +29,7 @@ class CTreePyramidNode:
         self.center = center                        # n_c
         self.radius = radius                        # n_r
         self.children = [None] * (2**len(center))   # n_s
-        self.weight = t_tensor(0)                   # n_w
+        self.weight = weight                        # n_w
         self.coords = t_tensor([[0] * len(center)]) # n_x
         self.leaf_idx = leaf_idx
         self.node_idx = node_idx
@@ -48,12 +49,12 @@ class CTreePyramidNode:
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
-    def sample(self):
+    def sample(self, sampler):
         """
         This is the Monte Carlo portion of the Quasi-Monte Carlo approach. The sample location (n_x) is obtained
         by a proposal distribution parameterized by the node center (n_c) and radius (n_r).
         """
-        self.coords = self.sampler.sample()
+        self.coords = sampler.sample()
         self.coords_hist.append(self.coords)
 
     def weigh(self, target_d, importance_d, target_f=lambda x: 1):
@@ -64,7 +65,13 @@ class CTreePyramidNode:
         :param importance_d: Importance distribution used to generate the sample. In the paper: q(x)
         :param target_f: Target f(x) used for importance sampling.
         """
-        self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance_d.prob(self.coords)
+        # TODO: There is a problem here for the DM weights that try to compute a weight to the particle using
+        # the mixture distribution. The weights are initially zero and if they are used to compute the sample
+        # weight there is a cirlular dependency on this calculation. In the case where all the parent nodes are
+        # sub-divided at the same iteration, all the new leaves have initial weight of zero until it is computed.
+        # The problem is that all leaves weights are zero and the importance is zero as well.
+        importance = importance_d.prob(self.coords)
+        self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance
         # self.weight = (target_f(self.center) * target_d.prob(self.center)) / importance_d.prob(self.center)
         self.value = self.weight * (self.radius ** len(self.center))
         self.weight_hist.append(self.weight)
@@ -101,7 +108,7 @@ class CTreePyramid:
 
         # TODO: Vectorize this operation
         p_centers = []
-        for coeff in center_coeffs:
+        for N, coeff in enumerate(center_coeffs):
             offset = (node.radius / 2) * t_tensor(coeff)
             p_centers.append(node.center + offset)
 
@@ -112,10 +119,11 @@ class CTreePyramid:
         ################################################
         # Create the new child nodes and update the tree
         ################################################
-        # Create the new child nodes
+        # Create the new child nodes that are initialized with their fair share of their parent weight, this
+        # addresses the problem of all the weights of the leaf nodes being zero.
         new_nodes = []
         for i, center in enumerate(p_centers):
-            new_nodes.append(CTreePyramidNode(center=center, radius=new_radius,
+            new_nodes.append(CTreePyramidNode(center=center, radius=new_radius, weight=node.weight / (N+1),
                                               leaf_idx=len(self.leaves) + i - 1, node_idx=len(self.nodes) + i,
                                               level=node.level + 1, kernel=self.kernel))
 
@@ -151,11 +159,11 @@ class CTreePyramidSampling(CSamplingMethod):
                 samples from all the isolated proposal distributions and computes weights with the individual
                 distributions.
 
-                - TODO: dm: Deterministic mixture tree pyramid IS. Uses the DM sampling approach by generating samples
+                - dm: Deterministic mixture tree pyramid IS. Uses the DM sampling approach by generating samples
                 from the all the isolated proposal distributions but computes weights with the single distribution
                 formed by the iso-weighted mixture model of all the proposals.
 
-                - TODO: mixture: Mixture tree pyramid IS. Uses the mixture sampling approach by generating samples
+                - mixture: Mixture tree pyramid IS. Uses the mixture sampling approach by generating samples
                 from a single distribution formed by a weighted mixture of all the proposals. Importance weights are
                 computed according to the same weighted mixture.
 
@@ -200,17 +208,75 @@ class CTreePyramidSampling(CSamplingMethod):
         """
 
         assert self.resampling in ["leaf", "none", "ancestral", "full"], "Unknown resampling strategy"
+        assert self.method in ["simple", "dm", "mixture"], "Unknown method strategy"
 
-        if self.method == "simple":
-            samples, weights = self._importance_sample_stp(target_d, n_samples, timeout)
-        elif self.method == "dm":
-            samples, weights = self._importance_sample_dmtp(target_d, n_samples, timeout)
-        elif self.method == "mixture":
-            samples, weights = self._importance_sample_mtp(target_d, n_samples, timeout)
-        else:
-            raise ValueError("Unknown method or resampling")
+        elapsed_time = 0
+        t_ini = time.time()
 
-        return samples, weights
+        # When the tree is created the root node is not sampled. Make sure it has one sample.
+        if len(self.T.root.weight_hist) == 0:
+            self.T.root.sample(self.T.root.sampler)
+            self._num_q_samples += 1
+            self.T.root.weigh(target_d, self.T.root.sampler)
+
+        while n_samples > self._get_nsamples() and elapsed_time < timeout:
+            if self.resampling == "leaf" or self.resampling == "full":  # If leaf resampling is enabled
+                for node in self.T.leaves:                              # For each leaf node
+                    # Generate a sample.
+                    # Simple version and Deterministic Mixture, generate samples from each of the
+                    # single distributions represented by each leaf node, separately.
+                    if self.method == "simple" or self.method == "dm":
+                        node.sample(node.sampler)
+
+                    # Mixture importance sampling, generate samples from the joint distribution for each of the
+                    # single leaf nodes.
+                    elif self.method == "mixture":
+                        node.sample(self)
+
+                    self._num_q_samples += 1                            # Count the sample operation
+
+                    # Compute its importance weight.
+                    # For the simple case, the importance distribution used is just the single sampling distribution
+                    # used to generate the sample
+                    if self.method == "simple":
+                        node.weigh(target_d, node.sampler)
+
+                    # For the deterministic mixture case and mixture, the importance distribution is the mixture of the
+                    # possible distributions that could potentially be used to generate the sample. The distribution
+                    # represented by the tree-sampling method is exactly the DM of the leaf samples, therefore we
+                    # use self as the importance distributions that was the origin of the generated samples.
+                    elif self.method == "mixture" or self.method == "dm":
+                        node.weigh(target_d, self)
+
+                    self._num_pi_evals += 1                             # Count the evaluation operation
+                    self._num_q_evals += 1                              # Count the evaluation operation
+
+            lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
+            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
+
+            for node in new_nodes:
+                if self.method == "simple" or self.method == "dm":
+                    node.sample(node.sampler)
+                elif self.method == "mixture":
+                    node.sample(self)
+                self._num_q_samples += 1  # Count the sample operation
+
+                if self.method == "simple":
+                    node.weigh(target_d, node.sampler)
+                elif self.method == "mixture" or self.method == "dm":
+                    node.weigh(target_d, self)
+                self._num_pi_evals += 1  # Count the evaluation operation
+                self._num_q_evals += 1  # Count the evaluation operation
+
+            # Self-normalization of importance weights
+            self._self_normalize()
+
+            # Sampling distribution must be updated
+            self.sampling_dist = None
+
+            elapsed_time = time.time() - t_ini
+
+        return self._get_samples()
 
     def prob(self, s):
         prob = np.zeros(len(s))
@@ -269,51 +335,6 @@ class CTreePyramidSampling(CSamplingMethod):
         if self.resampling == "none" or self.resampling == "leaf":
             res = len(self.T.nodes)
         return res
-
-    def _importance_sample_stp(self, target_d, n_samples=10000, timeout=60):
-        elapsed_time = 0
-        t_ini = time.time()
-
-        # When the tree is created the root node is not sampled. Make sure it has one sample.
-        if len(self.T.root.weight_hist) == 0:
-            self.T.root.sample()
-            self._num_q_samples += 1
-            self.T.root.weigh(target_d, self.T.root.sampler)
-
-        while n_samples > self._get_nsamples() and elapsed_time < timeout:
-            if self.resampling == "leaf" or self.resampling == "full":  # If leaf resampling is enabled
-                for node in self.T.leaves:                              # For each leaf node
-                    node.sample()                                       # Generate a sample
-                    self._num_q_samples += 1                            # Count the sample operation
-                    node.weigh(target_d, node.sampler)                  # Compute its importance weight
-                    self._num_pi_evals += 1                             # Count the evaluation operation
-                    self._num_q_evals += 1                              # Count the evaluation operation
-
-            lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
-            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
-
-            for node in new_nodes:
-                node.sample()                                           # Generate a sample for each new node,
-                self._num_q_samples += 1  # Count the sample operation
-                node.weigh(target_d, node.sampler)                      # Compute its importance weight
-                self._num_pi_evals += 1  # Count the evaluation operation
-                self._num_q_evals += 1  # Count the evaluation operation
-
-            # Self-normalization of importance weights
-            self._self_normalize()
-
-            # Sampling distribution must be updated
-            self.sampling_dist = None
-
-            elapsed_time = time.time() - t_ini
-
-        return self._get_samples()
-
-    def _importance_sample_dmtp(self, target_d, n_samples, timeout):
-        raise NotImplementedError
-
-    def _importance_sample_mtp(self, target_d, n_samples, timeout):
-        raise NotImplementedError
 
     def _get_samples(self):
         """

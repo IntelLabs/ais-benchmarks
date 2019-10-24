@@ -81,6 +81,30 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
+        # Tree pyramids (simple, full, haar)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (Deterministic Mixture, full, haar)
+        params["method"] = "dm"
+        params["resampling"] = "full"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (mixture, full, haar)
+        params["method"] = "mixture"
+        params["resampling"] = "full"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
         # Metropolis-Hastings
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
         params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
@@ -117,14 +141,6 @@ if __name__ == "__main__":
         nested_sampling_method = CNestedSampling(space_min, space_max, params)
         nested_sampling_method.name = "nested"
         sampling_method_list.append(nested_sampling_method)
-
-        # Tree pyramids (simple, full, haar)
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "haar"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
 
         # Tree pyramids (simple, full, normal)
         params["method"] = "simple"
