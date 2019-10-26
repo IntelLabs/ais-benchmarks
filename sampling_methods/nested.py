@@ -1,14 +1,13 @@
 import numpy as np
 import time
-from sampling_methods.base import CSamplingMethod
-from distributions.CMultivariateNormal import CMultivariateNormal
+from sampling_methods.base import CMixtureSamplingMethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
 
 
 # TODO: Implement convergence test and futher generate samples from the approximated distribution
-class CNestedSampling(CSamplingMethod):
+class CNestedSampling(CMixtureSamplingMethod):
     def __init__(self, space_min, space_max, params):
         super(self.__class__, self).__init__(space_min, space_max)
         self.range = space_max - space_min
@@ -20,25 +19,8 @@ class CNestedSampling(CSamplingMethod):
         # Obtain initial samples from a uniform prior distribution
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
-    # TODO: Implement sample method
-    def sample(self, n_samples):
-        raise NotImplementedError
-
     def reset(self):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
-
-    def logprob(self, samples):
-        return np.log(self.prob(samples))
-
-    def prob(self, samples):
-        prob = np.zeros(len(samples))
-        for x in self.samples:
-            cov = np.ones(len(self.space_max)) * self.bw
-            q = CMultivariateNormal(x, np.diag(cov))
-            pval = q.prob(samples)
-            prob = prob + pval.flatten()
-            self._num_q_evals += 1
-        return prob / len(self.samples)
 
     def resample(self, sample, value, pdf, timeout):
         new_sample = self.proposal_dist.sample() + sample
@@ -58,6 +40,7 @@ class CNestedSampling(CSamplingMethod):
     def importance_sample(self, target_d, n_samples, timeout=60):
         points = self.live_points
         values = target_d.logprob(points)
+        self._num_pi_evals += len(points)
 
         L = np.zeros(n_samples)
         X = np.zeros(n_samples)
@@ -71,13 +54,15 @@ class CNestedSampling(CSamplingMethod):
 
             # Add the point with lowest likelihood to the resulting sample set
             min_idx = np.argmin(values)
-            self.samples = np.vstack((self.samples, points[min_idx])) if self.samples.size else points[min_idx]
+            self.samples = np.vstack((self.samples, points[min_idx])) if self.samples.size else points[min_idx].reshape(1,-1)
 
             # Replace the point with lowest likelihood with a new sample from the proposal distribution
             points[min_idx], values[min_idx] = self.resample(points[min_idx], L[i], target_d, timeout)
 
         self.weights = target_d.logprob(self.samples)
-        return self.samples, self.weights
+        self._num_pi_evals += len(self.samples)
+        self._update_model()
+        return self.samples, np.exp(self.weights)
 
     def draw(self, ax):
         if len(self.space_max) == 1:

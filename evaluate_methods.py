@@ -2,9 +2,11 @@ import time
 import numpy as np
 import sys
 import random
+import os
 
 from sampling_methods.base import t_tensor
 from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.CMultivariateUniform import CMultivariateUniform
 from distributions.CGaussianMixtureModel import generateRandomGMM
 from distributions.CGaussianMixtureModel import generateEggBoxGMM
 from sampling_methods.metropolis_hastings import CMetropolisHastings
@@ -13,7 +15,9 @@ from sampling_methods.dm_ais import CDeterministicMixtureAIS
 from sampling_methods.layered_ais import CLayeredAIS
 from sampling_methods.m_pmc import CMixturePMC
 
+from sampling_methods.rejection import CRejectionSampling
 from sampling_methods.nested import CNestedSampling
+from sampling_methods.multi_nested import CMultiNestedSampling
 from sampling_methods.evaluation import evaluate_method
 
 
@@ -29,10 +33,10 @@ if __name__ == "__main__":
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
-    max_samples = 200                      # Number of maximum samples to obtain from the algorithm
+    max_samples = 2000                       # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
-    debug = True                           # Show plot with GT and sampling process for the 1D case
+    debug = True                            # Show plot with GT and sampling process for the 1D case
 
     rand_seed = 3
     random.seed(rand_seed)
@@ -40,10 +44,12 @@ if __name__ == "__main__":
 
     if len(sys.argv) == 2:
         output_file = sys.argv[1]
+        debug = False
+        ndims_list = [i for i in range(1, 4)]
 
     random.seed(0)
 
-    log_print("dims samples JSD bhat ev_mse NESS time method output_samples target_d accept_rate q_samples q_evals pi_evals", file=output_file, mode="w")
+    log_print("dims output_samples JSD bhat ev_mse NESS time method target_d accept_rate q_samples q_evals pi_evals", file=output_file, mode="w")
     for ndims in ndims_list:
         # Define the domain for the selected number of dimensions
         space_min = t_tensor([-space_size] * ndims)
@@ -78,30 +84,51 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
-        # Nested sampling
+        # TODO: There is a bug with the DM weights. It does not work as expected
+        # Tree pyramids (Deterministic Mixture, full, haar)
+        # params["method"] = "dm"
+        # params["resampling"] = "full"
+        # params["kernel"] = "haar"
+        # tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        # sampling_method_list.append(tp_sampling_method)
+
+        # TODO: This approach has to be reviewed as well. It is not implementing the algorithm as described in the paper
+        # Tree pyramids (mixture, full, haar)
+        # params["method"] = "mixture"
+        # params["resampling"] = "full"
+        # params["kernel"] = "haar"
+        # tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        # sampling_method_list.append(tp_sampling_method)
+
+        # M-PMC
+        params["K"] = 20  # Number of samples per proposal distribution
+        params["N"] = 10  # Number of proposal distributions
+        params["J"] = 1000
+        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        tp_sampling_method = CMixturePMC(space_min, space_max, params)
+        tp_sampling_method.name = "M-PMC"
+        sampling_method_list.append(tp_sampling_method)
+
+        # Metropolis-Hastings
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
-        params["proposal"] = MCMC_proposal_dist
-        params["N"] = 30
+        params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
+        params["n_steps"] = 2  # Num of decorrelation steps: discarded samples upon new accept
+        params["n_burnin"] = 10  # Number of samples considered as burn-in
         params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
-        nested_sampling_method = CNestedSampling(space_min, space_max, params)
-        nested_sampling_method.name = "nested"
-        sampling_method_list.append(nested_sampling_method)
+        mh_sampling_method = CMetropolisHastings(space_min, space_max, params)
+        mh_sampling_method.name = "MCMC-MH"
+        sampling_method_list.append(mh_sampling_method)
 
-        # Tree pyramids (simple, full, haar)
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "haar"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
-        # Tree pyramids (simple, full, normal)
-        params["method"] = "simple"
-        params["resampling"] = "full"
-        params["kernel"] = "normal"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
+        # Rejection sampling
+        reject_proposal_dist = CMultivariateUniform(center=origin, radius=(space_max-space_min)/2)
+        params["proposal"] = reject_proposal_dist
+        params["scaling"] = 1
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        rejection_sampling_method = CRejectionSampling(space_min, space_max, params)
+        rejection_sampling_method.name = "rejection"
+        sampling_method_list.append(rejection_sampling_method)
 
         # Layered Deterministic Mixture Adaptive Importance Sampling
         params["K"] = 3  # Number of samples per proposal distribution
@@ -123,25 +150,40 @@ if __name__ == "__main__":
         tp_sampling_method.name = "DM_AIS"
         sampling_method_list.append(tp_sampling_method)
 
-        # M-PMC
-        params["K"] = 20  # Number of samples per proposal distribution
-        params["N"] = 10  # Number of proposal distributions
-        params["J"] = 1000
-        params["sigma"] = 0.001  # Scaling parameter of the proposal distributions
-        tp_sampling_method = CMixturePMC(space_min, space_max, params)
-        tp_sampling_method.name = "M-PMC"
+        # Nested sampling
+        MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
+        params["proposal"] = MCMC_proposal_dist
+        params["N"] = 30
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        nested_sampling_method = CNestedSampling(space_min, space_max, params)
+        nested_sampling_method.name = "nested"
+        sampling_method_list.append(nested_sampling_method)
+
+        # TODO: THERE IS A BUG THAT CRASHES WHEN THE SAMPLING ELLIPSE IS TOO SMALL THE COVARIANCE BECOMES SINGLUAR
+        # Multi-Nested sampling
+        # MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.01)
+        # params["proposal"] = MCMC_proposal_dist
+        # params["N"] = 30
+        # params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        # mnested_sampling_method = CMultiNestedSampling(space_min, space_max, params)
+        # mnested_sampling_method.name = "multi-nested"
+        # sampling_method_list.append(mnested_sampling_method)
+
+        # Tree pyramids (simple, leaf, haar)
+        params["method"] = "simple"
+        params["resampling"] = "full"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         sampling_method_list.append(tp_sampling_method)
 
-        # Metropolis-Hastings
-        MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
-        params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
-        params["n_steps"] = 2  # Num of decorrelation steps: discarded samples upon new accept
-        params["n_burnin"] = 10  # Number of samples considered as burn-in
-        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
-
-        mh_sampling_method = CMetropolisHastings(space_min, space_max, params)
-        mh_sampling_method.name = "MCMC-MH"
-        sampling_method_list.append(mh_sampling_method)
+        # Tree pyramids (simple, full, normal)
+        params["method"] = "simple"
+        params["resampling"] = "leaf"
+        params["kernel"] = "normal"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
 
         # Tree pyramids (simple, none, haar)
         params["method"] = "simple"
@@ -159,25 +201,6 @@ if __name__ == "__main__":
         tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
         tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         sampling_method_list.append(tp_sampling_method)
-
-        # Tree pyramids (simple, leaves, haar)
-        params["method"] = "simple"
-        params["resampling"] = "leaf"
-        params["kernel"] = "haar"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
-        # Grid sampling
-        # grid_sampling_method = CGridSampling(space_min, space_max)
-        # grid_sampling_method.name = "grid"
-        # sampling_method_list.append(grid_sampling_method)
-
-        # Multi-Nested sampling
-        # mnested_sampling_method = CMultiNestedSampling(space_min, space_max, num_points=30)
-        # mnested_sampling_method.name = "multi-nested"
-        # sampling_method_list.append(mnested_sampling_method)
-
         #######################################################
         #######################################################
 
@@ -186,9 +209,13 @@ if __name__ == "__main__":
         #######################################################
         for target_dist in target_dists:
             for sampling_method in sampling_method_list:
+                print("dims output_samples JSD bhat ev_mse NESS time method target_d accept_rate q_samples q_evals pi_evals")
                 sampling_method.reset()
                 t_ini = time.time()
                 [jsd, bhattacharyya_dist, NESS, ev_mse, total_samples] = \
                     evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples,
-                                    debug=debug, filename=output_file, videofile="videos\\"+sampling_method.name+"_"+target_dist.name+"_"+str(ndims)+"d_vid.mp4")
+                                    debug=debug, filename=output_file, videofile="videos" + os.sep +
+                                                                                 sampling_method.name + "_" +
+                                                                                 target_dist.name + "_" +
+                                                                                 str(ndims)+"d_vid.mp4")
                 t_elapsed = time.time() - t_ini

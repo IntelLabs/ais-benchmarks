@@ -55,7 +55,6 @@ if __name__ == "__main__":
         # Select sampling method:
         # method = "BSPT"
         method = "reject"
-        # method = "adaptive-reject"#TODO
         # method = "random"
         # method = "grid"
         # method = "nested"
