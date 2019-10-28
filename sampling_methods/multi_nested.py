@@ -7,6 +7,8 @@ from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 from sklearn.cluster import KMeans
 import time
+import matplotlib.cm as cm
+
 
 
 # TODO: Implement convergence test and futher generate samples from the approximated distribution
@@ -74,7 +76,8 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
     def resample(self, value, pdf, ellipsoid, timeout=60):
-        new_sample = ellipsoid.sample()
+        new_sample = np.clip(ellipsoid.sample(), self.space_min, self.space_max)
+
         self._num_q_samples += 1
 
         new_value = pdf.logprob(new_sample)
@@ -187,10 +190,11 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
                 # Replace the point with lowest likelihood with a new sample from the proposal distribution
                 points[min_idx], values[min_idx] = self.resample(L[i], target_d, c_ellipsoid, timeout)
 
+        self.live_points = points
         self.ellipsoids = c_ellipsoids
-        self.weights = target_d.logprob(self.samples)
+        self.weights = np.ones(len(self.samples)) * 1 / len(self.samples)
         self._update_model()
-        return self.samples, np.exp(self.weights)
+        return self.samples, self.weights
 
     def draw(self, ax):
         if len(self.space_max) == 1:
@@ -211,8 +215,17 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
     def draw2d(self, ax):
         res = []
         for sample in self.live_points:
-            res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2))
-        res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2, label="live points"))
+            res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker="o", alpha=0.2))
+        res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker="o", alpha=0.2, label="live points"))
 
-        res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+        res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
         return res
+
+    # def draw2d(self, ax):
+    #     res = []
+    #     for sample in self.live_points:
+    #         res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2))
+    #     res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2, label="live points"))
+    #
+    #     res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+    #     return res

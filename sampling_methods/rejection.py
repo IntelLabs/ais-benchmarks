@@ -1,5 +1,7 @@
 import numpy as np
 import time
+from matplotlib import cm
+
 from sampling_methods.base import CMixtureSamplingMethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
@@ -17,7 +19,7 @@ class CRejectionSampling(CMixtureSamplingMethod):
         t_elapsed = time.time() - t_ini
         while t_elapsed < timeout and n_samples > len(self.samples):
             # Generate proposal samples from proposal distribution
-            proposals = self.proposal_dist.sample(n_samples)
+            proposals = self.proposal_dist.sample(n_samples - len(self.samples))
             self._num_q_samples += n_samples
 
             # Obtain the sample likelihood for both the proposal and target distributions
@@ -30,7 +32,7 @@ class CRejectionSampling(CMixtureSamplingMethod):
             acceptance_ratio = proposals_prob_p / proposals_prob_q
 
             # Generate acceptance probability values from U[0,1)
-            acceptance_prob = np.random.uniform(0,1, size=n_samples)
+            acceptance_prob = np.random.uniform(0,1, size=n_samples - len(self.samples))
 
             # Obtain the indices of the accepted samples
             accept_idx = acceptance_ratio > acceptance_prob
@@ -41,7 +43,7 @@ class CRejectionSampling(CMixtureSamplingMethod):
             t_elapsed = time.time() - t_ini
 
         # Return the accepted samples
-        self._update_model()
+        self.weights = np.ones_like(self.weights) * 1 / len(self.weights)
         return self.samples, self.weights
 
     def draw(self, ax):
@@ -59,5 +61,5 @@ class CRejectionSampling(CMixtureSamplingMethod):
 
     def draw2d(self, ax):
         res = []
-        res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+        res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="$q(x)$"))
         return res

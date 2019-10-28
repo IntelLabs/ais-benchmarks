@@ -46,28 +46,31 @@ def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes = None):
     ax.scatter(samples[:, 0], samples[:, 1], prob_p_margin, c=prob_p_margin_color, cmap=plt.cm.hot)
 
 
-def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes=None, alpha=1.0, cmap=plt.cm.hot, label=None):
+def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes=None, alpha=1.0, cmap=plt.cm.hot, label=None, linestyles='solid'):
     prob_p_margin = prob_p.reshape(shape).transpose()
     if marginalize_axes is not None:
         prob_p_margin = np.sum(prob_p_margin, axis=marginalize_axes)
 
-    X = np.array(dims[0]).reshape(1, -1)
-    Y = np.array(dims[1]).reshape(-1, 1)
+    # Format X and Y for the surface plot
+    # X = np.array(dims[0]).reshape(1, -1)
+    # Y = np.array(dims[1]).reshape(-1, 1)
 
     # prob_p_margin_color = prob_p_margin / np.max(prob_p_margin)
 
     # return ax.plot_surface(X, Y, prob_p_margin, cmap=cmap, linewidth=0, antialiased=True, shade=True, rstride=2,
     #                        cstride=2, zorder=1, alpha=alpha, label=label)
-    return ax.plot_surface(X, Y, prob_p_margin, cmap=cmap, linewidth=0, antialiased=True, shade=True, rstride=2,
-                           cstride=2, alpha=alpha, label=label)
-    # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='z', offset=-1.9, cmap=plt.cm.Reds)
+    # return ax.plot_surface(X, Y, prob_p_margin, cmap=cmap, linewidth=0, antialiased=True, shade=True, rstride=2,
+    #                        cstride=2, alpha=alpha, label=label)
+    levels = np.arange(np.min(prob_p_margin), np.max(prob_p_margin), (np.max(prob_p_margin)-np.min(prob_p_margin)) / 15)
+    CS = ax.contour(dims[0], dims[1], prob_p_margin.reshape(len(dims[0]), len(dims[1])), zdir='z', offset=0, cmap=cmap, levels=levels, linestyles=linestyles, alpha=alpha)
+    return CS.collections if len(CS.collections) else []
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='x', offset=-1, cmap=plt.cm.Reds)
     # ax.contour(X, Y, prob_p_margin.reshape(len(dims[0]),len(dims[1])), zdir='y', offset=1, cmap=plt.cm.Reds)
 
 
-def plot_pdf2d(ax, pdf, space_min, space_max, resolution=0.1, alpha=0.2, scale=1.0, label=None, colormap=plt.cm.hot):
+def plot_pdf2d(ax, pdf, space_min, space_max, resolution=0.1, alpha=0.2, scale=1.0, label=None, colormap=plt.cm.cool, linestyles='solid'):
     grid, prob, dims, shape = grid_sample_distribution(pdf, space_min, space_max, resolution=resolution)
-    return plot_grid_sampled_pdfs(ax, dims, prob * scale, shape=shape, alpha=alpha, cmap=colormap, label=label)
+    return plot_grid_sampled_pdfs(ax, dims, prob * scale, shape=shape, alpha=alpha, cmap=colormap, label=label, linestyles=linestyles)
 
 
 def plot_ellipsoids(axis, ellipsoids, points):

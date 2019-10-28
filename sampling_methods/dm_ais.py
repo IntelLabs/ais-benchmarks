@@ -80,3 +80,6 @@ class CDeterministicMixtureAIS(CMixtureSamplingMethod):
             elapsed_time = time.time() - t_ini
 
         return self.samples, self.weights / self.weights.sum()
+
+    def _update_model(self):
+        pass

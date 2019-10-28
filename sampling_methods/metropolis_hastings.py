@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from sampling_methods.base import CSamplingMethod
+from sampling_methods.base import CMixtureSamplingMethod
 from sampling_methods.base import t_tensor
 from utils.plot_utils import plot_pdf
 from distributions.CMultivariateNormal import CMultivariateNormal
@@ -8,7 +8,7 @@ from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
 
 
-class CMetropolisHastings(CSamplingMethod):
+class CMetropolisHastings(CMixtureSamplingMethod):
     """
     Class implementing metropolis-hastings algorithm. Usages:
         - Generating samples from an unknown distribution which likelihood can be evaluated.
@@ -74,7 +74,8 @@ class CMetropolisHastings(CSamplingMethod):
         while not accepted and timeout > t_elapsed:
             t_elapsed = time.time() - t_ini
             # Sample from the proposal distribution to obtain the proposed sample x' ~ p(x'|x)
-            x_new = x_old + self.proposal_d.sample()
+            x_new = np.clip(x_old + self.proposal_d.sample(), self.space_min, self.space_max)
+
             self._num_q_samples += 1
             self.trajectory_samples.append(x_new.flatten())
 
@@ -127,20 +128,9 @@ class CMetropolisHastings(CSamplingMethod):
             self.samples = np.concatenate((self.samples, new_samples)) if self.samples.size else new_samples
             elapsed_time = time.time() - t_ini
 
-        return self.samples, np.zeros(len(self.samples))
+        self.weights = np.ones(len(self.samples)) * 1 / len(self.samples)
 
-    def prob(self, s):
-        prob = np.zeros(len(s))
-        for x in self.samples:
-            cov = np.ones(len(self.space_max)) * self.bw
-            q = CMultivariateNormal(x, np.diag(cov))
-            pval = q.prob(s)
-            prob = prob + pval.flatten()
-            self._num_q_evals += 1
-        return prob / len(self.samples)
-
-    def logprob(self, s):
-        return np.log(self.prob(s))
+        return self.samples, self.weights
 
     def draw(self, ax):
         if len(self.space_max) == 1:
@@ -181,17 +171,37 @@ class CMetropolisHastings(CSamplingMethod):
         res = []
         for sample, type in zip(self.trajectory_samples, self.trajectory_types):
             if type == self.BURN_IN:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker="o", alpha=0.2))
+                res.extend(ax.plot([sample[0]], [sample[1]], c="b", marker="o", alpha=0.2))
             elif type == self.REJECT:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker=".", alpha=0.2))
+                res.extend(ax.plot([sample[0]], [sample[1]], c="r", marker="x", alpha=0.2))
             elif type == self.DECORRELATION:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker=".", alpha=0.2))
-            elif type == self.SAMPLE:
-                res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o"))
+                res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker=".", alpha=0.2))
+            # elif type == self.SAMPLE:
+            #     res.extend(ax.plot([sample[0]], [sample[1]], c="r", marker="o"))
 
-        res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
-        res.extend(ax.plot([0], [0], 0, "ro", c="r", marker="o", label="burn-in"))
-        res.extend(ax.plot([0], [0], 0, "r.", c="r", marker="x", label="rejected"))
-        res.extend(ax.plot([0], [0], 0, "g.", c="g", marker="o", label="intermediate"))
-        res.extend(ax.plot([0], [0], 0, "go", c="g", marker="x", label="sample"))
+        res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="$q(x)$"))
+        res.extend(ax.plot(self.space_min[0]-1, self.space_min[1]-1, "bo", c="b", marker="o", label="burn-in"))
+        res.extend(ax.plot(self.space_min[0]-1, self.space_min[1]-1, "r.", c="r", marker="x", label="rejected"))
+        res.extend(ax.plot(self.space_min[0]-1, self.space_min[1]-1, "g.", c="g", marker=".", label="intermediate"))
+        # res.extend(ax.plot([0], [0], "ro", c="r", marker="o", label="sample"))
         return res
+
+    # Draw 2d and use 3D height for the prob
+    # def draw2d(self, ax):
+    #     res = []
+    #     for sample, type in zip(self.trajectory_samples, self.trajectory_types):
+    #         if type == self.BURN_IN:
+    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker="o", alpha=0.2))
+    #         elif type == self.REJECT:
+    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker=".", alpha=0.2))
+    #         elif type == self.DECORRELATION:
+    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker=".", alpha=0.2))
+    #         elif type == self.SAMPLE:
+    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o"))
+    #
+    #     res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+    #     res.extend(ax.plot([0], [0], 0, "ro", c="r", marker="o", label="burn-in"))
+    #     res.extend(ax.plot([0], [0], 0, "r.", c="r", marker="x", label="rejected"))
+    #     res.extend(ax.plot([0], [0], 0, "g.", c="g", marker="o", label="intermediate"))
+    #     res.extend(ax.plot([0], [0], 0, "go", c="g", marker="x", label="sample"))
+    #     return res

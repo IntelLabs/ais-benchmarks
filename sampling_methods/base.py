@@ -73,11 +73,19 @@ class CMixtureSamplingMethod(CSamplingMethod):
         super(CMixtureSamplingMethod, self).__init__(space_min, space_max)
         self.model = None
 
+    def reset(self):
+        super(CMixtureSamplingMethod, self).reset()
+        self.model = None
+
     def sample(self, n_samples):
+        if self.model is None:
+            self._update_model()
         self._num_q_samples += n_samples
         return self.model.sample(n_samples)
 
     def prob(self, s):
+        if self.model is None:
+            self._update_model()
         return self.model.prob(s)
 
     def logprob(self, s):
@@ -123,16 +131,17 @@ class CMixtureSamplingMethod(CSamplingMethod):
     def draw2d(self, ax):
         res = []
         for q in self.proposals:
-            res.append(ax.scatter(q.mean[0], q.mean[1], 0, c="g", marker="o"))
-            # res.append(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, scale=1/len(self.proposals)))
+            res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o"))
+            res.extend(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.3, resolution=0.02, colormap=cm.viridis, linestyles='dashed', scale=1/len(self.proposals)))
+        res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o", label="$q_n(x)$"))
 
-        for s, w in zip(self.samples, self.weights):
-            res.append(ax.scatter(s[0], s[1], w, c="g", marker="o", alpha=0.2))
+        # for s, w in zip(self.samples, self.weights):
+        #     res.append(ax.scatter(s[0], s[1], w, c="g", marker="o", alpha=0.2))
         # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
         # res.append(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q_n(x)$", scale=1/len(self.proposals)))
 
 
-        res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+        res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.8, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
 
         return res
 

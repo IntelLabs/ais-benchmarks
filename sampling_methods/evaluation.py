@@ -66,7 +66,7 @@ def evaluate_proposal(proposal_dist, target_dist, space_min, space_max, sampling
     gt_expected_value = (eval_samples * np.exp(p_samples_logprob.reshape(-1, 1))).sum(axis=0)
     ev_mse = ((gt_expected_value - expected_value) * (gt_expected_value - expected_value)).sum()
 
-    return js_div, bhattacharyya_dist, ev_mse
+    return js_div, bhattacharyya_dist, ev_mse / sampling_eval_samples
 
 
 def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max, sampling_eval_samples=1000):
@@ -104,16 +104,17 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
         elif ndims == 2:
             fig = plt.figure(figsize=(10, 8))
-            ax = plt.subplot(111, projection='3d')
+            ax = plt.subplot(111)
+            # ax = plt.subplot(111, projection='3d')
             # plt.hold(True)
             plt.show(block=False)
 
             grid, log_prob, dims, shape = grid_sample_distribution(target_dist, space_min, space_max, resolution=0.02)
-            plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob), shape=shape, alpha=0.5, label="$\pi(x)$")
+            plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob), shape=shape, alpha=1, label="$\pi(x)$", cmap='gray', linestyles='dashed')
 
             plt.xlim(space_min[0], space_max[0])
             plt.ylim(space_min[1], space_max[1])
-            ax.set_zlim(ax.get_zlim())
+            # ax.set_zlim(ax.get_zlim())
 
     # Perform sampling
     sampling_time = 0
@@ -133,19 +134,21 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
         sampling_time += time.time()-t_ini
 
+        sampling_method._update_model()
+
         if filename is not None:
-            t_ini = time.time()
+            # t_ini = time.time()
             [js_div, bhattacharyya_dist, ev_mse] = \
                 evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
-            print("Evaluation time: %3.3f nsamples: %d samples/sec: %3.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
+            # print("Evaluation time: %5.3f nsamples: %d samples/sec: %5.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
 
-            log_print("  %02d %08d %7.4f %.5f %.5f %.5f %6.3f %s %d %s %3.3f %d %d %d" % (
-                ndims, max_samples, js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
-                sampling_method.name, len(samples_acc), target_dist.name, sampling_method.get_acceptance_rate(),
+            log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d" % (
+                ndims, len(samples_acc), js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
+                sampling_method.name, target_dist.name, sampling_method.get_acceptance_rate(),
                 sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
 
             if debug:
-                plt.suptitle("%s | #smpl: %d | JSD: %3.3f BHT: %3.3f, NESS: %.3f ,Acc:%3.3f" %
+                plt.suptitle("%s | #smpl: %d | JSD: %3.3f | BHT: %3.3f | NESS: %.3f | AcceptRatio:%3.3f" %
                              (sampling_method.name, n_samples, js_div, bhattacharyya_dist, sampling_method.get_NESS(),
                               sampling_method.get_acceptance_rate()))
 
@@ -167,20 +170,20 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                     vid_writer.add_frame(fig)
             if ndims == 2:
                 pts.extend(sampling_method.draw(ax))
-                pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], -1, label="samples", c="r", marker="o"))
+                pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker="o", alpha=0.4))
                 if videofile is not None:
                     vid_writer.add_frame(fig)
                 plt.pause(0.01)
-            plt.legend()
+            plt.legend(framealpha=0.5, loc="best")
 
-    res = evaluate_samples(samples_acc, samples_logprob_acc, target_dist, space_min, space_max, sampling_eval_samples)
+    res = evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
     res = list(res)
     res.append(sampling_method.get_NESS())
     res.append(len(samples_acc))
     if debug:
-        drawsamples = sampling_method.sample(1000)
+        drawsamples = sampling_method.sample(100)
         if ndims == 1:
-            pts.extend(ax.plot(drawsamples, np.zeros(1000), "b|"))
+            pts.extend(ax.plot(drawsamples, np.zeros(len(drawsamples)), "b|"))
         if ndims == 2:
             pts.append(ax.scatter(drawsamples[:, 0], drawsamples[:, 1], 0, label="samples", c="b", marker="x"))
         if videofile is not None:

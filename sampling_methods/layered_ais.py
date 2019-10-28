@@ -49,9 +49,12 @@ class CLayeredAIS(CMixtureSamplingMethod):
     def mcmc_mh(self, x, prop_d, target_d, n_steps):
         for _ in range(n_steps):
             old_val = target_d.prob(x)
+            self._num_pi_evals += 1
             x_delta = self.mhproposal.sample()[0]  # Discard batch dimension from batch sampler
-            x_hat = x + x_delta
+            self._num_q_samples += 1
+            x_hat = np.clip(x + x_delta, self.space_min, self.space_max)
             new_val = target_d.prob(x_hat)
+            self._num_pi_evals += 1
             alpha = np.random.rand()
             ratio = new_val / old_val
 
@@ -94,3 +97,6 @@ class CLayeredAIS(CMixtureSamplingMethod):
             elapsed_time = time.time() - t_ini
 
         return self.samples, self.weights / self.weights.sum()
+
+    def _update_model(self):
+        pass

@@ -114,3 +114,6 @@ class CMixturePMC(CMixtureSamplingMethod):
             elapsed_time = time.time() - t_ini
 
         return self.samples, self.weights
+
+    def _update_model(self):
+        pass

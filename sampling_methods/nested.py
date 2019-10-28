@@ -23,7 +23,7 @@ class CNestedSampling(CMixtureSamplingMethod):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
     def resample(self, sample, value, pdf, timeout):
-        new_sample = self.proposal_dist.sample() + sample
+        new_sample = np.clip(self.proposal_dist.sample() + sample, self.space_min, self.space_max)
         self._num_q_samples += 1
         new_value = pdf.logprob(new_sample)
         self._num_pi_evals += 1
@@ -38,9 +38,8 @@ class CNestedSampling(CMixtureSamplingMethod):
         return new_sample, new_value
 
     def importance_sample(self, target_d, n_samples, timeout=60):
-        points = self.live_points
-        values = target_d.logprob(points)
-        self._num_pi_evals += len(points)
+        values = target_d.logprob(self.live_points)
+        self._num_pi_evals += len(self.live_points)
 
         L = np.zeros(n_samples)
         X = np.zeros(n_samples)
@@ -54,15 +53,14 @@ class CNestedSampling(CMixtureSamplingMethod):
 
             # Add the point with lowest likelihood to the resulting sample set
             min_idx = np.argmin(values)
-            self.samples = np.vstack((self.samples, points[min_idx])) if self.samples.size else points[min_idx].reshape(1,-1)
+            self.samples = np.vstack((self.samples, self.live_points[min_idx])) if self.samples.size else self.live_points[min_idx].reshape(1,-1)
 
             # Replace the point with lowest likelihood with a new sample from the proposal distribution
-            points[min_idx], values[min_idx] = self.resample(points[min_idx], L[i], target_d, timeout)
+            self.live_points[min_idx], values[min_idx] = self.resample(self.live_points[min_idx], L[i], target_d, timeout)
 
-        self.weights = target_d.logprob(self.samples)
-        self._num_pi_evals += len(self.samples)
+        self.weights = np.ones(len(self.samples)) * 1 / len(self.samples)
         self._update_model()
-        return self.samples, np.exp(self.weights)
+        return self.samples, self.weights
 
     def draw(self, ax):
         if len(self.space_max) == 1:
@@ -83,8 +81,17 @@ class CNestedSampling(CMixtureSamplingMethod):
     def draw2d(self, ax):
         res = []
         for sample in self.live_points:
-            res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2))
-        res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2, label="live points"))
+            res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker="o", alpha=0.2))
+        res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker="o", alpha=0.2, label="live points"))
 
-        res.append(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+        res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="$q(x)$"))
         return res
+
+    # def draw2d(self, ax):
+    #     res = []
+    #     for sample in self.live_points:
+    #         res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2))
+    #     res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o", alpha=0.2, label="live points"))
+    #
+    #     res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+    #     return res
