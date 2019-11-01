@@ -31,9 +31,39 @@ class CSamplingMethod(metaclass=ABCMeta):
         return len(self.samples) / self._num_q_samples
 
     def get_NESS(self):
+        # https://jwalton.info/Efficient-effective-sample-size-python/
+        x = self.samples
+        n = len(x)
+
+        variogram = lambda t: ((x[t:] - x[:(n - t)]) ** 2).sum() / (n - t)
+
+        mean = x.mean()
+        dist = x - mean
+
+        W = (dist ** 2).sum() / (n - 1)
+
+        rho = np.ones(n)
+
+        t = 1
+        negative_autocorr = False
+        while not negative_autocorr and (t < n):
+
+            rho[t] = 1. - variogram(t) / (2. * W)
+
+            if not t % 2:
+                negative_autocorr = sum(rho[t - 1:t + 1]) < 0
+
+            t += 1
+
+        ess = n / (1 + 2 * rho[1:t].sum())
+
+        return ess / len(self.samples)
+
+    def get_approx_NESS(self):
         normweights = self.weights / np.sum(self.weights)
         ESS = 1 / np.sum(normweights*normweights)
         return ESS / len(self.samples)
+
 
     @property
     def num_proposal_samples(self):
@@ -144,6 +174,14 @@ class CMixtureSamplingMethod(CSamplingMethod):
         res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.8, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
 
         return res
+
+
+class CMixtureISSamplingMethod(CMixtureSamplingMethod):
+    def __init__(self, space_min, space_max):
+        super(CMixtureISSamplingMethod, self).__init__(space_min, space_max)
+
+    def get_NESS(self):
+        return self.get_approx_NESS()
 
 
 def make_grid(space_min, space_max, resolution):

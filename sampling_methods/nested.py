@@ -3,7 +3,6 @@ import time
 from sampling_methods.base import CMixtureSamplingMethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
-import matplotlib.cm as cm
 
 
 # TODO: Implement convergence test and futher generate samples from the approximated distribution

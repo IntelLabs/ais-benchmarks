@@ -5,6 +5,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+import math
+
 
 def load_files_regexp(path, regexp):
     path = "/home/jfelip/workspace/prob-comp-code/sampling_experiments/"
@@ -15,12 +17,16 @@ def load_files_regexp(path, regexp):
         series.append(np.loadtxt(path+file))
 
 
-def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None):
+def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, labels=None, mark_points=10):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     fig.hold(True)
 
-    for m in methods:
+    markers = ["x", "d", "+", "*", 4, 5, 6, 7]
+
+    for m_id,m in enumerate(methods):
+        m_lbl = labels[m_id] if labels is not None else m
+
         indices = data['method'] == m
         for sel, val in zip(selector, selector_val):
             indices = indices & (data[sel] == val)
@@ -32,16 +38,19 @@ def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None):
         y_err = np.sqrt(y_data.mean().rolling(window=10).std())
         # y_err = np.sqrt(y_data.std())
         y_avg = y_data.mean().rolling(window=10).mean()
-        p = ax.plot(x_data.values, y_avg.values, label=m)
+        markevery = max(1, int(len(x_data.values) / mark_points))
+        p = ax.plot(x_data.values, y_avg.values, label=m_lbl, marker=markers[m_id], markevery=markevery)
         color = p[-1].get_color()
         plt.fill_between(x_data.values, y_avg - y_err, y_avg + y_err, alpha=0.1, edgecolor=color, facecolor=color)
 
     ax.set_xlabel(xaxis)
     ax.set_ylabel(yaxis)
-    ax.legend()
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(0, ymax*1.1)
+    ax.legend(mode="expand", loc=9, ncol=2, prop={'size': 12})
 
 
-def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, selector_val=None):
+def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, selector_val=None, labels=None):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     fig.hold(True)
@@ -52,7 +61,7 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
     x_ticks = [p for p in range(len(bar_points))]
 
     colors = cm.get_cmap("Set3")
-    hatches = ["","\\\\\\", "ooo", "xxx", "---", "oo", "\\\\", "|", "O", ".", "*"]
+    hatches = ["","\\\\", "oo", "xx", "---", "o", "\\", "|", "O", ".", "*"]
 
     for m_id, m in enumerate(methods):
 
@@ -71,7 +80,9 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
             x_idx = x_data.index.get_loc(bar_point, method="nearest")
             yval = y_avg.iloc[x_idx]
             yerr = y_err.iloc[x_idx]
-            ax.bar(xtick + bar_width*m_id, yval, width=bar_width, yerr=yerr, label=m if xtick==x_ticks[0] else "",
+            yval = yval * int((not math.isnan(yerr)))
+            m_lbl = labels[m_id] if labels is not None else m
+            ax.bar(xtick + bar_width * m_id, yval, width=bar_width, yerr=yerr, label=m_lbl if xtick==x_ticks[0] else "",
                    color=colors(m_id/9.0), ecolor="k", hatch=hatches[m_id])
 
     ax.set_xticks([r+(bar_width*n_series/2) for r in x_ticks])
@@ -80,52 +91,58 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
     ax.set_ylabel(yaxis)
     # ax.set_yscale("log")
     ymin, ymax = ax.get_ylim()
-    ax.set_ylim(0, ymax*1.1)
-    ax.legend(mode="expand", loc=9, ncol=3, prop={'size': 12})
+    ax.set_ylim(max(0.001, ymin), ymax*1.1)
+    ax.legend(mode="expand", loc=9, ncol=2, prop={'size': 12})
 
 
 # dims samples kl_kde bhat_kde kl_nn bhat_nn time method final_samples
 data = pd.read_table("results.txt", delim_whitespace=True)
 
-methods = ["TP_simple_full_haar", "M-PMC", "MCMC-MH", "rejection", "DM_AIS", "LAIS", "multi-nested",
-           "TP_simple_none_haar", "TP_simple_leaf_normal"]
-# dimensions = [1,2,3,4,5,6,7,8,9]
-dimensions = [1,2,3]
+methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "DM_AIS", "LAIS", "nested"]
+labels = ["TP_AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[26]", "LAIS[3]", "nested[28]"]
+
+# methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "rejection", "DM_AIS", "LAIS", "nested",
+#            "TP_simple_none_haar", "TP_simple_leaf_normal"]
+
+plot_mode = "lines"
+dimensions = [1,2,3,4,5,6,7,8,9]
+# dimensions = [1,2,3]
 dists = ["gmm", "normal", "egg"]
-path = "results/"
+path = "results" + os.sep
 dpi = 1600
 for dist in dists:
     for dims in dimensions:
-        bar_points = [5, 10, 25, 50, 100, 200, 500, 1000]
+        barmin = np.log(2 ** dims + 1)
+        barmax = np.log(500*dims)
+        bar_points = np.logspace(barmin, barmax, num=8, base=np.e)
+        bar_points = list(bar_points.astype(np.int32))
 
-        # dims
-        # samples
-        # JSD
-        # bhat
-        # ev_mse
-        # NESS
-        # time
-        # method
-        # output_samples
-        # target_d
-        # accept_rate
-        # q_samples
-        # q_evals
-        # pi_evals
-
-        make_2d_barplot(data, "output_samples", "time", methods, bar_points=bar_points,
-                        selector=["dims", "target_d"], selector_val=[dims, dist])
+        if plot_mode == "bar":
+            make_2d_barplot(data, "output_samples", "time", methods, bar_points=bar_points,
+                            selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+        else:
+            make_2d_plot(data, "output_samples", "time", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            plt.gca().set_xlim(bar_points[0], bar_points[-1])
 
         plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
         plt.gca().set_ylabel("time(s)")
         plt.gca().set_xlabel("# samples")
-        # plt.yscale("log",  nonposy='clip')
+        plt.yscale("log",  nonposy='clip')
+        ymin, ymax = plt.gca().get_ylim()
+        plt.gca().set_ylim(ymin, ymax * 10)
+        # plt.gca().set_ylim(0, 50)
         plt.savefig(path + "%d_dims_%s_dist_time.pdf" % (dims, dist), bbox_inches='tight', dpi=dpi)
         # plt.show()
         plt.close()
 
-        make_2d_barplot(data, "output_samples", "JSD", methods, bar_points=bar_points,
-                        selector=["dims", "target_d"], selector_val=[dims, dist])
+        if plot_mode == "bar":
+            make_2d_barplot(data, "output_samples", "JSD", methods, bar_points=bar_points,
+                            selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+        else:
+            make_2d_plot(data, "output_samples", "JSD", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            plt.gca().set_xlim(bar_points[0], bar_points[-1])
 
         plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
         plt.gca().set_ylabel("Jensen-Shannon Divergence")
@@ -135,19 +152,14 @@ for dist in dists:
         # plt.show()
         plt.close()
 
-        # make_2d_barplot(data, "output_samples", "bhat", methods, bar_points=bar_points,
-        #                 selector=["dims", "target_d"], selector_val=[dims, dist])
-        #
-        # plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
-        # plt.gca().set_ylabel("Jensen-Shannon Divergence")
-        # plt.gca().set_xlabel("# samples")
-        # plt.yscale("log")
-        # plt.savefig(path + "%d_dims_%s_dist_jsd.pdf" % (dims, dist), bbox_inches='tight', dpi=dpi)
-        # # plt.show()
-        # plt.close()
+        if plot_mode == "bar":
+            make_2d_barplot(data, "output_samples", "NESS", methods, bar_points=bar_points,
+                            selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+        else:
+            make_2d_plot(data, "output_samples", "NESS", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            plt.gca().set_xlim(bar_points[0], bar_points[-1])
 
-        make_2d_barplot(data, "output_samples", "NESS", methods, bar_points=bar_points,
-                        selector=["dims", "target_d"], selector_val=[dims, dist])
         plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
         plt.gca().set_ylabel("Normalized Effective Sample Size")
         plt.gca().set_xlabel("# samples")
@@ -156,8 +168,14 @@ for dist in dists:
         # plt.show()
         plt.close()
 
-        make_2d_barplot(data, "output_samples", "ev_mse", methods, bar_points=bar_points,
-                        selector=["dims", "target_d"], selector_val=[dims, dist])
+        if plot_mode == "bar":
+            make_2d_barplot(data, "output_samples", "ev_mse", methods, bar_points=bar_points,
+                            selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+        else:
+            make_2d_plot(data, "output_samples", "ev_mse", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            plt.gca().set_xlim(bar_points[0], bar_points[-1])
+
         plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
         plt.gca().set_ylabel("Expected Value Mean Squared Error")
         plt.gca().set_xlabel("# samples")

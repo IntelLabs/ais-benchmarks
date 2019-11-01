@@ -1,6 +1,5 @@
 import numpy as np
 import time
-from matplotlib import cm
 
 from sampling_methods.base import CMixtureSamplingMethod
 from utils.plot_utils import plot_pdf

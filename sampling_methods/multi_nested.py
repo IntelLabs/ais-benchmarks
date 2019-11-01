@@ -2,7 +2,6 @@ import numpy as np
 from scipy.special import gamma
 from sampling_methods.base import CMixtureSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
-from distributions.CMixtureModel import CMixtureModel
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 from sklearn.cluster import KMeans

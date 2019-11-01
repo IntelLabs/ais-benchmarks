@@ -180,7 +180,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     res = list(res)
     res.append(sampling_method.get_NESS())
     res.append(len(samples_acc))
-    if debug:
+    if debug and (ndims == 1 or ndims == 2):
         drawsamples = sampling_method.sample(100)
         if ndims == 1:
             pts.extend(ax.plot(drawsamples, np.zeros(len(drawsamples)), "b|"))
@@ -188,7 +188,6 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             pts.append(ax.scatter(drawsamples[:, 0], drawsamples[:, 1], 0, label="samples", c="b", marker="x"))
         if videofile is not None:
             vid_writer.add_frame(fig)
-        plt.close()
-        if videofile is not None and (ndims == 1 or ndims == 2):
             vid_writer.save()
+        plt.close()
     return res

@@ -3,13 +3,12 @@ import numpy as np
 from numpy import array as t_tensor
 import itertools
 
-from sampling_methods.base import CMixtureSamplingMethod
+from sampling_methods.base import CMixtureISSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMultivariateUniform import CMultivariateUniform
 from utils.plot_utils import plot_tpyramid_area
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
-import matplotlib.cm as cm
 from distributions.CMixtureModel import CMixtureModel
 
 
@@ -93,15 +92,26 @@ class CTreePyramid:
     def __init__(self, dmin, dmax, kernel):
         self.root = CTreePyramidNode(center=(dmin + dmax) / 2, radius=np.max((dmax - dmin) / 2),
                                      leaf_idx=0, node_idx=0, level=0, kernel=kernel)
+        self.ndims = len(dmin)
         self.nodes = [self.root]
         self.leaves = [self.root]
-        self.centers = []
-        self.radii = []
-        self.samples = []
-        self.weights = []
+        self.centers = np.array([self.root.center])
+        self.radii = np.array([self.root.radius])
+        self.samples = np.zeros((1, self.ndims))
+        self.weights = np.array([0])
+        self.leaves_idx = [True]
 
-        self.ndims = len(dmin)
         self.kernel = kernel
+
+        """
+        Sampling kernel distribution. This shapes the proposal distribution represented by the tree pyramid.
+        """
+        if kernel == "haar":
+            self.sampler = CMultivariateUniform(np.zeros(self.ndims), np.ones(self.ndims)*0.5)
+        elif kernel == "normal":
+            self.sampler = CMultivariateNormal(np.zeros(self.ndims), np.diag(np.ones(self.ndims)))
+        else:
+            raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
     def expand(self, node):
         assert node.is_leaf(), "Non leaf node expansion is not allowed: " + repr(node)
@@ -132,10 +142,20 @@ class CTreePyramid:
                                               leaf_idx=len(self.leaves) + i - 1, node_idx=len(self.nodes) + i,
                                               level=node.level + 1, kernel=self.kernel))
 
+        # The expanding node is not a leaf anymore
+        self.leaves_idx[node.node_idx] = False
+
         # The first new node replaces the expanding leaf node in the leaves list
         new_nodes[0].leaf_idx = node.leaf_idx
         self.leaves[node.leaf_idx] = new_nodes[0]
         self.nodes.append(new_nodes[0])
+        # Add the node center and radius to the cached list
+        self.centers = np.concatenate((self.centers, np.array([new_nodes[0].center])))
+        self.radii = np.concatenate((self.radii, np.array([new_nodes[0].radius])))
+        self.samples = np.concatenate((self.samples, np.zeros((1, self.ndims))))
+        self.weights = np.concatenate((self.weights, np.zeros(1)))
+        self.leaves_idx.append(True)
+
         node.children[0] = new_nodes[0]
         node.leaf_idx = -1
 
@@ -145,6 +165,12 @@ class CTreePyramid:
             new_n.leaf_idx = len(self.leaves)
             self.leaves.append(new_n)
             self.nodes.append(new_n)
+            # Add the node center and radius to the cached list
+            self.centers = np.concatenate((self.centers, np.array([new_n.center])))
+            self.radii = np.concatenate((self.radii, np.array([new_n.radius])))
+            self.samples = np.concatenate((self.samples, np.zeros((1, self.ndims))))
+            self.weights = np.concatenate((self.weights, np.zeros(1)))
+            self.leaves_idx.append(True)
         ################################################
         ################################################
 
@@ -152,7 +178,7 @@ class CTreePyramid:
         return new_nodes
 
 
-class CTreePyramidSampling(CMixtureSamplingMethod):
+class CTreePyramidSampling(CMixtureISSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
         Initialize the Tree Pyramid sampling with the specific parameters
@@ -172,11 +198,9 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
                 from a single distribution formed by a weighted mixture of all the proposals. Importance weights are
                 computed according to the same weighted mixture.
 
-            resampling: Type of resampling used, options are: "none", "ancestral", "leaf", "full".
+            resampling: Type of resampling used, options are: "none", "leaf".
                 - none: No resampling. All samples drawn are kept. Outputs samples from leaves and intermediate nodes.
-                - ancestral: Samples from parent nodes are removed from the sample set. Output only samples from leaves.
                 - leaf: At every sampling step, all leaves are resampled. Output from leaves and intermediate nodes.
-                - full: Perform leaf resampling and outputs samples only from leaves.
 
             kernel: Kernel type used for the proposal distributions represented by the tree nodes (i.e. subspaces)
                 - haar: Uniform distribution with min=node.center-node.radius and max=node.center-node.radius.
@@ -187,7 +211,7 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
         assert self.method in ["simple", "dm", "mixture"], "Invalid method."
 
         self.resampling = params["resampling"]
-        assert self.resampling in ["leaf", "none", "ancestral", "full"], "Invalid resampling strategy"
+        assert self.resampling in ["leaf", "none"], "Invalid resampling strategy"
 
         self.kernel = params["kernel"]
         assert self.kernel in ["normal", "haar"], "Invalid kernel type."
@@ -209,7 +233,7 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
         :return: samples and weights
         """
 
-        assert self.resampling in ["leaf", "none", "ancestral", "full"], "Unknown resampling strategy"
+        assert self.resampling in ["leaf", "none"], "Unknown resampling strategy"
         assert self.method in ["simple", "dm", "mixture"], "Unknown method strategy"
 
         elapsed_time = 0
@@ -218,45 +242,13 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
         # When the tree is created the root node is not sampled. Make sure it has one sample.
         if len(self.T.root.weight_hist) == 0:
             self.T.root.sample(self.T.root.sampler)
+            self.T.samples[self.T.root.node_idx] = self.T.root.coords
             self._num_q_samples += 1
             self.T.root.weigh(target_d, self.T.root.sampler)
+            self.T.weights[self.T.root.node_idx] = self.T.root.weight
             self._update_model()
 
         while n_samples > self._get_nsamples() and elapsed_time < timeout:
-            if self.resampling == "leaf" or self.resampling == "full":  # If leaf resampling is enabled
-                for node in self.T.leaves:                              # For each leaf node
-                    # Generate a sample.
-                    # Simple version and Deterministic Mixture, generate samples from each of the
-                    # single distributions represented by each leaf node, separately.
-                    if self.method == "simple" or self.method == "dm":
-                        node.sample(node.sampler)
-
-                    # Mixture importance sampling, generate samples from the joint distribution for each of the
-                    # single leaf nodes.
-                    elif self.method == "mixture":
-                        node.sample(self)
-
-                    self._num_q_samples += 1                            # Count the sample operation
-
-                    # Compute its importance weight.
-                    # For the simple case, the importance distribution used is just the single sampling distribution
-                    # used to generate the sample
-                    if self.method == "simple":
-                        node.weigh(target_d, node.sampler)
-
-                    # For the deterministic mixture case and mixture, the importance distribution is the mixture of the
-                    # possible distributions that could potentially be used to generate the sample. The distribution
-                    # represented by the tree-sampling method is exactly the DM of the leaf samples, therefore we
-                    # use self as the importance distributions that was the origin of the generated samples.
-                    elif self.method == "mixture" or self.method == "dm":
-                        node.weigh(target_d, self)
-
-                    self._num_pi_evals += 1                             # Count the evaluation operation
-                    self._num_q_evals += 1                              # Count the evaluation operation
-
-                # Force an update of the tree parameterized distributions after the updated weights
-                self.sampling_dist = None
-
             lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
             new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
 
@@ -265,6 +257,8 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
                     node.sample(node.sampler)
                 elif self.method == "mixture":
                     node.sample(self)
+
+                self.T.samples[node.node_idx] = node.coords
                 self._num_q_samples += 1  # Count the sample operation
 
                 if self.method == "simple":
@@ -273,12 +267,33 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
                     node.weigh(target_d, self)
                 self._num_pi_evals += 1  # Count the evaluation operation
                 self._num_q_evals += 1  # Count the evaluation operation
+                self.T.weights[node.node_idx] = node.weight
+
+            # If leaf resampling is enabled
+            if self.resampling == "leaf":
+                re_samples = self.T.sampler.sample(len(self.T.leaves))
+                centers = self.T.centers[self.T.leaves_idx]
+                radii = self.T.radii[self.T.leaves_idx].reshape(len(re_samples), 1)
+                samples = re_samples * 2 * radii + centers
+                if self.kernel == "haar":
+                    importance_probs = 1 / ((2*radii)**self.T.ndims)
+                elif self.kernel == "normal":
+                    importance_probs = self.T.sampler.prob(re_samples)
+                self.T.samples[self.T.leaves_idx] = samples
+                self.T.weights[self.T.leaves_idx] = target_d.prob(samples) / importance_probs.reshape(-1)
+                self._num_pi_evals += len(samples)
+                self._num_q_evals += len(samples)
+                self._num_q_samples += len(samples)
+
+                for node in self.T.leaves:
+                    node.weight = self.T.weights[node.node_idx]
+                    node.value = node.weight * ((2*node.radius) ** len(node.center))
 
             # Self-normalization of importance weights
             self._self_normalize()
 
             # Force an update of the tree parameterized distributions after the updated weights
-            self.sampling_dist = None
+            self._update_model()
 
             elapsed_time = time.time() - t_ini
 
@@ -289,7 +304,7 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
         if self.ndims == 1:
             res = plot_tpyramid_area(ax, self.T, label="$w(x) = \pi(x)/q(x)$")
             res.extend(plot_pdf(ax, self, self.space_min, self.space_max, resolution=0.01,
-                                options="-r", alpha=1.0, label="$q(x)$"))
+                                options="-g", alpha=1.0, label="$q(x)$"))
 
             if self.kernel == "normal":
                 for n in self.T.leaves:
@@ -314,48 +329,28 @@ class CTreePyramidSampling(CMixtureSamplingMethod):
         return self._get_nsamples() / self._num_q_samples
 
     def get_NESS(self):
-        self._self_normalize()
         samples, weights = self._get_samples()
         ESS = 1 / np.sum(weights*weights)
         return ESS / len(samples)
 
     def _get_nsamples(self):
         res = len(self.T.leaves)
-        if self.resampling == "none" or self.resampling == "leaf":
-            res = len(self.T.nodes)
         return res
 
     def _get_samples(self):
-        """
-        Traverse the tree nodes and return samples depending on the resampling setting
-        - No resampling, return all samples
-        - Ancestral or full, return samples of leaves only
-        :return: samples, importance_weights
-        """
-        only_leaves = self.resampling == "ancestral" or self.resampling == "full"
-        values_acc = t_tensor([])
-        samples_acc = t_tensor([])
-        for node in self.T.nodes:
-            n_x = t_tensor(node.coords)
-            n_w = node.weight
-            if node.is_leaf() or not only_leaves and len(node.coords_hist) > 0:
-                samples_acc = np.concatenate((samples_acc, n_x)) if samples_acc.size else n_x
-                values_acc = np.concatenate((values_acc, n_w)) if values_acc.size else n_w
-
-        return samples_acc.reshape(-1, self.ndims), values_acc
+        return self.T.samples[self.T.leaves_idx], self.T.weights[self.T.leaves_idx]
 
     def _self_normalize(self):
-        norm = 0
-        for n in self.T.leaves:
-            norm += n.weight
-        for n in self.T.leaves:
-            n.weight /= norm
+        self.T.weights[self.T.leaves_idx] = self.T.weights[self.T.leaves_idx] / np.sum(self.T.weights[self.T.leaves_idx])
 
     def _update_model(self):
-        weights = np.array([])
+        weights = self.T.weights[self.T.leaves_idx]
+        centers = self.T.centers[self.T.leaves_idx]
+        radii = self.T.radii[self.T.leaves_idx]
         models = []
-        for n in self.T.leaves:
-            if n.weight > 0:
-                weights = np.concatenate((weights, n.weight))
-                models.append(n.sampler)
+        for c, r in zip(centers, radii):
+            if self.kernel == "haar":
+                models.append(CMultivariateUniform(c, r))
+            elif self.kernel == "normal":
+                models.append(CMultivariateNormal(c, np.diag(r * np.ones(self.ndims))))
         self.model = CMixtureModel(models, weights)

@@ -2,12 +2,12 @@ import numpy as np
 import time
 
 from numpy import array as t_tensor
-from sampling_methods.base import CMixtureSamplingMethod
+from sampling_methods.base import CMixtureISSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CMixtureModel import CMixtureModel
 
 
-class CDeterministicMixtureAIS(CMixtureSamplingMethod):
+class CDeterministicMixtureAIS(CMixtureISSamplingMethod):
     def __init__(self, space_min, space_max, params):
         """
         Implementation of Deterministic Mixture Adaptive Importance Sampling algorithm DM-PMC

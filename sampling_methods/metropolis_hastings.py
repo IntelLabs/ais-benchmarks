@@ -3,9 +3,7 @@ import time
 from sampling_methods.base import CMixtureSamplingMethod
 from sampling_methods.base import t_tensor
 from utils.plot_utils import plot_pdf
-from distributions.CMultivariateNormal import CMultivariateNormal
 from utils.plot_utils import plot_pdf2d
-import matplotlib.cm as cm
 
 
 class CMetropolisHastings(CMixtureSamplingMethod):
