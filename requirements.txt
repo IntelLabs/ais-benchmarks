@@ -4,3 +4,4 @@ scikit-learn
 matplotlib
 pillow
 opencv
+python3-tk

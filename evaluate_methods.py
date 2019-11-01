@@ -38,7 +38,7 @@ if __name__ == "__main__":
     output_file = "test3_results.txt"       # Results log file
     debug = True                            # Show plot with GT and sampling process for the 1D case
 
-    rand_seed = 3
+    rand_seed = time.time()
     random.seed(rand_seed)
     np.random.seed(rand_seed)
 
