@@ -18,7 +18,7 @@ from utils.video_writer import CVideoWriter
 def log_print(text, file, mode='a+'):
     with open(file, mode=mode) as f:
         f.write(text + "\n")
-        print(text)
+        #print(text)
 
 
 def bhattacharyya_distance(p_samples_prob, q_samples_prob):

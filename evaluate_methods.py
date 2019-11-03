@@ -28,7 +28,9 @@ def log_print(text, file, mode='a+'):
 
 
 if __name__ == "__main__":
-    ndims_list = [i for i in range(1, 3)]   # Number of dimensions of the space to test
+
+    time_eval = time.time()
+    ndims_list = [i for i in range(5, 6)]   # Number of dimensions of the space to test
     space_size = 1                          # Size of the domain for each dimension [0, n)
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
@@ -36,9 +38,9 @@ if __name__ == "__main__":
     max_samples = 500                       # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
-    debug = True                            # Show plot with GT and sampling process for the 1D case
+    debug = False                           # Show plot with GT and sampling process for the 1D case
 
-    rand_seed = time.time()
+    rand_seed = None
     random.seed(rand_seed)
     np.random.seed(rand_seed)
 
@@ -105,6 +107,16 @@ if __name__ == "__main__":
         # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         # sampling_method_list.append(tp_sampling_method)
 
+	# TODO: There is a bug of invalid values appearing
+        # M-PMC
+        #params["K"] = 20  # Number of samples per proposal distribution
+        #params["N"] = 10  # Number of proposal distributions
+        #params["J"] = 1000
+        #params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        #tp_sampling_method = CMixturePMC(space_min, space_max, params)
+        #tp_sampling_method.name = "M-PMC"
+        #sampling_method_list.append(tp_sampling_method)
+
         # Metropolis-Hastings
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
         params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
@@ -115,24 +127,14 @@ if __name__ == "__main__":
         mh_sampling_method.name = "MCMC-MH"
         sampling_method_list.append(mh_sampling_method)
 
-        # M-PMC
-        params["K"] = 20  # Number of samples per proposal distribution
-        params["N"] = 10  # Number of proposal distributions
-        params["J"] = 1000
-        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
-        tp_sampling_method = CMixturePMC(space_min, space_max, params)
-        tp_sampling_method.name = "M-PMC"
-        sampling_method_list.append(tp_sampling_method)
-
-        # # TODO: We are not using this baseline in the paper
-        # # Rejection sampling
-        # reject_proposal_dist = CMultivariateUniform(center=origin, radius=(space_max-space_min)/2)
-        # params["proposal"] = reject_proposal_dist
-        # params["scaling"] = 1
-        # params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
-        # rejection_sampling_method = CRejectionSampling(space_min, space_max, params)
-        # rejection_sampling_method.name = "rejection"
-        # sampling_method_list.append(rejection_sampling_method)
+        # Rejection sampling
+        reject_proposal_dist = CMultivariateUniform(center=origin, radius=(space_max-space_min)/2)
+        params["proposal"] = reject_proposal_dist
+        params["scaling"] = 1
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        rejection_sampling_method = CRejectionSampling(space_min, space_max, params)
+        rejection_sampling_method.name = "rejection"
+        sampling_method_list.append(rejection_sampling_method)
 
         # Layered Deterministic Mixture Adaptive Importance Sampling
         params["K"] = 3  # Number of samples per proposal distribution
@@ -206,8 +208,8 @@ if __name__ == "__main__":
         #######################################################
         for target_dist in target_dists:
             for sampling_method in sampling_method_list:
-                print("EVALUATING: %s with %d max samples" % (sampling_method.name, max_samples_dim))
-                print("dims output_samples JSD bhat ev_mse NESS time method target_d accept_rate q_samples q_evals pi_evals")
+                print("EVALUATING: %s with %d max samples %d dims" % (sampling_method.name, max_samples_dim, ndims))
+                #print("dims output_samples JSD bhat ev_mse NESS time method target_d accept_rate q_samples q_evals pi_evals")
                 sampling_method.reset()
                 t_ini = time.time()
                 [jsd, bhattacharyya_dist, NESS, ev_mse, total_samples] = \
@@ -217,3 +219,5 @@ if __name__ == "__main__":
                                                                                  target_dist.name + "_" +
                                                                                  str(ndims)+"d_vid.mp4")
                 t_elapsed = time.time() - t_ini
+
+    print("TOTAL EVALUATION TIME: %f" % (time.time()-time_eval)/3600.0 )
