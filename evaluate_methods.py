@@ -47,8 +47,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         output_file = sys.argv[1]
         debug = False
-        ndims_list = [i for i in range(1, 10)]
-        max_samples = 500
+        ndims_list = [i for i in range(1, 8)]
+        max_samples = 1000
 
     random.seed(0)
 
@@ -107,15 +107,15 @@ if __name__ == "__main__":
         # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         # sampling_method_list.append(tp_sampling_method)
 
-	# TODO: There is a bug of invalid values appearing
+        # TODO: There is a bug of invalid values appearing
         # M-PMC
-        #params["K"] = 20  # Number of samples per proposal distribution
-        #params["N"] = 10  # Number of proposal distributions
-        #params["J"] = 1000
-        #params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
-        #tp_sampling_method = CMixturePMC(space_min, space_max, params)
-        #tp_sampling_method.name = "M-PMC"
-        #sampling_method_list.append(tp_sampling_method)
+        # params["K"] = 20  # Number of samples per proposal distribution
+        # params["N"] = 10  # Number of proposal distributions
+        # params["J"] = 1000
+        # params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        # tp_sampling_method = CMixturePMC(space_min, space_max, params)
+        # tp_sampling_method.name = "M-PMC"
+        # sampling_method_list.append(tp_sampling_method)
 
         # Metropolis-Hastings
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
@@ -213,11 +213,12 @@ if __name__ == "__main__":
                 sampling_method.reset()
                 t_ini = time.time()
                 [jsd, bhattacharyya_dist, NESS, ev_mse, total_samples] = \
-                    evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples_dim, sampling_eval_samples,
+                    evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples_dim,
+                                    sampling_eval_samples, max_sampling_time=3600,
                                     debug=debug, filename=output_file, videofile="videos" + os.sep +
                                                                                  sampling_method.name + "_" +
                                                                                  target_dist.name + "_" +
                                                                                  str(ndims)+"d_vid.mp4")
                 t_elapsed = time.time() - t_ini
 
-    print("TOTAL EVALUATION TIME: %f" % (time.time()-time_eval)/3600.0 )
+    print("TOTAL EVALUATION TIME: %f" % ((time.time()-time_eval)/3600.0) )
