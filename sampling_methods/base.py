@@ -18,6 +18,7 @@ class CSamplingMethod(metaclass=ABCMeta):
         self._num_q_samples = 0
         self.samples = t_tensor([])
         self.weights = t_tensor([])
+        self.variogram = t_tensor([])
 
     def reset(self):
         self._num_pi_evals = 0
@@ -25,6 +26,7 @@ class CSamplingMethod(metaclass=ABCMeta):
         self._num_q_samples = 0
         self.samples = t_tensor([])
         self.weights = t_tensor([])
+        self.variogram = t_tensor([])
 
     def get_acceptance_rate(self):
         assert self.samples.size, "Invalid number of samples to compute acceptance rate"
@@ -35,19 +37,21 @@ class CSamplingMethod(metaclass=ABCMeta):
         x = self.samples
         n = len(x)
 
-        variogram = lambda t: ((x[t:] - x[:(n - t)]) ** 2).sum() / (n - t)
+        variogram = lambda t: t_tensor([((x[t:] - x[:(n - t)]) ** 2).sum() / (n - t)])
 
         mean = x.mean()
         dist = x - mean
 
         W = (dist ** 2).sum() / (n - 1)
 
-        rho = np.ones(n)
+        # vt = len(self.variogram)
+        # while len(self.variogram) < len(self.samples):
+        #     self.variogram = np.concatenate((self.variogram, variogram(vt))) if self.variogram.size else variogram(vt)
 
         t = 1
+        rho = np.ones(n)
         negative_autocorr = False
         while not negative_autocorr and (t < n):
-
             rho[t] = 1. - variogram(t) / (2. * W)
 
             if not t % 2:

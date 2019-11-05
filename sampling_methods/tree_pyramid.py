@@ -2,6 +2,7 @@ import time
 import numpy as np
 from numpy import array as t_tensor
 import itertools
+import matplotlib.patches as patches
 
 from sampling_methods.base import CMixtureISSamplingMethod
 from distributions.CMultivariateNormal import CMultivariateNormal
@@ -176,6 +177,34 @@ class CTreePyramid:
 
         # Return the newly created nodes
         return new_nodes
+
+    @staticmethod
+    def draw_node(axis, x, y, label="x", color="b"):
+        axis.add_patch(patches.Circle((x, y), 0.1, facecolor="w", linewidth=1, edgecolor=color))
+        axis.annotate(label, xy=(x-0.2, y-0.3), fontsize=18, ha="center", va="center")
+        axis.plot(x, y)
+
+    @staticmethod
+    def plot_node(axis, node, x, y):
+        plot_span = 10
+        if node.is_leaf():
+            CTreePyramid.draw_node(axis, x, y, "$\lambda_{%d}$" % node.leaf_idx, color="r")
+        else:
+            CTreePyramid.draw_node(axis, x, y, "", color="b")
+            for idx,ch in enumerate(node.children):
+                nodes_in_level = 2 ** (len(node.coords) * ch.level)
+                if nodes_in_level > 1:
+                    increment = plot_span / nodes_in_level
+                else:
+                    increment = 0
+                x_ch = x + increment * idx - (plot_span/nodes_in_level) / 2
+                y_ch = -ch.level
+                axis.arrow(x, y, x_ch - x, y_ch - y, alpha=0.2, zorder=0)
+                CTreePyramid.plot_node(axis, ch, x_ch, y_ch)
+
+    def plot(self, axis):
+        axis.cla()
+        self.plot_node(axis, self.root, 0, 0)
 
 
 class CTreePyramidSampling(CMixtureISSamplingMethod):

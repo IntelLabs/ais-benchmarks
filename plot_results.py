@@ -98,8 +98,8 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
 # dims samples kl_kde bhat_kde kl_nn bhat_nn time method final_samples
 data = pd.read_table("results.txt", delim_whitespace=True)
 
-methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "DM_AIS", "LAIS", "nested"]
-labels = ["TP_AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[26]", "LAIS[3]", "nested[28]"]
+methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "DM_AIS", "LAIS", "nested", "rejection"]
+labels = ["TP_AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[26]", "LAIS[3]", "nested[28]", "rejection"]
 
 # methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "rejection", "DM_AIS", "LAIS", "nested",
 #            "TP_simple_none_haar", "TP_simple_leaf_normal"]
@@ -163,6 +163,8 @@ for dist in dists:
         plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
         plt.gca().set_ylabel("Normalized Effective Sample Size")
         plt.gca().set_xlabel("# samples")
+        ymin, ymax = plt.gca().get_ylim()
+        plt.gca().set_ylim(0, min(1.2,ymax))
         # plt.yscale("log")
         plt.savefig(path + "%d_dims_%s_dist_ness.pdf" % (dims, dist), bbox_inches='tight', dpi=dpi)
         # plt.show()
@@ -185,26 +187,6 @@ for dist in dists:
         plt.close()
 
         print("Generated " + path + "%d_dims_%s_dist" % (dims, dist))
-
-        # make_table(data, "output_samples", "kl_kde", methods, selector=["dims", "target_dist"], selector_val=[dims, dist])
-        #
-        # nsamples=[] dims=[] target=[] eval_method=[]
-        # method:
-        # nsamples
-        # 5
-        # 10
-        # 25
-        # 50
-        # 100
-        # 200
-        # 500
-        # 1000
-        # 2000
-        #
-        # target:
-        # gmm
-        # normal
-
 
 
 # TODO: Get table at specific sample number values
