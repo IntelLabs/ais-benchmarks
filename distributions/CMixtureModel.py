@@ -1,20 +1,32 @@
 import numpy as np
+import sys
 
 
 class CMixtureModel:
     def __init__(self, models, weights):
-
         assert len(models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(models), len(weights))
-
-        # Make sure all weights are positive
-        assert np.all(weights >= 0), "There are non-positive weights"
-
-        # Make sure weights are normalized
-        weights = weights / weights.sum()
-
         self.models = models
         self.weights = weights
+        self.set_weights(weights)
 
+    def set_weights(self, weights):
+        assert len(self.models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(self.models), len(weights))
+
+        # Address NaN or negative
+        indices = np.logical_or(np.isnan(weights), weights <= 0)
+        if np.any(indices):
+            print("CMixtureModel. WARNING! There are NaN, negative or zero weights. Setting their weights to zero", file=sys.stderr)
+            weights[indices] = 0
+
+        # Make sure weights are normalized
+        if weights.sum() <= 0:
+            print("CMixtureModel. ERROR! All weights are set to zero!", file=sys.stderr)
+        else:
+            weights = weights / weights.sum()
+        self.weights = weights
+
+    # TODO: Is it possible to avoid computing the prob and stay in the log space?? This is numerically not stable for
+    #       higher dimensions
     def logprob(self, data):
         return np.log(self.prob(data))
 
