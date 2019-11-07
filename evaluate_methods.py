@@ -30,12 +30,12 @@ def log_print(text, file, mode='a+'):
 if __name__ == "__main__":
 
     time_eval = time.time()
-    ndims_list = [i for i in range(5, 6)]   # Number of dimensions of the space to test
+    ndims_list = [i for i in range(8, 9)]   # Number of dimensions of the space to test
     space_size = 1                          # Size of the domain for each dimension [0, n)
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
-    max_samples = 500                       # Number of maximum samples to obtain from the algorithm
+    max_samples = 1000                      # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
     debug = False                           # Show plot with GT and sampling process for the 1D case
@@ -109,13 +109,13 @@ if __name__ == "__main__":
 
         # TODO: There is a bug of invalid values appearing
         # M-PMC
-        params["K"] = 20  # Number of samples per proposal distribution
-        params["N"] = 10  # Number of proposal distributions
-        params["J"] = 1000
-        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
-        tp_sampling_method = CMixturePMC(space_min, space_max, params)
-        tp_sampling_method.name = "M-PMC"
-        sampling_method_list.append(tp_sampling_method)
+        # params["K"] = 20  # Number of samples per proposal distribution
+        # params["N"] = 10  # Number of proposal distributions
+        # params["J"] = 1000
+        # params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        # tp_sampling_method = CMixturePMC(space_min, space_max, params)
+        # tp_sampling_method.name = "M-PMC"
+        # sampling_method_list.append(tp_sampling_method)
 
         # # Metropolis-Hastings
         # MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
@@ -169,13 +169,13 @@ if __name__ == "__main__":
         # TODO: Disabled. Too slow for iterations. Will get results for completion of experimental section
         # TODO: THERE IS A BUG THAT CRASHES WHEN THE SAMPLING ELLIPSE IS TOO SMALL THE COVARIANCE BECOMES SINGLUAR
         # Multi-Nested sampling
-        # MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.01)
-        # params["proposal"] = MCMC_proposal_dist
-        # params["N"] = 30
-        # params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
-        # mnested_sampling_method = CMultiNestedSampling(space_min, space_max, params)
-        # mnested_sampling_method.name = "multi-nested"
-        # sampling_method_list.append(mnested_sampling_method)
+        MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.01)
+        params["proposal"] = MCMC_proposal_dist
+        params["N"] = 30
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        mnested_sampling_method = CMultiNestedSampling(space_min, space_max, params)
+        mnested_sampling_method.name = "multi-nested"
+        sampling_method_list.append(mnested_sampling_method)
 
         # # Tree pyramids (simple, leaf, haar)
         # params["method"] = "simple"
@@ -209,7 +209,7 @@ if __name__ == "__main__":
         for target_dist in target_dists:
             for sampling_method in sampling_method_list:
                 print("EVALUATING: %s with %d max samples %d dims" % (sampling_method.name, max_samples_dim, ndims))
-                #print("dims output_samples JSD bhat ev_mse NESS time method target_d accept_rate q_samples q_evals pi_evals")
+                # print("dims output_samples JSD bhat ev_mse NESS time method target_d accept_rate q_samples q_evals pi_evals")
                 sampling_method.reset()
                 t_ini = time.time()
                 [jsd, bhattacharyya_dist, NESS, ev_mse, total_samples] = \

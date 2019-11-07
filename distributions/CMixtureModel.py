@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+from scipy.special import logsumexp
 
 
 class CMixtureModel:
@@ -25,10 +26,22 @@ class CMixtureModel:
             weights = weights / weights.sum()
         self.weights = weights
 
-    # TODO: Is it possible to avoid computing the prob and stay in the log space?? This is numerically not stable for
-    #       higher dimensions
     def logprob(self, data):
-        return np.log(self.prob(data))
+
+        if len(data.shape) == 1:
+            data.reshape(-1, 1)
+            llikelihood = np.zeros((len(self.models), 1))
+
+        elif len(data.shape) == 2:
+            llikelihood = np.zeros((len(self.models), len(data)))
+        else:
+            raise ValueError("Unsupported samples data format: " + str(data.shape))
+
+        for i in range(len(self.models)):
+            llikelihood[i] = self.models[i].logprob(data)
+
+        logprob = logsumexp(llikelihood, b=self.weights.reshape(-1,1), axis=0)
+        return logprob
 
     def prob(self, data):
         likelihood = np.zeros(len(data))

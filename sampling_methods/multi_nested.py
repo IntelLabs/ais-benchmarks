@@ -41,7 +41,7 @@ class CEllipsoid:
         return self.sampler.sample()
 
     @staticmethod
-    def fit(points, inflate = 1.0):
+    def fit(points, inflate=1.0):
         loc = np.mean(points, axis=0)
 
         assert len(points) >= len(loc)
@@ -55,7 +55,8 @@ class CEllipsoid:
             if scale <= 0:
                 return None
 
-        return CEllipsoid(loc,scale*inflate)
+        ell = CEllipsoid(loc, scale*inflate)
+        return ell
 
 
 class CMultiNestedSampling(CMixtureSamplingMethod):
