@@ -30,7 +30,7 @@ def log_print(text, file, mode='a+'):
 if __name__ == "__main__":
 
     time_eval = time.time()
-    ndims_list = [i for i in range(8, 9)]   # Number of dimensions of the space to test
+    ndims_list = [i for i in range(3, 5)]   # Number of dimensions of the space to test
     space_size = 1                          # Size of the domain for each dimension [0, n)
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
@@ -107,56 +107,55 @@ if __name__ == "__main__":
         # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
         # sampling_method_list.append(tp_sampling_method)
 
-        # TODO: There is a bug of invalid values appearing
         # M-PMC
-        # params["K"] = 20  # Number of samples per proposal distribution
-        # params["N"] = 10  # Number of proposal distributions
-        # params["J"] = 1000
-        # params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
-        # tp_sampling_method = CMixturePMC(space_min, space_max, params)
-        # tp_sampling_method.name = "M-PMC"
-        # sampling_method_list.append(tp_sampling_method)
+        params["K"] = 20  # Number of samples per proposal distribution
+        params["N"] = 10  # Number of proposal distributions
+        params["J"] = 1000
+        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        tp_sampling_method = CMixturePMC(space_min, space_max, params)
+        tp_sampling_method.name = "M-PMC"
+        sampling_method_list.append(tp_sampling_method)
 
         # # Metropolis-Hastings
-        # MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
-        # params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
-        # params["n_steps"] = 2  # Num of decorrelation steps: discarded samples upon new accept
-        # params["n_burnin"] = 10  # Number of samples considered as burn-in
-        # params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
-        # mh_sampling_method = CMetropolisHastings(space_min, space_max, params)
-        # mh_sampling_method.name = "MCMC-MH"
-        # sampling_method_list.append(mh_sampling_method)
-        #
-        # # Rejection sampling
-        # reject_proposal_dist = CMultivariateUniform(center=origin, radius=(space_max-space_min)/2)
-        # params["proposal"] = reject_proposal_dist
-        # params["scaling"] = 1
-        # params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
-        # rejection_sampling_method = CRejectionSampling(space_min, space_max, params)
-        # rejection_sampling_method.name = "rejection"
-        # sampling_method_list.append(rejection_sampling_method)
-        #
-        # # Layered Deterministic Mixture Adaptive Importance Sampling
-        # params["K"] = 3  # Number of samples per proposal distribution
-        # params["N"] = 5  # Number of proposal distributions
-        # params["J"] = 1000  # Total number of samples
-        # params["L"] = 10  # Number of MCMC moves during the proposal adaptation
-        # params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
-        # params["mh_sigma"] = 0.005  # Scaling parameter of the mcmc proposal distributions moment update
-        # tp_sampling_method = CLayeredAIS(space_min, space_max, params)
-        # tp_sampling_method.name = "LAIS"
-        # sampling_method_list.append(tp_sampling_method)
-        #
-        # # Deterministic Mixture Adaptive Importance Sampling
-        # params["K"] = 5  # Number of samples per proposal distribution
-        # params["N"] = 10  # Number of proposal distributions
-        # params["J"] = 1000
-        # params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
-        # tp_sampling_method = CDeterministicMixtureAIS(space_min, space_max, params)
-        # tp_sampling_method.name = "DM_AIS"
-        # sampling_method_list.append(tp_sampling_method)
+        MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
+        params["proposal_d"] = MCMC_proposal_dist  # MC move proposal distribution p(x'|x)
+        params["n_steps"] = 2  # Num of decorrelation steps: discarded samples upon new accept
+        params["n_burnin"] = 10  # Number of samples considered as burn-in
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        mh_sampling_method = CMetropolisHastings(space_min, space_max, params)
+        mh_sampling_method.name = "MCMC-MH"
+        sampling_method_list.append(mh_sampling_method)
 
-        # TODO: Disabled. Too slow for iterations. Will get results for completion of experimental section
+        # Rejection sampling
+        reject_proposal_dist = CMultivariateUniform(center=origin, radius=(space_max-space_min)/2)
+        params["proposal"] = reject_proposal_dist
+        params["scaling"] = 1
+        params["kde_bw"] = 0.01  # Bandwidth of the KDE approximation to evaluate the prob of the distribution approximated by the set of generated samples
+        rejection_sampling_method = CRejectionSampling(space_min, space_max, params)
+        rejection_sampling_method.name = "rejection"
+        sampling_method_list.append(rejection_sampling_method)
+
+        # Layered Deterministic Mixture Adaptive Importance Sampling
+        params["K"] = 3  # Number of samples per proposal distribution
+        params["N"] = 5  # Number of proposal distributions
+        params["J"] = 1000  # Total number of samples
+        params["L"] = 10  # Number of MCMC moves during the proposal adaptation
+        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        params["mh_sigma"] = 0.005  # Scaling parameter of the mcmc proposal distributions moment update
+        tp_sampling_method = CLayeredAIS(space_min, space_max, params)
+        tp_sampling_method.name = "LAIS"
+        sampling_method_list.append(tp_sampling_method)
+
+        # Deterministic Mixture Adaptive Importance Sampling
+        params["K"] = 5  # Number of samples per proposal distribution
+        params["N"] = 10  # Number of proposal distributions
+        params["J"] = 1000
+        params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
+        tp_sampling_method = CDeterministicMixtureAIS(space_min, space_max, params)
+        tp_sampling_method.name = "DM_AIS"
+        sampling_method_list.append(tp_sampling_method)
+
+        # Disabled. Using multi nested instead
         # # Nested sampling
         # MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
         # params["proposal"] = MCMC_proposal_dist
@@ -166,8 +165,6 @@ if __name__ == "__main__":
         # nested_sampling_method.name = "nested"
         # sampling_method_list.append(nested_sampling_method)
 
-        # TODO: Disabled. Too slow for iterations. Will get results for completion of experimental section
-        # TODO: THERE IS A BUG THAT CRASHES WHEN THE SAMPLING ELLIPSE IS TOO SMALL THE COVARIANCE BECOMES SINGLUAR
         # Multi-Nested sampling
         MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.01)
         params["proposal"] = MCMC_proposal_dist
@@ -177,29 +174,29 @@ if __name__ == "__main__":
         mnested_sampling_method.name = "multi-nested"
         sampling_method_list.append(mnested_sampling_method)
 
-        # # Tree pyramids (simple, leaf, haar)
-        # params["method"] = "simple"
-        # params["resampling"] = "leaf"
-        # params["kernel"] = "haar"
-        # tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        # sampling_method_list.append(tp_sampling_method)
+        # Tree pyramids (simple, leaf, haar)
+        params["method"] = "simple"
+        params["resampling"] = "leaf"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
 
-        # # Tree pyramids (simple, leaf, normal)
-        # params["method"] = "simple"
-        # params["resampling"] = "leaf"
-        # params["kernel"] = "normal"
-        # tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        # sampling_method_list.append(tp_sampling_method)
-        #
-        # # Tree pyramids (simple, none, haar)
-        # params["method"] = "simple"
-        # params["resampling"] = "none"
-        # params["kernel"] = "haar"
-        # tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        # sampling_method_list.append(tp_sampling_method)
+        # Tree pyramids (simple, leaf, normal)
+        params["method"] = "simple"
+        params["resampling"] = "leaf"
+        params["kernel"] = "normal"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (simple, none, haar)
+        params["method"] = "simple"
+        params["resampling"] = "none"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
         #######################################################
         #######################################################
 

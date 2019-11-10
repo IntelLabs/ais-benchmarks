@@ -7,10 +7,9 @@ from utils.plot_utils import plot_pdf2d
 from sklearn.cluster import KMeans
 import time
 import matplotlib.cm as cm
+import sys
 
 
-
-# TODO: Implement convergence test and futher generate samples from the approximated distribution
 class CEllipsoid:
     def __init__(self, loc, scale, indices=[]):
 
@@ -49,11 +48,15 @@ class CEllipsoid:
         if len(points[0]) > 1:
             scale = np.cov(points, rowvar=False)
             if np.linalg.det(scale) <= 0:
-                return None
+                print("CEllipsoid: ERROR! Ellipsoid fit failed. Negative determinant. Identity covariance.", file=sys.stderr)
+                ell = CEllipsoid(loc, np.diag(np.ones(len(loc)) * inflate))
+                return ell
         else:
             scale = np.std(points)
             if scale <= 0:
-                return None
+                print("Ellipsoid fit failed. Negative or zero STD. Using 1.", file=sys.stderr)
+                ell = CEllipsoid(loc, scale * inflate)
+                return ell
 
         ell = CEllipsoid(loc, scale*inflate)
         return ell
@@ -75,7 +78,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
     def reset(self):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
-    def resample(self, value, pdf, ellipsoid, timeout=60):
+    def resample(self, value, pdf, ellipsoid, timeout=60, ellipsoid_converged_radius=1e-3):
         new_sample = np.clip(ellipsoid.sample(), self.space_min, self.space_max)
 
         self._num_q_samples += 1
@@ -84,7 +87,8 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         self._num_pi_evals += 1
         elapsed_time = 0
         t_ini = time.time()
-        while value > new_value and elapsed_time < timeout:
+        # print("Ellipsoid volume: %f. Converged: " % ellipsoid.volume, not ellipsoid.volume > ellipsoid_converged_radius**self.ndims)
+        while value > new_value and elapsed_time < timeout and ellipsoid.volume > ellipsoid_converged_radius**self.ndims:
             new_sample = ellipsoid.sample()
             self._num_q_samples += 1
             new_value = pdf.logprob(new_sample)
@@ -192,7 +196,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
 
         self.live_points = points
         self.ellipsoids = c_ellipsoids
-        self.weights = np.ones(len(self.samples)) * 1 / len(self.samples)
+        self.weights = np.ones(len(self.samples)) / len(self.samples)
         self._update_model()
         return self.samples, self.weights
 
