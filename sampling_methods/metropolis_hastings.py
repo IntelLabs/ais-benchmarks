@@ -69,6 +69,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
         accepted = False
         t_elapsed = 0
         t_ini = time.time()
+        x_new = x_old
         while not accepted and timeout > t_elapsed:
             t_elapsed = time.time() - t_ini
             # Sample from the proposal distribution to obtain the proposed sample x' ~ p(x'|x)

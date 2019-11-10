@@ -40,7 +40,7 @@ class CKernelDensity:
         return self.logprob(data)
 
     def logprob(self, data):
-        return np.log(self.prob(data))
+        return self.model.logprob(data)
 
     def prob(self, data):
         return self.model.prob(data)

@@ -73,7 +73,7 @@ class CMixturePMC(CMixtureISSamplingMethod):
 
         # Renormalize proposals weights
         self.wproposals = self.wproposals / self.wproposals.sum()
-        self.model.weights = self.wproposals
+        self.model.set_weights(self.wproposals)
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         elapsed_time = 0

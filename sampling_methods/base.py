@@ -13,6 +13,7 @@ class CSamplingMethod(metaclass=ABCMeta):
         assert space_max.shape == space_min.shape
         self.space_min = space_min
         self.space_max = space_max
+        self.ndims = len(space_max)
         self._num_pi_evals = 0
         self._num_q_evals = 0
         self._num_q_samples = 0

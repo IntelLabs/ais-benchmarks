@@ -1,22 +1,47 @@
 import numpy as np
+import sys
+from scipy.special import logsumexp
 
 
 class CMixtureModel:
     def __init__(self, models, weights):
-
         assert len(models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(models), len(weights))
+        self.models = models
+        self.weights = weights
+        self.set_weights(weights)
 
-        # Make sure all weights are positive
-        assert np.all(weights >= 0), "There are non-positive weights"
+    def set_weights(self, weights):
+        assert len(self.models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(self.models), len(weights))
+
+        # Address NaN or negative
+        indices = np.logical_or(np.isnan(weights), weights <= 0)
+        if np.any(indices):
+            print("CMixtureModel. WARNING! There are NaN, negative or zero weights. Setting their weights to zero", file=sys.stderr)
+            weights[indices] = 0
 
         # Make sure weights are normalized
-        weights = weights / weights.sum()
-
-        self.models = models
+        if weights.sum() <= 0:
+            print("CMixtureModel. ERROR! All weights are set to zero!", file=sys.stderr)
+        else:
+            weights = weights / weights.sum()
         self.weights = weights
 
     def logprob(self, data):
-        return np.log(self.prob(data))
+
+        if len(data.shape) == 1:
+            data.reshape(-1, 1)
+            llikelihood = np.zeros((len(self.models), 1))
+
+        elif len(data.shape) == 2:
+            llikelihood = np.zeros((len(self.models), len(data)))
+        else:
+            raise ValueError("Unsupported samples data format: " + str(data.shape))
+
+        for i in range(len(self.models)):
+            llikelihood[i] = self.models[i].logprob(data)
+
+        logprob = logsumexp(llikelihood, b=self.weights.reshape(-1,1), axis=0)
+        return logprob
 
     def prob(self, data):
         likelihood = np.zeros(len(data))

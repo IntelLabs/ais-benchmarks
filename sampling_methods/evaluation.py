@@ -18,7 +18,7 @@ from utils.video_writer import CVideoWriter
 def log_print(text, file, mode='a+'):
     with open(file, mode=mode) as f:
         f.write(text + "\n")
-        print(text)
+        #print(text)
 
 
 def bhattacharyya_distance(p_samples_prob, q_samples_prob):
@@ -26,10 +26,26 @@ def bhattacharyya_distance(p_samples_prob, q_samples_prob):
     return res
 
 
+def kl_divergence_components_logprob(p_samples_logprob, q_samples_logprob):
+    p_samples_prob = np.exp(p_samples_logprob - np.max(p_samples_logprob))
+    q_samples_prob = np.exp(q_samples_logprob - np.max(q_samples_logprob))
+    res = kl_divergence_components(p_samples_prob, q_samples_prob)
+    return res
+
+
 def kl_divergence_components(p_samples_prob, q_samples_prob):
     p_samples_prob_norm = p_samples_prob / np.sum(p_samples_prob)
     q_samples_prob_norm = q_samples_prob / np.sum(q_samples_prob)
-    res = p_samples_prob_norm * np.log(p_samples_prob_norm / q_samples_prob_norm)
+    res = p_samples_prob_norm * (np.log(p_samples_prob_norm) - np.log(q_samples_prob_norm))
+    return res
+
+
+def kl_divergence_logprob(p_samples_logprob, q_samples_logprob):
+    p_samples_prob = np.exp(p_samples_logprob - np.max(p_samples_logprob))
+    q_samples_prob = np.exp(q_samples_logprob - np.max(q_samples_logprob))
+    res = kl_divergence(p_samples_prob, q_samples_prob)
+
+    # res = entropy(pk=p_samples_prob, qk=q_samples_prob)
     return res
 
 
@@ -48,6 +64,16 @@ def js_divergence(p_samples_prob, q_samples_prob):
     return res
 
 
+def js_divergence_logprob(p_samples_logprob, q_samples_logprob):
+    p_samples_prob = np.exp(p_samples_logprob - np.max(p_samples_logprob))
+    q_samples_prob = np.exp(q_samples_logprob - np.max(q_samples_logprob))
+    m_samples_prob = 0.5 * (p_samples_prob + q_samples_prob)
+    res = 0.5 * kl_divergence_components(p_samples_prob, m_samples_prob) + \
+          0.5 * kl_divergence_components(q_samples_prob, m_samples_prob)
+
+    return res
+
+
 def evaluate_proposal(proposal_dist, target_dist, space_min, space_max, sampling_eval_samples=1000):
     # Generate random samples and obtain its true density from the target distribution
     eval_samples, p_samples_logprob = uniform_sample_distribution(target_dist, space_min, space_max, nsamples=sampling_eval_samples)
@@ -56,7 +82,9 @@ def evaluate_proposal(proposal_dist, target_dist, space_min, space_max, sampling
     q_samples_logprob = proposal_dist.logprob(eval_samples)
 
     # Compute the empirical Jensen-Shannon Divergence
-    js_div = np.sum(js_divergence(np.exp(p_samples_logprob), np.exp(q_samples_logprob)))
+    js_div_comps = js_divergence_logprob(p_samples_logprob, q_samples_logprob)
+    js_div = np.sum(js_div_comps)
+    # print(list(js_div_comps))
 
     # Compute the empirical Bhattacharyya distance
     bhattacharyya_dist = bhattacharyya_distance(np.exp(p_samples_logprob), np.exp(q_samples_logprob))
