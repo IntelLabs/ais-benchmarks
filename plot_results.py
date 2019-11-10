@@ -47,7 +47,7 @@ def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, 
     ax.set_ylabel(yaxis)
     ymin, ymax = ax.get_ylim()
     ax.set_ylim(0, ymax*1.1)
-    ax.legend(mode="expand", loc=9, ncol=2, prop={'size': 12})
+    ax.legend(mode="expand", loc=9, ncol=3, prop={'size': 12}, numpoints=1)
 
 
 def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, selector_val=None, labels=None):
@@ -92,7 +92,7 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
     # ax.set_yscale("log")
     ymin, ymax = ax.get_ylim()
     ax.set_ylim(max(0.001, ymin), ymax*1.1)
-    ax.legend(mode="expand", loc=9, ncol=2, prop={'size': 12})
+    ax.legend(mode="expand", loc=9, ncol=3, prop={'size': 12}, numpoints=1)
 
 
 # dims samples kl_kde bhat_kde kl_nn bhat_nn time method final_samples
@@ -113,7 +113,7 @@ dpi = 1600
 for dist in dists:
     for dims in dimensions:
         barmin = np.log(2 ** dims + 1)
-        barmax = np.log(500*dims)
+        barmax = np.log(1000*dims)
         bar_points = np.logspace(barmin, barmax, num=8, base=np.e)
         bar_points = list(bar_points.astype(np.int32))
 
