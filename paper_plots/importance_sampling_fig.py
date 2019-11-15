@@ -8,7 +8,8 @@ from distributions.CMultivariateUniform import CMultivariateUniform
 from distributions.CMultivariateNormal import CMultivariateNormal
 from distributions.CKernelDensity import CKernelDensity
 from sampling_methods.base import t_tensor
-
+from sampling_methods.dm_ais import CDeterministicMixtureAIS
+from sampling_methods.tree_pyramid import CTreePyramidSampling
 
 def f(x):
     return np.sin(5*x)
@@ -200,49 +201,178 @@ xsimpixtrue = f(xsimtrue).flatten()*target_dist.prob(xsimtrue).flatten()
 #     plt.show(block=False)
 #     time.sleep(0.01)
 
-# Seventh plot: Multiple Importance sampling
-fig = plt.figure(figsize=(10, 3.5))
-ax1 = plt.subplot(111)
-proposal_dists = [CMultivariateNormal(t_tensor([-0.1]), t_tensor([[0.02]])),
-                  CMultivariateNormal(t_tensor([0.5]), t_tensor([[0.02]]))]
-# Initial sample
-proposal_dist = proposal_dists[np.random.randint(0, len(proposal_dists))]
-xsim = proposal_dist.sample(1)
-weights = target_dist.prob(xsim[-1]) / proposal_dist.prob(xsim[-1])
+# # Seventh plot: Multiple Importance sampling
+# fig = plt.figure(figsize=(10, 3.5))
+# ax1 = plt.subplot(111)
+# proposal_dists = [CMultivariateNormal(t_tensor([-0.1]), t_tensor([[0.02]])),
+#                   CMultivariateNormal(t_tensor([0.5]), t_tensor([[0.02]]))]
+# # Initial sample
+# proposal_dist = proposal_dists[np.random.randint(0, len(proposal_dists))]
+# xsim = proposal_dist.sample(1)
+# weights = target_dist.prob(xsim[-1]) / proposal_dist.prob(xsim[-1])
+#
+# kde = CKernelDensity(xsim, np.ones(len(xsim)) / len(xsim))
+# kde.bw = 0.01
+#
+# for i in range(1, 200, 1):
+#     ax1.cla()
+#     proposal_dist = proposal_dists[np.random.randint(0, len(proposal_dists))]
+#
+#     xsim = np.concatenate((xsim, proposal_dist.sample(1)))
+#
+#     ax1.plot(x, target_dist.prob(x), "-", alpha=1, color="r", label="$\pi(x|D)$")
+#
+#     for j, Q in enumerate(proposal_dists):
+#         ax1.plot(x, Q.prob(x), "--", alpha=1, color="g", label="$Q_%d(x)$" % j)
+#
+#     plt.vlines(xsim[-1], ymin=0, ymax=proposal_dist.prob(xsim[-1]), linewidth=1, linestyles="dashed", colors="g")
+#
+#     weights = np.concatenate((weights, target_dist.prob(xsim[-1]) / proposal_dist.prob(xsim[-1])))
+#
+#     kde.samples = xsim
+#     kde.weights = weights
+#     kde.fit()
+#     ax1.plot(x, kde.prob(x), "--", alpha=1, color="r", label="$\hat{\pi}(x)$")
+#     ax1.plot(xsim, np.zeros_like(xsim), ".", alpha=1, color="r", label="$x_i \sim \pi(x|D) $")
+#
+#     ax1.legend()
+#     ax1.set_ylim(0, 3)
+#     plt.savefig("multipleIS" + os.sep + "multiple_IS_%d.png" % i)
+#     fig.canvas.draw()
+#     fig.canvas.flush_events()
+#     plt.show(block=False)
+#     time.sleep(0.01)
 
-kde = CKernelDensity(xsim, np.ones(len(xsim)) / len(xsim))
-kde.bw = 0.01
+# # Eight plot: Adaptive Multiple Importance sampling
+# fig = plt.figure(figsize=(10, 3.5))
+# ax1 = plt.subplot(111)
+# proposal_dists = [CMultivariateNormal(t_tensor([-0.1]), t_tensor([[0.02]])),
+#                   CMultivariateNormal(t_tensor([0.5]), t_tensor([[0.02]]))]
+# # Initial sample
+# params = dict()
+# params["K"] = 10  # Number of samples per proposal distribution
+# params["N"] = 4  # Number of proposal distributions
+# params["J"] = 1000
+# params["sigma"] = 0.02  # Scaling parameter of the proposal distributions
+# sampling_method = CDeterministicMixtureAIS(space_min, space_max, params)
+# sampling_method.reset()
+#
+# batch_samples = params["K"] * params["N"]
+#
+# sampling_method.importance_sample(target_dist, batch_samples)
+# xsim = sampling_method.samples
+# weights = sampling_method.weights
+#
+# for i in range(1, 200, 1):
+#     ax1.cla()
+#
+#     # Iterate the IS strategy and obtain samples and weights
+#     n_samples = len(xsim) + batch_samples
+#     sampling_method.importance_sample(target_dist, n_samples)
+#     xsim = sampling_method.samples
+#     weights = sampling_method.weights
+#
+#     ax1.plot(x, target_dist.prob(x), "-", alpha=1, color="r", label="$\pi(x|D)$")
+#
+#     for j, Q in enumerate(sampling_method.proposals):
+#         ax1.plot(x, Q.prob(x), "--", alpha=1, color="g", label="$Q_%d(x)$" % j)
+#
+#     # plt.vlines(xsim[-1], ymin=0, ymax=proposal_dist.prob(xsim[-1]), linewidth=1, linestyles="dashed", colors="g")
+#
+#     ax1.plot(x, sampling_method.prob(x), "--", alpha=1, color="r", label="$\hat{\pi}(x)$")
+#     ax1.plot(xsim, np.zeros_like(xsim), ".", alpha=1, color="r", label="$x_i \sim \pi(x|D) $")
+#
+#     ax1.legend()
+#     ax1.set_ylim(0, 3)
+#     plt.savefig("adaptiveIS" + os.sep + "adaptive_IS_%d.png" % i)
+#     fig.canvas.draw()
+#     fig.canvas.flush_events()
+#     plt.show(block=False)
+#     time.sleep(0.01)
+
+# # Ninth plot: Tree Pyramid Adaptive Multiple Importance sampling
+# fig = plt.figure(figsize=(14, 3.5))
+# ax1 = plt.subplot2grid((1, 3), (0, 0), colspan=2, rowspan=1)
+# ax2 = plt.subplot2grid((1, 3), (0, 2), colspan=1, rowspan=1)
+#
+# # Initial sample
+# params = dict()
+# params["method"] = "simple"
+# params["resampling"] = "none"
+# params["kernel"] = "haar"
+# sampling_method = CTreePyramidSampling(space_min, space_max, params)
+# sampling_method.reset()
+#
+# batch_samples = 1
+#
+# sampling_method.importance_sample(target_dist, batch_samples)
+# xsim, weights = sampling_method._get_samples()
+#
+# for i in range(1, 200, 1):
+#     ax1.cla()
+#
+#     # Iterate the IS strategy and obtain samples and weights
+#     n_samples = len(xsim) + batch_samples
+#     sampling_method.importance_sample(target_dist, n_samples)
+#     xsim, weights = sampling_method._get_samples()
+#
+#     ax1.plot(x, target_dist.prob(x), "-", alpha=1, color="r", label="$\pi(x|D)$")
+#
+#     sampling_method.T.plot(ax2, names=False)
+#
+#     ax1.plot(x, sampling_method.prob(x), "--", alpha=1, color="r", label="$\hat{\pi}(x)$")
+#     ax1.plot(xsim, np.zeros_like(xsim), ".", alpha=1, color="r", label="$x_i \sim \pi(x|D) $")
+#
+#     ax1.legend()
+#     ax1.set_ylim(0, 3)
+#     ax2.axis("off")
+#     plt.savefig("TP_AIS" + os.sep + "tp_AIS_%d.png" % i)
+#     fig.canvas.draw()
+#     fig.canvas.flush_events()
+#     plt.show(block=False)
+#     time.sleep(0.01)
+
+# Tenth plot: Tree Pyramid Adaptive Multiple Importance sampling with resampling
+fig = plt.figure(figsize=(14, 3.5))
+ax1 = plt.subplot2grid((1, 3), (0, 0), colspan=2, rowspan=1)
+ax2 = plt.subplot2grid((1, 3), (0, 2), colspan=1, rowspan=1)
+
+# Initial sample
+params = dict()
+params["method"] = "simple"
+params["resampling"] = "leaf"
+params["kernel"] = "haar"
+sampling_method = CTreePyramidSampling(space_min, space_max, params)
+sampling_method.reset()
+
+batch_samples = 1
+
+sampling_method.importance_sample(target_dist, batch_samples)
+xsim, weights = sampling_method._get_samples()
 
 for i in range(1, 200, 1):
     ax1.cla()
-    proposal_dist = proposal_dists[np.random.randint(0, len(proposal_dists))]
 
-    xsim = np.concatenate((xsim, proposal_dist.sample(1)))
+    # Iterate the IS strategy and obtain samples and weights
+    n_samples = len(xsim) + batch_samples
+    sampling_method.importance_sample(target_dist, n_samples)
+    xsim, weights = sampling_method._get_samples()
 
     ax1.plot(x, target_dist.prob(x), "-", alpha=1, color="r", label="$\pi(x|D)$")
 
-    for j, Q in enumerate(proposal_dists):
-        ax1.plot(x, Q.prob(x), "--", alpha=1, color="g", label="$Q_%d(x)$" % j)
+    sampling_method.T.plot(ax2, names=False)
 
-    plt.vlines(xsim[-1], ymin=0, ymax=proposal_dist.prob(xsim[-1]), linewidth=1, linestyles="dashed", colors="g")
-
-    weights = np.concatenate((weights, target_dist.prob(xsim[-1]) / proposal_dist.prob(xsim[-1])))
-
-    kde.samples = xsim
-    kde.weights = weights
-    kde.fit()
-    ax1.plot(x, kde.prob(x), "--", alpha=1, color="r", label="$\hat{\pi}(x)$")
+    ax1.plot(x, sampling_method.prob(x), "--", alpha=1, color="r", label="$\hat{\pi}(x)$")
     ax1.plot(xsim, np.zeros_like(xsim), ".", alpha=1, color="r", label="$x_i \sim \pi(x|D) $")
 
     ax1.legend()
     ax1.set_ylim(0, 3)
-    plt.savefig("multipleIS" + os.sep + "multiple_IS_%d.png" % i)
+    ax2.axis("off")
+    plt.savefig("TP_AISr" + os.sep + "tp_AISr_%d.png" % i)
     fig.canvas.draw()
     fig.canvas.flush_events()
     plt.show(block=False)
     time.sleep(0.01)
-
-# Eight plot: Adaptive Multiple Importance sampling
 
 
 plt.show(block=True)
