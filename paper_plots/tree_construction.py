@@ -25,14 +25,16 @@ def display_samples(samples, samples_prob, ax=None, marker="x", alpha=1.0):
 
 # Figure Sampling algorithm evaluation sequence.
 # Left: Ground truth PDF.
-fig = plt.figure(figsize=(10, 7))
-ax1 = plt.subplot2grid((3, 3), (0, 0), colspan=2, rowspan=1)
-ax2 = plt.subplot2grid((3, 3), (0, 2), colspan=1, rowspan=1)
-ax3 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=1)
-ax4 = plt.subplot2grid((3, 3), (1, 2), colspan=1, rowspan=1)
-ax5 = plt.subplot2grid((3, 3), (2, 0), colspan=2, rowspan=1)
-ax6 = plt.subplot2grid((3, 3), (2, 2), colspan=1, rowspan=1)
-axes = [ax1, ax2, ax3, ax4, ax5, ax6]
+fig = plt.figure(figsize=(10, 10))
+ax1 = plt.subplot2grid((4, 3), (0, 0), colspan=2, rowspan=1)
+ax2 = plt.subplot2grid((4, 3), (0, 2), colspan=1, rowspan=1)
+ax3 = plt.subplot2grid((4, 3), (1, 0), colspan=2, rowspan=1)
+ax4 = plt.subplot2grid((4, 3), (1, 2), colspan=1, rowspan=1)
+ax5 = plt.subplot2grid((4, 3), (2, 0), colspan=2, rowspan=1)
+ax6 = plt.subplot2grid((4, 3), (2, 2), colspan=1, rowspan=1)
+ax7 = plt.subplot2grid((4, 3), (3, 0), colspan=2, rowspan=1)
+ax8 = plt.subplot2grid((4, 3), (3, 2), colspan=1, rowspan=1)
+axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
 
 space_min = t_tensor([-1])
 space_max = t_tensor([1])
@@ -85,9 +87,22 @@ display_samples(samples_acc, sampling_method.prob(samples_acc), ax=ax5, marker="
 sampling_method.T.plot(ax6)
 ax6.axis("off")
 
+## BOTTOM PLOT. WITH 50 SAMPLES
+samples_acc, samples_w = sampling_method.importance_sample(target_d=target_dist,
+                                                           n_samples=50,
+                                                           timeout=90)
+display_samples(samples_acc, np.zeros_like(samples_w), ax=ax7, marker="r|")
+displayPDF_1D(target_dist, space_min, space_max, ax=ax7, color="g")
+displayPDF_1D(sampling_method, space_min, space_max, ax=ax7, color="r")
+display_samples(samples_acc, sampling_method.prob(samples_acc), ax=ax7, marker="rx")
+sampling_method.T.plot(ax8, names=False)
+ax8.axis("off")
+
 ax1.set_ylabel("Density")
 ax3.set_ylabel("Density")
 ax5.set_ylabel("Density")
+ax7.set_ylabel("Density")
+
 ax1.set_xlim(-1, 1)
 plt.gcf().subplots_adjust(bottom=0.2)
 plt.tight_layout()

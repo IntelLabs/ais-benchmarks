@@ -185,10 +185,13 @@ class CTreePyramid:
         axis.plot(x, y)
 
     @staticmethod
-    def plot_node(axis, node, x, y):
+    def plot_node(axis, node, x, y, names=True):
         plot_span = 10
         if node.is_leaf():
-            CTreePyramid.draw_node(axis, x, y, "$\lambda_{%d}$" % node.leaf_idx, color="r")
+            if names:
+                CTreePyramid.draw_node(axis, x, y, "$\lambda_{%d}$" % node.leaf_idx, color="r")
+            else:
+                CTreePyramid.draw_node(axis, x, y, "", color="r")
         else:
             CTreePyramid.draw_node(axis, x, y, "", color="b")
             for idx,ch in enumerate(node.children):
@@ -200,11 +203,11 @@ class CTreePyramid:
                 x_ch = x + increment * idx - (plot_span/nodes_in_level) / 2
                 y_ch = -ch.level
                 axis.arrow(x, y, x_ch - x, y_ch - y, alpha=0.2, zorder=0)
-                CTreePyramid.plot_node(axis, ch, x_ch, y_ch)
+                CTreePyramid.plot_node(axis, ch, x_ch, y_ch, names)
 
-    def plot(self, axis):
+    def plot(self, axis, names=True):
         axis.cla()
-        self.plot_node(axis, self.root, 0, 0)
+        self.plot_node(axis, self.root, 0, 0, names)
 
 
 class CTreePyramidSampling(CMixtureISSamplingMethod):
