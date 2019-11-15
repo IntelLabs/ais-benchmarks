@@ -23,3 +23,6 @@ class CGaussianMixtureModel:
 
     def prob(self, samples):
         return self.gmm.prob(samples)
+
+    def sample(self, nsamples):
+        return self.gmm.sample(nsamples)

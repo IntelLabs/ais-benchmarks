@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from sampling_methods.base import t_tensor
 from distributions.CGaussianMixtureModel import CGaussianMixtureModel
 from sampling_methods.base import grid_sample_distribution
-from distributions.CGaussianMixtureModel import generateRandomGMM
-from distributions.CGaussianMixtureModel import generateEggBoxGMM
+from utils.misc import generateRandomGMM
+from utils.misc import generateEggBoxGMM
 
 
 def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes = None, alpha=1):
