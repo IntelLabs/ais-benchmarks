@@ -30,15 +30,15 @@ def log_print(text, file, mode='a+'):
 if __name__ == "__main__":
 
     time_eval = time.time()
-    ndims_list = [i for i in range(3, 5)]   # Number of dimensions of the space to test
+    ndims_list = [i for i in range(1, 5)]   # Number of dimensions of the space to test
     space_size = 1                          # Size of the domain for each dimension [0, n)
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
-    max_samples = 1000                      # Number of maximum samples to obtain from the algorithm
+    max_samples = 100                      # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
-    debug = False                           # Show plot with GT and sampling process for the 1D case
+    debug = True                           # Show plot with GT and sampling process for the 1D case
 
     rand_seed = None
     random.seed(rand_seed)
@@ -89,14 +89,13 @@ if __name__ == "__main__":
         sampling_method_list = list()
         params = dict()
 
-        # TODO: There is a bug with the DM weights. It does not work as expected
         # Tree pyramids (Deterministic Mixture, leaf, haar)
-        # params["method"] = "dm"
-        # params["resampling"] = "leaf"
-        # params["kernel"] = "haar"
-        # tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        # sampling_method_list.append(tp_sampling_method)
+        params["method"] = "dm"
+        params["resampling"] = "leaf"
+        params["kernel"] = "normal"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
 
         # TODO: This approach has to be reviewed as well. It is not implementing the algorithm as described in the paper
         # Tree pyramids (Mixture, leaf, haar)
@@ -155,7 +154,7 @@ if __name__ == "__main__":
         tp_sampling_method.name = "DM_AIS"
         sampling_method_list.append(tp_sampling_method)
 
-        # Disabled. Using multi nested instead
+        # # Disabled. Using multi nested instead
         # # Nested sampling
         # MCMC_proposal_dist = CMultivariateNormal(origin, np.diag(np.ones_like(space_max)) * 0.1)
         # params["proposal"] = MCMC_proposal_dist
