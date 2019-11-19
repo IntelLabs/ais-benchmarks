@@ -76,6 +76,18 @@ class CTreePyramidNode:
         self.value = self.weight * (self.radius ** len(self.center))
         self.weight_hist.append(self.weight)
 
+    def get_child(self, val):
+        """
+        :param val: Value used to determine the children that contains it
+        :return: children node that contains val
+        """
+        for c in self.children:
+            min_val = c.center - c.radius
+            max_val = c.center + c.radius
+            if np.all(min_val <= val) and np.all(val <= max_val):
+                return c
+        raise ValueError("Children value not found.")
+
     def __lt__(self, other):
         return self.value < other.value
 
@@ -113,6 +125,20 @@ class CTreePyramid:
             self.sampler = CMultivariateNormal(np.zeros(self.ndims), np.diag(np.ones(self.ndims)))
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
+
+    def find(self, val, prev=None):
+        """
+        :param val: value to find the node that contains it
+        :param prev: node that represents the subspace to search
+        :return: node that contains val
+        """
+        if prev is None:
+            prev = self.root
+
+        if prev is not None and prev.is_leaf():
+            return prev
+        else:
+            return self.find(val, prev=prev.get_child(val))
 
     def expand(self, node):
         assert node.is_leaf(), "Non leaf node expansion is not allowed: " + repr(node)
@@ -255,6 +281,27 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         super(self.__class__, self).reset()
         self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
 
+    def find_unique(self, samples):
+        """
+        Obtains the list of unique nodes that contain the samples passed in the samples parameter. Returns also a list
+        with the number of samples that belong to each node of the returned list of nodes.
+
+        :param samples: Samples to get the nodes.
+        :return: (nodes, freq) nodes: List of unique nodes that contain the samples.
+                               freq: List with the number of samples in each node
+        """
+        nodes = []
+        freqs = []
+        for s in samples:
+            node = self.T.find(s)
+            if node in nodes:
+                freqs[nodes.index(node)] += 1
+            else:
+                nodes.append(node)
+                freqs.append(1)
+
+        return nodes, freqs
+
     def importance_sample(self, target_d, n_samples, timeout=60):
         """
         Obtain n_samples importance samples with their importance weights
@@ -281,8 +328,23 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             self._update_model()
 
         while n_samples > self._get_nsamples() and elapsed_time < timeout:
-            lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
-            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
+            if self.method == "mixture":
+                # Generate new samples from the proposal. The number of samples to generate depends on the nodes
+                # that will be expanded. Each node generates 2^k samples. Therefore to obtain N samples we have to
+                # split X nodes. N = X*2^k, X = N / 2^k
+
+                n_samples_to_get = n_samples - self._get_nsamples()
+                nodes_to_expand = np.int(np.ceil(n_samples_to_get / 2**self.ndims))
+                samples = self.sample(nodes_to_expand)
+
+                # Find the unique nodes for the sample
+                nodes, freqs = self.find_unique(np.clip(samples, self.space_min, self.space_max))
+
+                # Expand them
+                new_nodes = self._expand_nodes(nodes, n_samples - self._get_nsamples())
+            else:
+                lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
+                new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
 
             for node in new_nodes:
                 if self.method == "simple" or self.method == "dm":

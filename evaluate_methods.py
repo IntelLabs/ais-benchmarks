@@ -35,7 +35,7 @@ if __name__ == "__main__":
     num_gaussians_gmm = 5                   # Number of mixture components in the GMM model
     gmm_sigma_min = 0.001                   # Miminum sigma value for the Normal family models
     gmm_sigma_max = 0.01                    # Maximum sigma value for the Normal family models
-    max_samples = 100                      # Number of maximum samples to obtain from the algorithm
+    max_samples = 1000                      # Number of maximum samples to obtain from the algorithm
     sampling_eval_samples = 2000            # Number fo samples from the true distribution used for comparison
     output_file = "test3_results.txt"       # Results log file
     debug = True                           # Show plot with GT and sampling process for the 1D case
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         target_dists.append(normal_dist)
 
         # Egg box distribution with GMMs
-        egg = generateEggBoxGMM(space_min + 0.2, space_max - 0.2, space_size / 3, 0.01)
+        egg = generateEggBoxGMM(space_min + 0.2, space_max - 0.2, space_size / 3, 0.001)
         egg.name = "egg"
         target_dists.append(egg)
         #######################################################
@@ -88,23 +88,6 @@ if __name__ == "__main__":
         # Configure sampling methods
         sampling_method_list = list()
         params = dict()
-
-        # Tree pyramids (Deterministic Mixture, leaf, haar)
-        params["method"] = "dm"
-        params["resampling"] = "leaf"
-        params["kernel"] = "normal"
-        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        sampling_method_list.append(tp_sampling_method)
-
-        # TODO: This approach has to be reviewed as well. It is not implementing the algorithm as described in the paper
-        # Tree pyramids (Mixture, leaf, haar)
-        # params["method"] = "mixture"
-        # params["resampling"] = "leaf"
-        # params["kernel"] = "haar"
-        # tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
-        # tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
-        # sampling_method_list.append(tp_sampling_method)
 
         # M-PMC
         params["K"] = 20  # Number of samples per proposal distribution
@@ -172,6 +155,22 @@ if __name__ == "__main__":
         mnested_sampling_method = CMultiNestedSampling(space_min, space_max, params)
         mnested_sampling_method.name = "multi-nested"
         sampling_method_list.append(mnested_sampling_method)
+
+        # Tree pyramids (Deterministic Mixture, leaf, haar)
+        params["method"] = "dm"
+        params["resampling"] = "leaf"
+        params["kernel"] = "normal"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
+
+        # Tree pyramids (Mixture, leaf, haar)
+        params["method"] = "mixture"
+        params["resampling"] = "leaf"
+        params["kernel"] = "haar"
+        tp_sampling_method = CTreePyramidSampling(space_min, space_max, params)
+        tp_sampling_method.name = "TP_" + params["method"] + "_" + params["resampling"] + "_" + params["kernel"]
+        sampling_method_list.append(tp_sampling_method)
 
         # Tree pyramids (simple, leaf, haar)
         params["method"] = "simple"
