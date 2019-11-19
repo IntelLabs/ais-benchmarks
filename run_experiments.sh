@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-trials=`seq 0 $1`
+trials=`seq $1 $2`
 
 date
 for i in $trials
