@@ -1,0 +1,32 @@
+# Define the target densities used for evaluation and label their categories and provide evaluation parameters
+targets:
+    - name: normal
+      type: distributions.CMultivariateNormal.CMultivariateNormal
+      params: {mean: [0.0], cov: [[1.0]]} #WARNING!! Notice the double bracket when defining the cov
+      domain: {min: [-1.0], max: [1.0]}
+      batch_size: 2
+      nsamples: 1000
+      nsamples_eval: 2000
+      tags: [low_kurtosis, low_skew, unimodal]
+
+    - name: gmm
+      type: distributions.CGaussianMixtureModel.CGaussianMixtureModel
+      params: {mu: [[0.0], [-0.2]], sigma: [[0.01], [0.001]], weights:[0.5, 0.5]} #WARNING!! Notice the double bracket when defining the cov
+      domain: {min: [-1.0], max: [1.0]}
+      batch_size: 2
+      nsamples: 1000
+      nsamples_eval: 2000
+      tags: [high_kurtosis, low_skew, multimodal, close_modes]
+
+
+metrics: [NESS, JSD, T]
+
+
+display:
+    value: false            # Display 1D and 2D density plots on the screen
+    display_path: results/  # If value is true, save the plots as a .png in the path
+
+output:
+    file: results.txt
+    make_plots: false
+    plots_path: plot_results/

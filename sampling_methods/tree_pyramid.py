@@ -237,7 +237,7 @@ class CTreePyramid:
 
 
 class CTreePyramidSampling(CMixtureISSamplingMethod):
-    def __init__(self, space_min, space_max, params):
+    def __init__(self, params):
         """
         Initialize the Tree Pyramid sampling with the specific parameters
         :param space_min: Lower space domain values
@@ -264,7 +264,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                 - haar: Uniform distribution with min=node.center-node.radius and max=node.center-node.radius.
                 - normal: Normal distribution with mean=node.center and std=node.radius.
         """
-        super(self.__class__, self).__init__(space_min, space_max)
+        super(self.__class__, self).__init__(params)
         self.method = params["method"]
         assert self.method in ["simple", "dm", "mixture"], "Invalid method."
 
@@ -274,8 +274,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         self.kernel = params["kernel"]
         assert self.kernel in ["normal", "haar"], "Invalid kernel type."
 
-        self.T = CTreePyramid(space_min, space_max, kernel=self.kernel)
-        self.ndims = len(space_min)
+        self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
 
     def reset(self):
         super(self.__class__, self).reset()

@@ -8,6 +8,7 @@ class CGaussianMixtureModel:
         self.models = []
         self.mu = mu
         self.sigma = sigma
+        self.dims = len(mu[0])
         for mean, cov in zip(mu, sigma):
             self.models.append(CMultivariateNormal(mean, np.diag(cov)))
 

@@ -8,20 +8,21 @@ from distributions.CMixtureModel import CMixtureModel
 
 
 class CMixturePMC(CMixtureISSamplingMethod):
-    def __init__(self, space_min, space_max, params):
+    def __init__(self, params):
         """
         Implementation of Mixture Particle Monte Carlo Adaptive Importance Sampling algorithm
         https://arxiv.org/pdf/0710.4242.pdf
 
-        :param space_min: Space lower boundary
-        :param space_max: Space upper boundary
         :param params:
+            - space_min: Space lower boundary
+            - space_max: Space upper boundary
+            - dims: Number of dimensions
             - K: Number of samples per proposal
             - N: Number of proposals
             - J: Maximum number of iterations when sampling
             - sigma: Initial sigma for the mixture components
         """
-        super(self.__class__, self).__init__(space_min, space_max)
+        super(self.__class__, self).__init__(params)
         self.K = params["K"]            # in the paper N
         self.N = params["N"]            # in the paper D
         self.J = params["J"]            # in the paper t
@@ -29,7 +30,6 @@ class CMixturePMC(CMixtureISSamplingMethod):
         self.proposals = []             # q_d(\theta_d)
         self.wproposals = []            # \alpha_d
         self.model = None
-        self.dims = len(space_max)
         self.reset()
 
     def reset(self):
@@ -67,7 +67,7 @@ class CMixturePMC(CMixtureISSamplingMethod):
 
             # Failsafe for collapsing or exploding covariances
             if np.any(np.isnan(cov)) or np.any(cov > 1):
-                cov = np.diag(np.ones(self.dims) * 0.01)
+                cov = np.diag(np.ones(self.ndims) * 0.01)
 
             self.proposals[d].set_moments(mu, cov)
 

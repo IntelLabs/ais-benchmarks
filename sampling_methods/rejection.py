@@ -7,8 +7,8 @@ from utils.plot_utils import plot_pdf2d
 
 
 class CRejectionSampling(CMixtureSamplingMethod):
-    def __init__(self, space_min, space_max, params):
-        super(self.__class__, self).__init__(space_min, space_max)
+    def __init__(self, params):
+        super(self.__class__, self).__init__(params)
         self.proposal_dist = params["proposal"]
         self.scaling = params["scaling"]
         self.bw = params["kde_bw"]

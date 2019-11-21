@@ -1,0 +1,16 @@
+# Define the methods to be evaluated and its parameter configuration
+methods:
+    - name: rejection
+      type: sampling_methods.rejection.CRejectionSampling
+      params:
+        scaling: 1
+        proposal: uniform
+        kde_bw: 0.01
+
+    - name: mcmc_mh
+      type: sampling_methods.metropolis_hastings.CMetropolisHastings
+      params:
+        n_burnin: 10
+        n_steps: 2
+        kde_bw: 0.01
+        proposal_sigma: 0.1

@@ -7,28 +7,30 @@ from utils.plot_utils import plot_pdf2d
 
 
 class CMetropolisHastings(CMixtureSamplingMethod):
-    """
-    Class implementing metropolis-hastings algorithm. Usages:
-        - Generating samples from an unknown distribution which likelihood can be evaluated.
-        - Integral computations of high dimensional functions
-
-    PARAMETERS:
-    n_steps: number of steps between samples. This can be used to reduce the correlation of subsequent samples.
-
-    n_burnin: number of samples considered as burn-in. This is the number of MH steps that it takes to the MCMChain
-                to converge to the stationary distribution where samples can be produced
-
-    proposal_d: Proposal distribution used to propose the MC moves during the Markov Chain execution, i.e. P(x'|x).
-                must implement the .sample() method. Proposals are computed as x' = x + proposal_d.sample()
-    """
     REJECT = 0
     ACCEPT = 1
     BURN_IN = 2
     DECORRELATION = 3
     SAMPLE = 4
 
-    def __init__(self, space_min, space_max, params):
-        super(self.__class__, self).__init__(space_min, space_max)
+    def __init__(self, params):
+        """
+        Class implementing metropolis-hastings algorithm. Usages:
+            - Generating samples from an unknown distribution which likelihood can be evaluated.
+            - Integral computations of high dimensional functions
+
+        :param params:
+            - space_min: Space lower boundary
+            - space_max: Space upper boundary
+            - dims: Number of dimensions
+            - n_steps: number of steps between samples. This can be used to reduce the correlation of subsequent samples
+            - n_burnin: number of samples considered as burn-in. This is the number of MH steps that it takes to the
+                        MCMChain to converge to the stationary distribution where samples can be produced.
+            -proposal_d: Proposal distribution used to propose the MC moves during the Markov Chain execution,
+                         i.e. P(x'|x). must implement the .sample() method. Proposals are computed
+                         as x' = x + proposal_d.sample()
+        """
+        super(self.__class__, self).__init__(params)
         self.proposal_d = params["proposal_d"]
         self.n_steps = params["n_steps"]
         self.n_burnin = params["n_burnin"]

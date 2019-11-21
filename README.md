@@ -100,20 +100,20 @@ to be evaluated using the benchmark file.
 ```
 # Define the methods to be evaluated and its parameter configuration
 methods:
-    - reject:
-        type: CRejectionSampling
-        params:
-            scaling: 1
-            proposal: uniform
-            kde_bw: 0.01
+    - name: rejection
+      type: CRejectionSampling
+      params:
+        scaling: 1
+        proposal: uniform
+        kde_bw: 0.01
 
-    - MCMC_MH:
-        type: CMetropolisHastings
-        params: 
-            n_burnin: 10 
-            n_steps: 2 
-            kde_bw: 0.01 
-            proposal_sigma: 0.1
+    - name: mcmc_mh
+      type: CMetropolisHastings    
+      params: 
+        n_burnin: 10 
+        n_steps: 2 
+        kde_bw: 0.01 
+        proposal_sigma: 0.1
 ```
 
 A benchmark can be executed on the desired methods by using the appropriate script: 
@@ -197,7 +197,7 @@ sampling in general mixture classes.Statistics and Computing, 18(4):447–459, 2
 Arxiv astro physics, 2014
 
 [7] George Casella, Christian P. Robert, and Martin T. Wells.Generalized Accept-Reject samplingschemes, volume 
-Volume 45 ofLecture Notes–Monograph Series, pages 342–347. Institute ofMathematical Statistics, Beachwood, Ohio, 
+Volume 45 ofLecture Notes–Monograph Series, pages 342–347. Institute of Mathematical Statistics, Beachwood, Ohio, 
 USA, 2004.
 
 [8] Luca Martino, Victor Elvira, David Luengo, and Jukka Corander.  An adaptive populationimportance sampler: 
