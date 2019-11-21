@@ -1,5 +1,16 @@
 # Define the target densities used for evaluation and label their categories and provide evaluation parameters
 targets:
+    - name: gmm
+      type: distributions.CGaussianMixtureModel.CGaussianMixtureModel
+      params: {mu: [[0.0, 0.0], [-0.2, 0.4]], sigma: [[0.01, 0.1], [0.001, 0.01]], weights:[0.5, 0.5]} #WARNING!! Notice the double bracket when defining the cov
+      space_size: 1.0
+      batch_size: 2
+      nsamples: 200
+      nsamples_eval: 2000
+      domain_min: np.array([-1,-1])
+      domain_max: np.array([1,1])
+      tags: [high_kurtosis, low_skew, multimodal, close_modes]
+
     - name: normal
       type: distributions.CMultivariateNormal.CMultivariateNormal
       params: {mean: [0.0], cov: [[0.2]]} #WARNING!! Notice the double bracket when defining the cov
@@ -7,6 +18,8 @@ targets:
       batch_size: 2
       nsamples: 100
       nsamples_eval: 2000
+      domain_min: np.array([-1])
+      domain_max: np.array([1])
       tags: [low_kurtosis, low_skew, unimodal]
 
     - name: gmm
@@ -16,6 +29,8 @@ targets:
       batch_size: 2
       nsamples: 100
       nsamples_eval: 2000
+      domain_min: np.array([-1])
+      domain_max: np.array([1])
       tags: [high_kurtosis, low_skew, multimodal, close_modes]
 
 

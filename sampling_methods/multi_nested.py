@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 import time
 import matplotlib.cm as cm
 import sys
+import distributions
 
 
 class CEllipsoid:
@@ -76,7 +77,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         """
         super(self.__class__, self).__init__(params)
         self.range = self.space_max - self.space_min
-        self.proposal_dist = params["proposal"]
+        self.proposal_dist = eval(params["proposal"])
         self.N = params["N"]
         self.bw = np.array([params["kde_bw"]])
 

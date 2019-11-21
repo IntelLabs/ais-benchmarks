@@ -132,9 +132,9 @@ if __name__ == "__main__":
         sampling_method_list.append(tp_sampling_method)
 
         # Deterministic Mixture Adaptive Importance Sampling
-        params["K"] = 5  # Number of samples per proposal distribution
-        params["N"] = 10  # Number of proposal distributions
-        params["J"] = 1000
+        params["K"] = 5     # Number of samples per proposal distribution
+        params["N"] = 10    # Number of proposal distributions
+        params["J"] = 1000  # Limit number of samples
         params["sigma"] = 0.01  # Scaling parameter of the proposal distributions
         tp_sampling_method = CDeterministicMixtureAIS(params)
         tp_sampling_method.name = "DM_AIS"
