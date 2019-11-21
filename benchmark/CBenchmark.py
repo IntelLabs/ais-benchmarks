@@ -41,7 +41,7 @@ class CBenchmark(object):
 
             params = []
             for p in method["params"].items():
-                params.append('"%s":"%s"' % (p[0], p[1]))
+                params.append('"%s":%s' % (p[0], p[1]))
                 params.append(",")
 
             params_str = ""
@@ -92,7 +92,7 @@ class CBenchmark(object):
 
             self.targets.append(target_dist)
             self.ndims.append(target_dist.dims)
-            self.space_size.append([np.array(target["domain"]["min"]), np.array(target["domain"]["max"])])
+            self.space_size.append(np.array(target["space_size"]))
 
     def run(self):
         assert len(self.targets) > 0
@@ -102,10 +102,10 @@ class CBenchmark(object):
         # TODO: Use the display plot paths
         # TODO: Use the metrics
 
-        for target_dist, ndims, space_size, max_samples_dim in zip(self.targets, self.ndims, self.space_size, self.nsamples):
+        for target_dist, ndims, space_size, max_samples_dim, eval_sampl in zip(self.targets, self.ndims, self.space_size, self.nsamples, self.eval_sampl):
             for sampling_method in self.methods:
                 print("EVALUATING: %s with %d max samples %d dims" % (sampling_method.name, max_samples_dim, ndims))
                 sampling_method.reset()
                 evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples_dim,
-                                self.eval_sampl, max_sampling_time=self.timeout,
+                                eval_sampl, max_sampling_time=self.timeout,
                                 debug=self.display, filename=self.output_file)

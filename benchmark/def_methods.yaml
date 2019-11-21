@@ -4,8 +4,11 @@ methods:
       type: sampling_methods.rejection.CRejectionSampling
       params:
         scaling: 1
-        proposal: uniform
+        proposal: distributions.CMultivariateUniform.CMultivariateUniform(np.array([0.0]),np.array([1.0]))
         kde_bw: 0.01
+        space_min: np.array([-1.0])
+        space_max: np.array([1.0])
+        dims: 1
 
     - name: mcmc_mh
       type: sampling_methods.metropolis_hastings.CMetropolisHastings
@@ -13,4 +16,7 @@ methods:
         n_burnin: 10
         n_steps: 2
         kde_bw: 0.01
-        proposal_sigma: 0.1
+        proposal_d: distributions.CMultivariateNormal.CMultivariateNormal(np.array([0.0]),np.array([[0.01]]))
+        space_min: np.array([-1.0])
+        space_max: np.array([1.0])
+        dims: 1
