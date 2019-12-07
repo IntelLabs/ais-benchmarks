@@ -9,11 +9,14 @@ from distributions.CMixtureModel import CMixtureModel
 
 
 class CSamplingMethod(metaclass=ABCMeta):
-    def __init__(self, space_min, space_max):
-        assert space_max.shape == space_min.shape
-        self.space_min = space_min
-        self.space_max = space_max
-        self.ndims = len(space_max)
+    def __init__(self, params):
+        self.space_min = params["space_min"]
+        self.space_max = params["space_max"]
+        self.ndims = params["dims"]
+
+        assert self.space_max.shape == self.space_min.shape
+        assert self.ndims == len(self.space_max)
+
         self._num_pi_evals = 0
         self._num_q_evals = 0
         self._num_q_samples = 0
@@ -104,8 +107,8 @@ class CSamplingMethod(metaclass=ABCMeta):
 
 
 class CMixtureSamplingMethod(CSamplingMethod):
-    def __init__(self, space_min, space_max):
-        super(CMixtureSamplingMethod, self).__init__(space_min, space_max)
+    def __init__(self, params):
+        super(CMixtureSamplingMethod, self).__init__(params)
         self.model = None
 
     def reset(self):
@@ -182,8 +185,8 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
 
 class CMixtureISSamplingMethod(CMixtureSamplingMethod):
-    def __init__(self, space_min, space_max):
-        super(CMixtureISSamplingMethod, self).__init__(space_min, space_max)
+    def __init__(self, params):
+        super(CMixtureISSamplingMethod, self).__init__(params)
 
     def get_NESS(self):
         return self.get_approx_NESS()

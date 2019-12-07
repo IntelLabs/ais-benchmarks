@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 import time
 import matplotlib.cm as cm
 import sys
+import distributions
 
 
 class CEllipsoid:
@@ -63,10 +64,20 @@ class CEllipsoid:
 
 
 class CMultiNestedSampling(CMixtureSamplingMethod):
-    def __init__(self, space_min, space_max, params):
-        super(self.__class__, self).__init__(space_min, space_max)
-        self.range = space_max - space_min
-        self.proposal_dist = params["proposal"]
+    def __init__(self, params):
+        """
+        Implementation of multi nested sampling algorithm.
+        F. Feroz, M.P. Hobson, E. Cameron, and Pettitt A.N.  Importance Nested Sampling and the MULTINEST Algorithm.
+        Arxiv astro physics, 2014
+
+        :param params:
+            - space_min: Space lower boundary
+            - space_max: Space upper boundary
+            - dims: Number of dimensions
+        """
+        super(self.__class__, self).__init__(params)
+        self.range = self.space_max - self.space_min
+        self.proposal_dist = eval(params["proposal"])
         self.N = params["N"]
         self.bw = np.array([params["kde_bw"]])
 

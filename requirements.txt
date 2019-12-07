@@ -3,5 +3,6 @@ scipy
 scikit-learn
 matplotlib
 pillow
+pyyaml
 opencv
 python3-tk

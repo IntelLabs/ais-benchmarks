@@ -128,7 +128,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             plot_pdf(ax, target_dist, space_min, space_max, alpha=1.0, options="b-", resolution=0.01, label="$\pi(x)$")
 
             plt.xlim(space_min, space_max)
-            plt.ylim(ax.get_ylim())
+            plt.ylim(0, ax.get_ylim()[1])
 
         elif ndims == 2:
             fig = plt.figure(figsize=(10, 8))
