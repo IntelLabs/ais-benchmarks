@@ -1,15 +1,16 @@
 import numpy as np
 import time
 
+import distributions
 from sampling_methods.base import CMixtureSamplingMethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 
 
 class CRejectionSampling(CMixtureSamplingMethod):
-    def __init__(self, space_min, space_max, params):
-        super(self.__class__, self).__init__(space_min, space_max)
-        self.proposal_dist = params["proposal"]
+    def __init__(self, params):
+        super(self.__class__, self).__init__(params)
+        self.proposal_dist = eval(params["proposal"])
         self.scaling = params["scaling"]
         self.bw = params["kde_bw"]
 

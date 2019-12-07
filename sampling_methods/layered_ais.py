@@ -8,12 +8,13 @@ from distributions.CMixtureModel import CMixtureModel
 
 
 class CLayeredAIS(CMixtureISSamplingMethod):
-    def __init__(self, space_min, space_max, params):
+    def __init__(self, params):
         """
         Implementation of Deterministic Mixture Adaptive Importance Sampling algorithm
-        :param space_min: Space lower boundary
-        :param space_max: Space upper boundary
         :param params:
+            - space_min: Space lower boundary
+            - space_max: Space upper boundary
+            - dims: Number of dimensions
             - K: Number of samples per proposal
             - N: Number of proposals
             - J: Maximum number of iterations when sampling
@@ -21,7 +22,7 @@ class CLayeredAIS(CMixtureISSamplingMethod):
             - sigma: Initial sigma for the mixture components
             - mh_sigma: Sigma for the transition distribution used for the mcmc adaptation steps
         """
-        super(self.__class__, self).__init__(space_min, space_max)
+        super(self.__class__, self).__init__(params)
         self.K = params["K"]
         self.N = params["N"]
         self.J = params["J"]

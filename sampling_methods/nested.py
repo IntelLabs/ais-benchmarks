@@ -3,15 +3,15 @@ import time
 from sampling_methods.base import CMixtureSamplingMethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
-
+import distributions
 
 # TODO: Implement convergence test and futher generate samples from the approximated distribution
 class CNestedSampling(CMixtureSamplingMethod):
-    def __init__(self, space_min, space_max, params):
-        super(self.__class__, self).__init__(space_min, space_max)
-        self.range = space_max - space_min
+    def __init__(self, params):
+        super(self.__class__, self).__init__(params)
+        self.range = self.space_max - self.space_min
 
-        self.proposal_dist = params["proposal"]
+        self.proposal_dist = eval(params["proposal"])
         self.N = params["N"]
         self.bw = np.array([params["kde_bw"]])
 
@@ -21,6 +21,7 @@ class CNestedSampling(CMixtureSamplingMethod):
     def reset(self):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
 
+
     def resample(self, sample, value, pdf, timeout):
         new_sample = np.clip(self.proposal_dist.sample() + sample, self.space_min, self.space_max)
         self._num_q_samples += 1
@@ -28,6 +29,8 @@ class CNestedSampling(CMixtureSamplingMethod):
         self._num_pi_evals += 1
         elapsed_time = 0
         t_ini = time.time()
+        # print("Ellipsoid volume: %f. Converged: " % ellipsoid.volume, not ellipsoid.volume > ellipsoid_converged_radius**self.ndims)
+        # while value > new_value and elapsed_time < timeout and ellipsoid.volume > ellipsoid_converged_radius**self.ndims:
         while value > new_value and elapsed_time < timeout:
             new_sample = self.proposal_dist.sample() + sample
             self._num_q_samples += 1
