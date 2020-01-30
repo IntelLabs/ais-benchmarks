@@ -32,7 +32,7 @@ def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, 
             indices = indices & (data[sel] == val)
 
         x_data = data[indices].groupby(xaxis)[xaxis].mean()
-        y_data = data[indices].groupby(xaxis)[yaxis]
+        y_data = data[indices].groupby(xaxis)[yaxis]-
         if len(y_data) == 0:
             continue
         y_err = np.sqrt(y_data.mean().rolling(window=10).std())
@@ -96,16 +96,16 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
 
 
 # dims samples kl_kde bhat_kde kl_nn bhat_nn time method final_samples
-data = pd.read_table("results.txt", delim_whitespace=True)
+data = pd.read_table("raw_results/results.txt", delim_whitespace=True)
 
-methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "DM_AIS", "LAIS", "nested", "rejection"]
-labels = ["TP_AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[26]", "LAIS[3]", "nested[28]", "rejection"]
+methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "DM_AIS", "LAIS", "multi-nested"]
+labels = ["TP_AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[26]", "LAIS[3]", "multi-nest[27]"]
 
 # methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "rejection", "DM_AIS", "LAIS", "nested",
 #            "TP_simple_none_haar", "TP_simple_leaf_normal"]
 
 plot_mode = "lines"
-dimensions = [1,2,3,4,5,6,7,8,9]
+dimensions = [1,2,3,4,5,6,7]
 # dimensions = [1,2,3]
 dists = ["gmm", "normal", "egg"]
 path = "results" + os.sep
