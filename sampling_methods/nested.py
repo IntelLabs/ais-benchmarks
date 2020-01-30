@@ -26,6 +26,7 @@ class CNestedSampling(CMixtureSamplingMethod):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
         self.L = np.array([])
         self.Z = 0
+        super(CNestedSampling, self).reset()
 
     def resample(self, sample, value, pdf, timeout):
         new_sample = np.clip(self.proposal_dist.sample() + sample, self.space_min, self.space_max)

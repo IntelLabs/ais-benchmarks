@@ -85,15 +85,14 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
 
         # Obtain initial samples from a uniform prior distribution
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
-        self.Z = None
-        self.L = None
-
-        self.reset()
+        self.Z = 0
+        self.L = np.array([])
 
     def reset(self):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
         self.L = np.array([])
         self.Z = 0
+        super(CMultiNestedSampling, self).reset()
 
     def get_NESS(self):
         ESS = np.exp(-np.sum(self.weights * np.log(self.weights)))
