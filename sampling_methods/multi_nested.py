@@ -56,7 +56,7 @@ class CEllipsoid:
             scale = np.std(points)
             if scale <= 0:
                 print("Ellipsoid fit failed. Negative or zero STD. Using 1.", file=sys.stderr)
-                ell = CEllipsoid(loc, scale * inflate)
+                ell = CEllipsoid(loc, np.diag(np.ones(len(loc)) * inflate))
                 return ell
 
         ell = CEllipsoid(loc, scale*inflate)
@@ -85,16 +85,26 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
 
         # Obtain initial samples from a uniform prior distribution
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
+        self.Z = None
+        self.L = None
+
+        self.reset()
 
     def reset(self):
         self.live_points = np.random.uniform(0, 1, size=(self.N, len(self.space_max))) * self.range + self.space_min
+        self.L = np.array([])
+        self.Z = 0
+
+    def get_NESS(self):
+        ESS = np.exp(-np.sum(self.weights * np.log(self.weights)))
+        return ESS / len(self.samples)
 
     def resample(self, value, pdf, ellipsoid, timeout=60, ellipsoid_converged_radius=1e-3):
         new_sample = np.clip(ellipsoid.sample(), self.space_min, self.space_max)
 
         self._num_q_samples += 1
 
-        new_value = pdf.logprob(new_sample)
+        new_value = pdf.prob(new_sample)
         self._num_pi_evals += 1
         elapsed_time = 0
         t_ini = time.time()
@@ -102,7 +112,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         while value > new_value and elapsed_time < timeout and ellipsoid.volume > ellipsoid_converged_radius**self.ndims:
             new_sample = ellipsoid.sample()
             self._num_q_samples += 1
-            new_value = pdf.logprob(new_sample)
+            new_value = pdf.prob(new_sample)
             self._num_pi_evals += 1
             elapsed_time = time.time() - t_ini
 
@@ -175,25 +185,18 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         points = self.live_points
-        values = target_d.logprob(points)
+        values = target_d.prob(points)
         self._num_pi_evals += len(points)
 
         # Perform recursive clustering on the sample points
         clusters, c_ellipsoids = self.recursive_clustering(points)
 
-        # Perform the nested sampling algorithm on each cluster
+        # Perform nested sampling on each cluster
         n_samples_ell = int((n_samples-len(self.samples)) / len(c_ellipsoids))
         n_samples_ell = max(n_samples_ell, 1)
         for idx, c_ellipsoid in enumerate(c_ellipsoids):
-            L = np.zeros(n_samples_ell)
-            X = np.zeros(n_samples_ell)
-            W = np.zeros(n_samples_ell)
-            Z = 0
             for i in range(n_samples_ell):
-                L[i] = np.min(values[c_ellipsoid.indices])
-                X[i] = np.exp(-i / self.N)
-                W[i] = X[i-1] - X[i]
-                Z = Z + L[i] * W[i]
+                Lmin = np.min(values[c_ellipsoid.indices])
 
                 # Add the point with lowest likelihood to the resulting sample set
                 g_indices = np.argwhere(c_ellipsoid.indices == True).flatten()
@@ -202,12 +205,22 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
                 min_idx = g_indices[np.argmin(values[c_ellipsoid.indices])]
                 self.samples = np.vstack((self.samples, points[min_idx])) if self.samples.size else points[min_idx].reshape(1,-1)
 
+                # Keep the likelihood value associated with the sample
+                self.L = np.concatenate((self.L, np.array([Lmin]))) if self.L.size else np.array([Lmin])
+
                 # Replace the point with lowest likelihood with a new sample from the proposal distribution
-                points[min_idx], values[min_idx] = self.resample(L[i], target_d, c_ellipsoid, timeout)
+                points[min_idx], values[min_idx] = self.resample(Lmin, target_d, c_ellipsoid, timeout)
+
+        # Update Z (evidence)
+        X = np.array([np.exp(-i / self.N) for i in range(len(self.samples))])
+        W = np.array([X[i - 1] - X[i] for i in range(1, len(self.samples))])
+        W = np.concatenate((np.array([X[0]]), W))
+        Z = np.sum(self.L * W)
+
+        self.weights = (self.L * W) / Z
 
         self.live_points = points
         self.ellipsoids = c_ellipsoids
-        self.weights = np.ones(len(self.samples)) / len(self.samples)
         self._update_model()
         return self.samples, self.weights
 
