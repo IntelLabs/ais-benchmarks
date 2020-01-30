@@ -206,7 +206,7 @@ if __name__ == "__main__":
         #######################################################
         for target_dist in target_dists:
             for sampling_method in sampling_method_list:
-                print("EVALUATING: %s with %d max samples %d dims" % (sampling_method.name, max_samples_dim, ndims))
+                print("EVALUATING %s | dims: %d | target: %s | max samples: %d " % (sampling_method.name, ndims, target_dist.name, max_samples_dim))
                 # print("dims output_samples JSD bhat ev_mse NESS time method target_d accept_rate q_samples q_evals pi_evals")
                 sampling_method.reset()
                 t_ini = time.time()
