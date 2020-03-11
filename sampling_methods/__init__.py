@@ -1,6 +1,5 @@
 import sampling_methods.base
 import sampling_methods.dm_ais
-import sampling_methods.evaluation
 import sampling_methods.layered_ais
 import sampling_methods.m_pmc
 import sampling_methods.metropolis_hastings

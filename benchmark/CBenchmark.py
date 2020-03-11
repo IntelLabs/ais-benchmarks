@@ -1,9 +1,7 @@
 import yaml
 import numpy as np
-import distributions
-import sampling_methods
 
-from sampling_methods.evaluation import evaluate_method
+from benchmark.evaluation import evaluate_method
 
 
 class CBenchmark(object):

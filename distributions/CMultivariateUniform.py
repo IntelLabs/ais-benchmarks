@@ -1,13 +1,14 @@
 import numpy as np
+from distributions.base import CDistribution
 
 
-class CMultivariateUniform:
-    def __init__(self, center, radius):
-        self.dims = len(center)
-
-        self.center = center
-        self.radius = radius
-        self.volume = np.prod(np.array([radius*2]*len(center)))
+class CMultivariateUniform(CDistribution):
+    def __init__(self, params):
+        super(self.__class__, self).__init__(params)
+        self.center = params["center"]
+        self.radius = params["radius"]
+        self.dims = len(self.center)
+        self.volume = np.prod(np.array([self.radius*2]*self.dims))
 
     def sample(self, n_samples=1):
         minval = self.center - self.radius
@@ -18,7 +19,7 @@ class CMultivariateUniform:
             res = np.vstack((res, np.random.uniform(low=minval, high=maxval, size=None)))
         return res.reshape(n_samples, self.dims)
 
-    def logprob(self, samples):
+    def log_prob(self, samples):
         return np.log(self.prob(samples))
 
     def prob(self, samples):
@@ -36,6 +37,18 @@ class CMultivariateUniform:
         res[np.logical_not(inliers.flatten())] = 0
         return res
 
+    def condition(self, dist):
+        pass
+
+    def integral(self, a, b):
+        pass
+
+    def marginal(self, dim):
+        pass
+
+    def support(self):
+        pass
+
 
 if __name__ == "__main__":
     import torch
@@ -46,7 +59,8 @@ if __name__ == "__main__":
     cov = np.array([0.1, 1, 1])
 
     dist1 = torch.distributions.Uniform(t_tensor(mean), t_tensor(cov))
-    dist2 = CMultivariateUniform(mean, cov)
+
+    dist2 = CMultivariateUniform({"center": mean, "radius": cov})
 
     sample = dist2.sample(10000)
     t1 = time.time()
