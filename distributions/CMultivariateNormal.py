@@ -36,7 +36,7 @@ class CMultivariateNormal:
     def sample(self, n_samples=1):
         return np.random.multivariate_normal(self.mean.flatten(), self.cov, size=n_samples)
 
-    def logprob(self, samples):
+    def log_prob(self, samples):
         if len(samples.shape) == 1:
             samples = samples.reshape(1, self.dims, 1)
         elif len(samples.shape) == 2:
@@ -55,7 +55,7 @@ class CMultivariateNormal:
     #     return self.term1 + self.term2 + term3
 
     def prob(self, samples):
-        return np.exp(self.logprob(samples))
+        return np.exp(self.log_prob(samples))
 
 
 if __name__ == "__main__":
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     # print("Logprob torch:",probs1)
     print("Logprob torch time: ", probs1_time)
     t1 = time.time()
-    probs2 = dist2.logprob(sample2)
+    probs2 = dist2.log_prob(sample2)
     probs2_time = time.time() - t1
     # print("Logprob np:",probs2)
     print("Logprob np time: ", probs2_time)

@@ -94,8 +94,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
 
             # Compute the assymetric term Q(x'|x)/Q(x|x'). If the proposal distribution is symmetric
             # Q(x'|x) = Q(x|x') and the assymetric term is 1. In its log form: log(Q(x'|x)) - log(Q(x|x'))
-            hastings_term = self.proposal_d.logprob(x_old - x_new) \
-                            - self.proposal_d.logprob(x_new - x_old)
+            hastings_term = self.proposal_d.logprob(x_old - x_new) - self.proposal_d.logprob(x_new - x_old)
             self._num_q_evals += 2
 
             # Obtain the acceptance ratio. Notice we are working with logs, therefore the sum instead of the product
@@ -167,11 +166,11 @@ class CMetropolisHastings(CMixtureSamplingMethod):
 
             res.extend(ax.plot(sample, y, style))
 
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01,label="$q(x)$"))
-        res.extend(ax.plot(0, 0, "ro", label="burn-in"))
-        res.extend(ax.plot(0, 0, "r.", label="rejected"))
-        res.extend(ax.plot(0, 0, "go", label="intermediate"))
-        res.extend(ax.plot(0, 0, "gx", label="sample"))
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "ro", label="burn-in"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "r.", label="rejected"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "go", label="intermediate"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "gx", label="sample"))
         return res
 
     def draw2d(self, ax):
@@ -192,23 +191,3 @@ class CMetropolisHastings(CMixtureSamplingMethod):
         res.extend(ax.plot(self.space_min[0]-1, self.space_min[1]-1, "g.", c="g", marker=".", label="intermediate"))
         # res.extend(ax.plot([0], [0], "ro", c="r", marker="o", label="sample"))
         return res
-
-    # Draw 2d and use 3D height for the prob
-    # def draw2d(self, ax):
-    #     res = []
-    #     for sample, type in zip(self.trajectory_samples, self.trajectory_types):
-    #         if type == self.BURN_IN:
-    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker="o", alpha=0.2))
-    #         elif type == self.REJECT:
-    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="r", marker=".", alpha=0.2))
-    #         elif type == self.DECORRELATION:
-    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker=".", alpha=0.2))
-    #         elif type == self.SAMPLE:
-    #             res.extend(ax.plot([sample[0]], [sample[1]], 0, c="g", marker="o"))
-    #
-    #     res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
-    #     res.extend(ax.plot([0], [0], 0, "ro", c="r", marker="o", label="burn-in"))
-    #     res.extend(ax.plot([0], [0], 0, "r.", c="r", marker="x", label="rejected"))
-    #     res.extend(ax.plot([0], [0], 0, "g.", c="g", marker="o", label="intermediate"))
-    #     res.extend(ax.plot([0], [0], 0, "go", c="g", marker="x", label="sample"))
-    #     return res
