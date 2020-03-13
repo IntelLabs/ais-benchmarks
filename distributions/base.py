@@ -41,6 +41,8 @@ class CDistribution(metaclass=ABCMeta):
         return self.support_vals
 
     def draw(self, ax, n_points=100, label=None, color=None):
+        if self.dims > 1:
+            raise NotImplementedError("Drawing of more than 1D PDF is not implemented in the base CDistribution class")
         x = np.linspace(self.support()[0], self.support()[1], n_points).reshape(n_points, self.dims)
         ax.plot(x, self.prob(x), label=label, c=color)
 

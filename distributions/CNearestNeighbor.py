@@ -1,6 +1,7 @@
 from numpy import array as t_tensor
 from scipy import spatial
 
+
 class CNearestNeighbor:
     def __init__(self, samples, sample_weight):
         self.samples = samples
