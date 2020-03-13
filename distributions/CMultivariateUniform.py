@@ -4,7 +4,11 @@ from distributions.base import CDistribution
 
 class CMultivariateUniform(CDistribution):
     def __init__(self, params):
-        super(self.__class__, self).__init__(params)
+        params["type"] = "uniform"
+        params["family"] = "uniform"
+        params["likelihood_f"] = self.prob
+        params["loglikelihood_f"] = self.log_prob
+        super(CMultivariateUniform, self).__init__(params)
         self.center = params["center"]
         self.radius = params["radius"]
         self.dims = len(self.center)
@@ -38,39 +42,24 @@ class CMultivariateUniform(CDistribution):
         return res
 
     def condition(self, dist):
-        pass
+        raise NotImplementedError
 
     def integral(self, a, b):
-        pass
+        raise NotImplementedError
 
     def marginal(self, dim):
-        pass
-
-    def support(self):
-        pass
+        raise NotImplementedError
 
 
 if __name__ == "__main__":
-    import torch
-    import time
-    from torch import DoubleTensor as t_tensor
+    from matplotlib import pyplot as plt
 
-    mean = np.array([0, 0, 0])
-    cov = np.array([0.1, 1, 1])
+    center = np.array([0.0])
+    radius = np.array([1.0])
+    support = np.array([-radius, radius])
 
-    dist1 = torch.distributions.Uniform(t_tensor(mean), t_tensor(cov))
+    dist = CMultivariateUniform({"center": center, "radius": radius, "dims": 1, "support": support})
 
-    dist2 = CMultivariateUniform({"center": mean, "radius": cov})
-
-    sample = dist2.sample(10000)
-    t1 = time.time()
-    probs1 = dist1.log_prob(t_tensor(sample))
-    probs1_time = time.time() - t1
-    # print("Logprob torch:",probs1)
-    print("Logprob torch time: ", probs1_time)
-    t1 = time.time()
-    probs2 = dist2.log_prob(sample)
-    probs2_time = time.time() - t1
-    # print("Logprob np:",probs2)
-    print("Logprob np time: ", probs2_time)
-    print("Diff: ", np.sum(np.abs(probs1.numpy()-probs2)))
+    plt.figure()
+    dist.draw(plt.gca())
+    plt.show(True)
