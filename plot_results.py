@@ -32,7 +32,7 @@ def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, 
             indices = indices & (data[sel] == val)
 
         x_data = data[indices].groupby(xaxis)[xaxis].mean()
-        y_data = data[indices].groupby(xaxis)[yaxis]-
+        y_data = data[indices].groupby(xaxis)[yaxis]
         if len(y_data) == 0:
             continue
         y_err = np.sqrt(y_data.mean().rolling(window=10).std())
