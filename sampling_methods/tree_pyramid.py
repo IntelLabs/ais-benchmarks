@@ -43,9 +43,16 @@ class CTreePyramidNode:
         Sampling kernel distribution. This shapes the proposal distribution represented by the tree pyramid.
         """
         if kernel == "haar":
-            self.sampler = CMultivariateUniform(self.center, self.radius)
+            support = t_tensor([self.center - self.radius, self.center + self.radius])
+
+            self.sampler = CMultivariateUniform({"center": self.center, "radius": self.radius,
+                                                 "dims": len(self.center), "support": support})
         elif kernel == "normal":
-            self.sampler = CMultivariateNormal(self.center, np.diag(t_tensor([self.radius/self.bw_div] * len(self.center))))
+            support = t_tensor([self.center - self.radius/self.bw_div * 6, self.center - self.radius/self.bw_div * 6])
+            self.sampler = CMultivariateNormal({"mean": self.center,
+                                                "sigma": np.diag(t_tensor([self.radius/self.bw_div] * len(self.center))),
+                                                "dims": 1,
+                                                "support": support})
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
@@ -117,12 +124,20 @@ class CTreePyramid:
         self.kernel = kernel
 
         """
-        Sampling kernel distribution. This shapes the proposal distribution represented by the tree pyramid.
+        Resampling distribution. This is used to resample the leaves by sampling from a prototypical distribution
+        and scaling the sample depending on the leaf location and radius.
         """
         if kernel == "haar":
-            self.sampler = CMultivariateUniform(np.zeros(self.ndims), np.ones(self.ndims)*0.5)
+            self.sampler = CMultivariateUniform({"center": np.zeros(self.ndims),
+                                                 "radius": np.ones(self.ndims)*0.5,
+                                                 "dims": self.ndims,
+                                                 "support": np.array([-np.ones(self.ndims)*0.5,
+                                                                      np.ones(self.ndims)*0.5])})
         elif kernel == "normal":
-            self.sampler = CMultivariateNormal(np.zeros(self.ndims), np.diag(np.ones(self.ndims)))
+            self.sampler = CMultivariateNormal({"mean": np.zeros(self.ndims),
+                                                "sigma": np.diag(np.ones(self.ndims))*0.5,
+                                                "dims": self.ndims,
+                                                "support": np.array([-np.ones(self.ndims)*6, np.ones(self.ndims)*6])})
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
@@ -349,7 +364,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                 if self.method == "simple" or self.method == "dm":
                     node.sample(node.sampler)
                 elif self.method == "mixture":
-                    node.sample(self)
+                    node.sample(self.model)
 
                 self.T.samples[node.node_idx] = node.coords
                 self._num_q_samples += 1  # Count the sample operation
@@ -367,25 +382,29 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                 re_samples = self.T.sampler.sample(len(self.T.leaves))
                 centers = self.T.centers[self.T.leaves_idx]
                 radii = self.T.radii[self.T.leaves_idx].reshape(len(re_samples), 1)
-                samples = re_samples * 2 * radii + centers
+                samples = re_samples * radii + centers
                 if self.kernel == "haar":
+                    # Because in the haar case the importance probability depends on the node radii, we can omit
+                    # calling self.prob() (which computes computing q(x)) and do it in a vectorized form as shown below.
                     importance_probs = 1 / ((2*radii)**self.T.ndims)
                 elif self.kernel == "normal":
                     importance_probs = self.T.sampler.prob(re_samples)
                 self.T.samples[self.T.leaves_idx] = samples
-                self.T.weights[self.T.leaves_idx] = target_d.prob(samples) / importance_probs.reshape(-1)
+                probs = target_d.prob(samples)
+                self.T.weights[self.T.leaves_idx] = probs.reshape(-1) / importance_probs.reshape(-1)
                 self._num_pi_evals += len(samples)
                 self._num_q_evals += len(samples)
                 self._num_q_samples += len(samples)
 
+                # Self-normalization of importance weights.
+                self._self_normalize()
                 for node in self.T.leaves:
                     node.weight = self.T.weights[node.node_idx]
                     node.value = node.weight * ((2*node.radius) ** len(node.center))
 
-            # Self-normalization of importance weights
-            self._self_normalize()
-
             # Force an update of the tree parameterized distributions after the updated weights
+            # Update model internally calls self_normalize. So weights are always self-normalized when the model is
+            # updated.
             self._update_model()
 
             elapsed_time = time.time() - t_ini
@@ -395,9 +414,9 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
     def draw(self, ax):
         res = []
         if self.ndims == 1:
-            res = plot_tpyramid_area(ax, self.T, label="$w(x) = \pi(x)/q(x)$")
+            res = plot_tpyramid_area(ax, self.T, label="TP-AIS $w(x) = \pi(x)/q(x)$")
             res.extend(plot_pdf(ax, self, self.space_min, self.space_max, resolution=0.01,
-                                options="-g", alpha=1.0, label="$q(x)$"))
+                                options="-g", alpha=1.0, label="TP-AIS $q(x)$"))
 
             if self.kernel == "normal":
                 for n in self.T.leaves:
@@ -405,7 +424,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                                         resolution=0.01, options="--r", alpha=0.5))
 
         elif self.ndims == 2:
-            res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="$q(x)$"))
+            res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="TP-AIS $q(x)$"))
         return res
 
     def _expand_nodes(self, particles, max_parts):
@@ -443,7 +462,11 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         models = []
         for c, r in zip(centers, radii):
             if self.kernel == "haar":
-                models.append(CMultivariateUniform(c, r))
+                models.append(CMultivariateUniform({"center": c, "radius": r,
+                                                    "support": [c-r, c+r], "dims": self.ndims}))
             elif self.kernel == "normal":
-                models.append(CMultivariateNormal(c, np.diag(r * np.ones(self.ndims))))
+                models.append(CMultivariateNormal({"mean": c,
+                                                   "sigma": np.diag(r * np.ones(self.ndims)),
+                                                   "support": [c-r*6, c+r*6], "dims": self.ndims}))
+        self._self_normalize()
         self.model = CMixtureModel(models, weights)

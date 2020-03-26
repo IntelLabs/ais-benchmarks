@@ -34,7 +34,7 @@ def grid_sample_distribution(dist, space_min, space_max, resolution):
 def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-b", alpha=0.2, scale=1.0, label=None):
     x = np.linspace(space_min, space_max, int((space_max - space_min) / resolution)).reshape(-1, 1)
     y = pdf.prob(x) * scale
-    return ax.plot(x, y, options, alpha=alpha, label=label)
+    return ax.plot(x.flatten(), y.flatten(), options, alpha=alpha, label=label)
 
 
 def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes = None):
@@ -97,9 +97,9 @@ def plot_tpyramid_area(axis, T, scale=1, label=None):
         heightw = n.weight * scale
 
         # area
-        height = n.weight * n.sampler.prob(n.center) * scale - heightw
+        height = n.weight * n.sampler.prob(n.center) * scale
         color = cm.cool(height).flatten()
-        rect = patches.Rectangle([x,heightw], n.radius*2, height.flatten(), linewidth=1, linestyle="--", alpha=0.4, color=color)
+        rect = patches.Rectangle([x, 0], n.radius*2, height.flatten(), linewidth=1, linestyle="--", alpha=0.4, color=color)
         rects.append(axis.add_patch(rect))
 
         # weights

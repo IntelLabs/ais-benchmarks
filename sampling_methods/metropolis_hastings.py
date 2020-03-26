@@ -34,10 +34,13 @@ class CMetropolisHastings(CMixtureSamplingMethod):
                               if the proposal_d parameter is not set this is used instead.
         """
         super(self.__class__, self).__init__(params)
-        if "proposal_d" in params.keys():
+        if "proposal_d" in params.keys() and params["proposal_d"] is not None:
             self.proposal_d = params["proposal_d"]
         else:
-            self.proposal_d = CMultivariateNormal(np.zeros(params["dims"]), np.diag(np.ones(params["dims"]) * params["proposal_sigma"]))
+            mean = np.zeros(params["dims"])
+            cov = np.diag(np.ones(params["dims"]) * params["proposal_sigma"])
+            support = np.array([mean - params["proposal_sigma"] * 6, mean + params["proposal_sigma"] * 6])
+            self.proposal_d = CMultivariateNormal({"mean": mean, "sigma": cov, "dims": 1, "support": support})
         self.n_steps = params["n_steps"]
         self.n_burnin = params["n_burnin"]
         self.target_d = None
@@ -87,14 +90,14 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             self.trajectory_samples.append(x_new.flatten())
 
             # Compute the symmetric acceptance ratio P(x')/P(x). In its log form: log(P(x')) - log(P(x))
-            pi_x_new = self.target_d.logprob(x_new)
-            pi_x_old = self.target_d.logprob(x_old)
+            pi_x_new = self.target_d.log_prob(x_new)
+            pi_x_old = self.target_d.log_prob(x_old)
             self._num_pi_evals += 2
             metropolis_term = pi_x_new - pi_x_old
 
             # Compute the assymetric term Q(x'|x)/Q(x|x'). If the proposal distribution is symmetric
             # Q(x'|x) = Q(x|x') and the assymetric term is 1. In its log form: log(Q(x'|x)) - log(Q(x|x'))
-            hastings_term = self.proposal_d.logprob(x_old - x_new) - self.proposal_d.logprob(x_new - x_old)
+            hastings_term = self.proposal_d.log_prob(x_old - x_new) - self.proposal_d.log_prob(x_new - x_old)
             self._num_q_evals += 2
 
             # Obtain the acceptance ratio. Notice we are working with logs, therefore the sum instead of the product
@@ -109,7 +112,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             self.trajectory_types.append(self.REJECT)
 
         x_old = x_new
-        self.trajectory_types.append(self.ACCEPT)
+        self.trajectory_types[-1] = self.ACCEPT
         return x_old
 
     def mcmc(self, n_samples, n_steps, timeout=60):
@@ -153,24 +156,24 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             y = 0
             if type == self.BURN_IN:
                 style = "ro"
-                y = 0.1
+                y = -0.1
             elif type == self.REJECT:
                 style = "r."
-                y = 0.2
+                y = -0.15
             elif type == self.DECORRELATION:
-                style = "go"
-                y = 0.3
+                style = "g."
+                y = -0.2
             elif type == self.SAMPLE:
-                style = "gx"
-                y = 0.4
+                style = "rx"
+                y = -0.25
 
             res.extend(ax.plot(sample, y, style))
 
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "ro", label="burn-in"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "r.", label="rejected"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "go", label="intermediate"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "gx", label="sample"))
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="MCMC: $q(x)$"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "ro", label="MCMC: burn-in"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "r.", label="MCMC: rejected"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "go", label="MCMC: intermediate"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "gx", label="MCMC: sample"))
         return res
 
     def draw2d(self, ax):

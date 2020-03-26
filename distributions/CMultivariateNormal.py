@@ -8,14 +8,15 @@ class CMultivariateNormal(CDistribution):
         params["family"] = "exponential"
         params["likelihood_f"] = self.prob
         params["loglikelihood_f"] = self.log_prob
+        params["dims"] = len(params["mean"])
+        params["support"] = [params["mean"] - params["sigma"] * 10.0, params["mean"] + params["sigma"] * 10.0]
         super(CMultivariateNormal, self).__init__(params)
 
-        assert cov.shape == (self.dims, self.dims)
-
-        self.det = np.linalg.det(cov)
-        assert self.det > 0
-
         self.set_moments(params["mean"], params["sigma"])
+
+        assert self.cov.shape == (self.dims, self.dims)
+        self.det = np.linalg.det(self.cov)
+        assert self.det > 0
 
         self.term1 = - 0.5 * self.dims * np.log(np.pi * 2)
 
@@ -44,7 +45,7 @@ class CMultivariateNormal(CDistribution):
 
         diff = self.mean.reshape(1, self.dims, 1) - samples
         term3 = -0.5 * (np.transpose(diff, axes=(0, 2, 1)) @ self.inv_cov @ diff)
-        return (self.term1 + self.term2 + term3).reshape(len(samples))
+        return (self.term1 + self.term2 + term3).reshape(len(samples), 1)
 
     def prob(self, samples):
         return np.exp(self.log_prob(samples))

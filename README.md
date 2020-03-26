@@ -10,7 +10,7 @@ It is our hope that this package helps researches to benchmark their sampling al
 of the art implementations, if you find this package useful for your research please consider citing it, see citation
 info below. 
 
-
+TODO: Comment on batching. It is assumed all variables have their first indext to be the batch dimension.
 
 ## Baselines
 Several well-known and state-of-the-art algorithms are provided as a baseline for evaluation of new implementation of 

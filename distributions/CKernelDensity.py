@@ -1,46 +1,99 @@
 import numpy as np
+from distributions.base import CDistribution
+from distributions.base import CKernel
 from distributions.CMixtureModel import CMixtureModel
-from distributions.CMultivariateNormal import CMultivariateNormal
-from sklearn.neighbors.kde import KernelDensity
-# from scipy.stats import gaussian_kde
 
 
-# class CKernelDensity:
-#     def __init__(self, samples, sample_weight, bw=0.1):
-#         # self.kde = gaussian_kde(samples)
-#
-#         # self.kde = KernelDensity(bandwidth=bw, kernel="epanechnikov")
-#         self.kde = KernelDensity(bandwidth=bw, kernel="gaussian")
-#         self.kde.fit(samples, sample_weight=sample_weight)
-#
-#     def log_prob(self, samples):
-#         return self.kde.score_samples(samples)
-#
-#         # return self.kde(samples)
+class CKernelDensity(CDistribution):
+    def __init__(self, params):
+        self._check_param(params, "samples")
+        self._check_param(params, "weights")
+        self._check_param(params, "kernel_f")
+        self._check_param(params, "kernel_bw")
 
-class CKernelDensity:
-    def __init__(self, samples, sample_weight, bw=0.1):
-        self.samples = samples
-        self.weights = sample_weight
-        self.bw = bw
+        params["type"] = "KDE"
+        params["family"] = "mixture"
+        params["likelihood_f"] = self.prob
+        params["loglikelihood_f"] = self.log_prob
+        params["dims"] = len(params["samples"][0])
+
+        super(CKernelDensity, self).__init__(params)
+
+        self.samples = params["samples"]
+        self.weights = params["weights"]
+        self.kernel_f = params["kernel_f"]
+        self.kernel_bw = params["kernel_bw"]
         self.model = None
+
+        assert callable(self.kernel_f), "kernel must be callable"
+
         self.fit()
 
     def fit(self):
         models = []
         for x in self.samples:
-            cov = np.ones(len(self.samples[0])) * self.bw
-            if x.shape:
-                models.append(CMultivariateNormal(x, np.diag(cov)))
-            else:
-                models.append(CMultivariateNormal(np.array([x]), np.diag(cov)))
-        self.model = CMixtureModel(models, np.exp(self.weights))
+            models.append(CKernel(x, self.kernel_bw, self.kernel_f))
+        self.model = CMixtureModel(models, self.weights)
 
     def log_prob(self, data):
-        return self.logprob(data)
+        return self.model.log_prob(data)
 
-    def logprob(self, data):
-        return self.model.logprob(data)
+    def sample(self, nsamples=1):
+        return self.model.sample(nsamples)
 
     def prob(self, data):
         return self.model.prob(data)
+
+    def condition(self, dist):
+        raise NotImplementedError
+
+    def marginal(self, dim):
+        raise NotImplementedError
+
+    def integral(self, a, b):
+        raise NotImplementedError
+
+    def support(self):
+        return self.support_vals
+
+
+if __name__ == "__main__":
+    from matplotlib import pyplot as plt
+    import distributions
+
+    samples = np.array([-.1, .3, .2, .25, .31]).reshape(5, 1)
+    weights = np.ones(len(samples)) / len(samples)
+    support = [-1, 1]
+
+    params = dict()
+    params["samples"] = samples
+    params["weights"] = weights
+    params["kernel_f"] = distributions.base.CKernel.kernel_epanechnikov
+    params["kernel_bw"] = np.array([5])
+    params["support"] = support
+    dist = CKernelDensity(params)
+
+    plt.figure()
+    plt.subplot(2, 2, 1)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    plt.legend()
+
+    plt.subplot(2, 2, 2)
+    params["kernel_f"] = distributions.base.CKernel.kernel_normal
+    dist = CKernelDensity(params)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    plt.legend()
+
+    plt.subplot(2, 2, 3)
+    params["kernel_f"] = distributions.base.CKernel.kernel_triangular
+    dist = CKernelDensity(params)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    plt.legend()
+
+    plt.subplot(2, 2, 4)
+    params["kernel_f"] = distributions.base.CKernel.kernel_uniform
+    dist = CKernelDensity(params)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    plt.legend()
+
+    plt.show(True)

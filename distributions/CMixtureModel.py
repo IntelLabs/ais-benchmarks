@@ -44,7 +44,7 @@ class CMixtureModel:
         return logprob
 
     def prob(self, data):
-        likelihood = np.zeros(len(data))
+        likelihood = np.zeros(len(data)).reshape(-1, 1)
         if len(data.shape) == 1:
             likelihood = 0
 
@@ -57,7 +57,7 @@ class CMixtureModel:
 
         return likelihood
 
-    def sample(self, n_samples):
+    def sample(self, n_samples=1):
         res = np.array([])
         for _ in range(n_samples):
             idx = np.argmax(np.random.multinomial(1, self.weights))  # Select the sampling proposal
