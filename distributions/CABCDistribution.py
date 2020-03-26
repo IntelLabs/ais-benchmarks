@@ -165,7 +165,7 @@ if __name__ == "__main__":
     z = np.linspace(-1, 1, 300).reshape(300, 1)
     px = np.array([])
     for x in z:
-        px = np.concatenate((px, dist.prob(np.array([x]))))
+        px = np.concatenate((px, dist.prob(np.array([x])).flatten()))
 
     # Normalize px. The ABC distribution uses a surrogate likelihood that is not guaranteed to be normalized.
     px = px / np.sum(px)

@@ -4,12 +4,19 @@ from distributions.base import CDistribution
 
 class CMultivariateNormal(CDistribution):
     def __init__(self, params):
+        self._check_param(params, "mean")
+        self._check_param(params, "sigma")
+
         params["type"] = "normal"
         params["family"] = "exponential"
         params["likelihood_f"] = self.prob
         params["loglikelihood_f"] = self.log_prob
         params["dims"] = len(params["mean"])
-        params["support"] = [params["mean"] - params["sigma"] * 10.0, params["mean"] + params["sigma"] * 10.0]
+
+        # Clip the normal support at 4 sigmas
+        if "support" not in params:
+            params["support"] = [params["mean"] - np.sqrt(params["sigma"]) * 4.0, params["mean"] + np.sqrt(params["sigma"]) * 4.0]
+
         super(CMultivariateNormal, self).__init__(params)
 
         self.set_moments(params["mean"], params["sigma"])
@@ -67,10 +74,9 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
     mean = np.array([0.0])
-    cov = np.diag([1.0])
-    support = np.array([-10, 10])
+    cov = np.diag([0.1])
 
-    dist = CMultivariateNormal({"mean": mean, "sigma": cov, "dims": 1, "support": support})
+    dist = CMultivariateNormal({"mean": mean, "sigma": cov, "dims": 1})
 
     plt.figure()
     dist.draw(plt.gca())
