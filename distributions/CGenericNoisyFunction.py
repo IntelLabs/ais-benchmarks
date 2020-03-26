@@ -4,50 +4,38 @@ from distributions.base import CDistribution
 
 class GenericNoisyFunction(CDistribution):
     def __init__(self, params):
+        self._check_param(params, "noise_model", CDistribution)
+        self._check_param(params, "function")
+
+        params["type"] = "generic"
+        params["family"] = "stochastic_function"
+        params["likelihood_f"] = self.prob
+        params["loglikelihood_f"] = self.log_prob
+
         super(GenericNoisyFunction, self).__init__(params)
-        self.noise_level = params["noise"]
-        self.model = params["model"]
-        self.supp = params["support"]
+
+        self.noise_model = params["noise_model"]
+        self.function = params["function"]
+
+        assert callable(self.function), "Function must be callable"
+
         self.x = None
 
     def sample(self):
-        noise = np.random.normal(0, self.noise_level, size=self.x.size).reshape(self.x.shape)
-        fx = self.model(self.x) + noise
+        noise = self.noise_model.sample(len(self.x))
+        fx = self.function(self.x) + noise
         return fx
 
-    def logprob(self, x):
+    def log_prob(self, x):
         if self.x is None:
-            raise ValueError("GenericFunction prob or logprob cannot be evaluated w/o conditioning it first with the true x value.")
-
-        if len(self.x.shape) == 1:
-            dims = len(self.x)
-            mu = self.x.reshape(1, dims, 1)
-        elif len(self.x.shape) == 2:
-            dims = len(self.x[0])
-            mu = self.x.reshape(len(self.x), dims, 1)
-        else:
-            raise ValueError("Shape of conditioned values not supported.")
-
-        if len(x.shape) == 1:
-            x = x.reshape(1, dims, 1)
-        elif len(x.shape) == 2:
-            x = x.reshape(len(x), dims, 1)
-        else:
-            raise ValueError("Shape of samples not supported.")
-
-        cov = np.diag(np.ones(dims)) * self.noise_level
-        inv_cov = np.linalg.inv(cov)
-        log_det = np.log(np.linalg.det(cov))
-
-        term1 = - 0.5 * dims * np.log(np.pi * 2)
-        term2 = - 0.5 * log_det
-
-        diff = x - mu
-        term3 = - 0.5 * ((np.transpose(diff, axes=(0, 2, 1))) @ inv_cov @ diff)
-        return (term1 + term2 + term3).reshape(len(x))
+            raise ValueError("GenericFunction logprob cannot be evaluated w/o conditioning first with the true x value.")
+        return self.noise_model.log_prob(x-self.x)
 
     def prob(self, x):
-        return np.exp(self.logprob(x))
+        if self.x is None:
+            raise ValueError("GenericFunction prob cannot be evaluated w/o conditioning first with the true x value.")
+
+        return self.noise_model.prob(x-self.x)
 
     def is_ready(self):
         return True
@@ -55,19 +43,60 @@ class GenericNoisyFunction(CDistribution):
     def wait_for_ready(self, timeout):
         return
 
-    def draw(self, axis):
-        x = np.linspace(self.supp[0], self.supp[1], 100)
-        noise = np.random.normal(0, self.noise_level, 100)
-        axis.scatter(x, self.model(x) + noise)
+    def draw(self, axis, n_points=100, label=None, color=None):
+        z = np.linspace(self.support_vals[0], self.support_vals[1], n_points).reshape(n_points, 1)
+        self.condition(z)
+        samples = self.sample()
+        axis.scatter(z, samples, c=color, label=label)
+
+        xs = self.sample()
+        for _ in range(200):
+            x = self.sample()
+            xs = np.dstack((xs, x))
+
+        means = np.mean(xs, axis=2).flatten()
+        stdevs = np.std(xs, axis=2).flatten()
+        if label is not None:
+            axis.fill_between(z.flatten(), means - 3 * stdevs, means + 3 * stdevs, label=label + " $3\sigma$", color=color, alpha=0.5)
+            axis.plot(z.flatten(), means, label=label + " mean", color=color, alpha=0.5)
+        else:
+            axis.fill_between(z.flatten(), means - 3 * stdevs, means + 3 * stdevs, color=color, alpha=0.5)
+            axis.plot(z.flatten(), means, color=color)
 
     def condition(self, x):
         self.x = x
-
-    def support(self):
-        return self.supp
 
     def marginal(self, dim):
         raise NotImplementedError
 
     def integral(self, a, b):
         raise NotImplementedError
+
+
+if __name__ == "__main__":
+    from matplotlib import pyplot as plt
+    from distributions.CMultivariateNormal import CMultivariateNormal
+
+    mean = 0
+    sigma = 0.01
+
+    params = dict()
+    params["noise_model"] = CMultivariateNormal({"mean": np.array([mean]), "sigma": np.diag([sigma])})
+    params["function"] = lambda x: 1 / (1+np.e**-x)
+    params["support"] = [-6, 6]
+    params["dims"] = 1
+    dist = GenericNoisyFunction(params)
+
+    # Condition the generative process on a value and evaluate the likelihoods of the noisy process
+    x = 0.6
+    dist.condition(np.array([x]))
+    px = dist.prob(np.array([[x], [x + sigma], [x - sigma]]))
+    lpx = dist.log_prob(np.array([[x], [x + sigma], [x - sigma]]))
+
+    print("x = ", x)
+    print("p(x) = ", px)
+    print("log(p(x)) = ", lpx)
+
+    plt.figure()
+    dist.draw(plt.gca())
+    plt.show(True)

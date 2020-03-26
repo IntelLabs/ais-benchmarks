@@ -8,6 +8,8 @@ class CMultivariateUniform(CDistribution):
         params["family"] = "uniform"
         params["likelihood_f"] = self.prob
         params["loglikelihood_f"] = self.log_prob
+        params["dims"] = len(params["center"])
+        params["support"] = [params["center"] - params["radius"], params["center"] + params["radius"]]
         super(CMultivariateUniform, self).__init__(params)
         self.center = params["center"]
         self.radius = params["radius"]
@@ -39,7 +41,7 @@ class CMultivariateUniform(CDistribution):
         inliers = np.all(np.logical_and(min_val < samples, samples < max_val), axis=1)  # Select the inliers if all the coordinates are in range
         res = np.ones(len(samples)) / self.volume
         res[np.logical_not(inliers.flatten())] = 0
-        return res
+        return res.reshape(len(samples), 1)
 
     def condition(self, dist):
         raise NotImplementedError
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
     center = np.array([0.0])
-    radius = np.array([1.0])
+    radius = np.array([0.5])
     support = np.array([-radius, radius])
 
     dist = CMultivariateUniform({"center": center, "radius": radius, "dims": 1, "support": support})

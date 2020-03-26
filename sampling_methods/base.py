@@ -98,7 +98,7 @@ class CSamplingMethod(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def logprob(self, samples):
+    def log_prob(self, samples):
         raise NotImplementedError
 
     @abstractmethod
@@ -126,7 +126,7 @@ class CMixtureSamplingMethod(CSamplingMethod):
             self._update_model()
         return self.model.prob(s)
 
-    def logprob(self, s):
+    def log_prob(self, s):
         return np.log(self.prob(s))
 
     def _update_model(self):
@@ -134,9 +134,13 @@ class CMixtureSamplingMethod(CSamplingMethod):
         for x in self.samples:
             cov = np.ones(len(self.space_max)) * self.bw
             if x.shape:
-                models.append(CMultivariateNormal(x, np.diag(cov)))
+                model = CMultivariateNormal({"mean": x, "sigma": np.diag(cov),
+                                             "dims": self.ndims, "support": np.array([x - cov * 6, x + cov * 6])})
             else:
-                models.append(CMultivariateNormal(np.array([x]), np.diag(cov)))
+                model = CMultivariateNormal({"mean": np.array([x]), "sigma": np.diag(cov),
+                                             "dims": self.ndims,
+                                             "support": np.array([np.array([x]) - cov * 6, np.array([x]) + cov * 6])})
+            models.append(model)
         self.model = CMixtureModel(models, np.exp(self.weights))
 
     def draw(self, ax):

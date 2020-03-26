@@ -8,23 +8,26 @@ class CGaussianMixtureModel(CDistribution):
     def __init__(self, params):
         """
         :param params: A dictionary containing the distribution parameters. Must define the following parameters:
-                params["dims"]
                 params["support"]
                 params["means"]
                 params["sigmas"]
                 params["weights"]
         """
+        self._check_param(params, "means")
+        self._check_param(params, "sigmas")
+
         params["type"] = "GMM"
         params["family"] = "mixture"
         params["likelihood_f"] = self.prob
         params["loglikelihood_f"] = self.log_prob
+        params["dims"] = len(params["means"][0])
         super(CGaussianMixtureModel, self).__init__(params)
 
         self.models = []
         self.means = params["means"]
         self.sigmas = params["sigmas"]
         for mean, cov in zip(self.means, self.sigmas):
-            self.models.append(CMultivariateNormal(mean, np.diag(cov)))
+            self.models.append(CMultivariateNormal({"mean": mean, "sigma": np.diag(cov)}))
 
         if "weights" in params.keys():
             self.weights = params["weights"]
