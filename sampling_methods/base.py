@@ -4,8 +4,8 @@ from abc import ABCMeta, abstractmethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
-from distributions.CMultivariateNormal import CMultivariateNormal
-from distributions.CMixtureModel import CMixtureModel
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
+from distributions.mixture.CMixtureModel import CMixtureModel
 
 
 class CSamplingMethod(metaclass=ABCMeta):

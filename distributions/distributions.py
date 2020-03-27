@@ -1,6 +1,7 @@
 import time
 import numpy as np
 from abc import ABCMeta, abstractmethod
+from utils.plot_utils import plot_pdf2d
 
 
 class CDistribution(metaclass=ABCMeta):
@@ -10,8 +11,8 @@ class CDistribution(metaclass=ABCMeta):
 
     A distribution is composed at its core by:
     1- The sampling function. Generates data points that are distributed as the represented distribution. x ~ P(x)
-    2- The likelihood function. Provides the probability that the random variable takes the value x under the
-       represented distribution.
+    2- The likelihood function. Provides the probability density of a random variable value under the
+       represented distribution. Accessible through the prob() and log_prob() methods.
 
     Parameters and properties:
     The distribution class is initialized by a dictionary of parameters which must contain (besides class specific
@@ -25,6 +26,10 @@ class CDistribution(metaclass=ABCMeta):
     loglikelihood_f: Log Likelihood function log(p(x|z)). Because probabilities can be very small numbers,
                      log likelihoods are used to avoid numerical stability issues. Besides, sometimes the log form
                      of the likelihood function is easier to compute.
+
+    Batching:
+    All methods assume the first dimension to be the batch dimension to support vectorized implementations. The results
+    are also in batch form even if there is only one component in the batch dimension.
 
     Example 1:
     Generative models can be implemented as a distribution base class. A data generating process can be implemented via
@@ -78,6 +83,13 @@ class CDistribution(metaclass=ABCMeta):
         self.support_vals = params["support"]
 
     def _check_param(self, params, param, type=None):
+        """
+        Private function to assert that input parameters exist and optionally are of de desired type.
+        :param params: Parameter dictionary.
+        :param param: Name of the parameter to check.
+        :param type: Desired type of the parameter.
+        :return: None
+        """
         assert param in params, "%s '%s' parameter is required" % (self.__class__.__name__, param)
         if type is not None:
             assert isinstance(params[param], type), "%s: Parameter '%s' is required to have type %s" % (self.__class__.__name__, param, str(type))
@@ -92,6 +104,7 @@ class CDistribution(metaclass=ABCMeta):
                              if the dimensionality of the RV is D, samples to evaluate are passed in a N by D shape
                              where each N is the number of samples, the result must be a N by 1 array with the
                              likelihood results.
+        :return: None
         """
         self.likelihood_f = likelihood_f
 
@@ -106,6 +119,7 @@ class CDistribution(metaclass=ABCMeta):
                                 means, if the dimensionality of the RV is D, samples to evaluate are passed in a N by D
                                 shape where each N is the number of samples, the result must be a N by 1 array with
                                 the likelihood results.
+        :return: None
         """
         self.loglikelihood_f = loglikelihood_f
 
@@ -129,12 +143,25 @@ class CDistribution(metaclass=ABCMeta):
         return self.support_vals
 
     def draw(self, ax, n_points=100, label=None, color=None):
-        if self.dims > 1:
-            raise NotImplementedError("Drawing of more than 1D PDF is not implemented in the base CDistribution class")
-        x = np.linspace(self.support()[0], self.support()[1], n_points).reshape(n_points, self.dims)
-        ax.plot(x.flatten(), self.prob(x).flatten(), label=label, c=color)
+        if self.dims == 1:
+            x = np.linspace(self.support()[0], self.support()[1], n_points).reshape(n_points, 1)
+            ax.plot(x.flatten(), self.prob(x).flatten(), label=label, c=color)
+        elif self.dims == 2:
+            plot_pdf2d(ax, self, self.support()[0], self.support()[1])
+        else:
+            raise NotImplementedError("Drawing of more than 2D PDF is not implemented in the base CDistribution class. \
+                                       Try marginalizing dimensions")
 
     def prob(self, x):
+        """
+        Return the PDF evaluated at x.
+        :param x: Points to evaluate the PDF. NxM array that contains N points of M dimensions. Where M has to match
+        the dimensionality of the PDF represented by this class instance, i.e. M == self.dims.
+        :return: Probability density of x.
+        """
+        assert len(x.shape) == 2 and x.shape[1] == self.dims, "Shape mismatch. x must be an Nx%d array. That contains \
+                                                               N points to be evaluated." % self.dims
+
         if self.likelihood_f is not None:
             return self.likelihood_f(x)
         elif self.loglikelihood_f is not None:
@@ -143,6 +170,15 @@ class CDistribution(metaclass=ABCMeta):
             raise Exception("Likelihood and LogLikelihood functions not defined")
 
     def log_prob(self, x):
+        """
+        Return the log(PDF) evaluated at x.
+        :param x: Points to evaluate the PDF. NxM array that contains N points of M dimensions. Where M has to match
+        the dimensionality of the PDF represented by this class instance, i.e. M == self.dims.
+        :return: Log probability density of x.
+        """
+        assert len(x.shape) == 2 and x.shape[1] == self.dims, "Shape mismatch. x must be an Nx%d array. That contains \
+                                                               N points to be evaluated." % self.dims
+
         if self.loglikelihood_f is not None:
             return self.loglikelihood_f(x)
         elif self.likelihood_f is not None:

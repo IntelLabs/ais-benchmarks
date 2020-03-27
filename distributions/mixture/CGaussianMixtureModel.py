@@ -1,7 +1,7 @@
 import numpy as np
-from distributions.base import CDistribution
-from distributions.CMixtureModel import CMixtureModel
-from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.parametric import CDistribution
+from distributions.mixture.CMixtureModel import CMixtureModel
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 
 
 class CGaussianMixtureModel(CDistribution):
@@ -60,10 +60,26 @@ if __name__ == "__main__":
     means = np.array([[0.0], [0.7], [-0.5]])
     covs = np.array([[0.1], [0.05], [0.5]])
     weights = np.array([.4, .2, .4])
+    support = np.array([-2, 2])
 
-    dist = CGaussianMixtureModel({"means": means, "sigmas": covs, "weights": weights, "dims": 1, "support": [-3, 3]})
-
+    # 1D GMM
+    dist = CGaussianMixtureModel({"means": means, "sigmas": covs, "weights": weights, "dims": 1, "support": support})
     plt.figure()
+    plt.subplot(2, 1, 1)
+    plt.title('CGaussianMixtureModel({"means": %s, "sigmas": %s, "weights": %s})' %
+              (str(dist.means), str(dist.sigmas), str(dist.weights)))
     dist.draw(plt.gca())
-    plt.show(True)
+    plt.show(block=False)
 
+    # 2D GMM
+    means = np.array([[.0, .2], [.7, .2], [-.5, -.5]])
+    covs = np.array([[.1, .3], [.05, .2], [.1, .05]])
+    weights = np.array([.4, .2, .4])
+    support = np.array([[-2, -2], [2, 2]])
+
+    dist2 = CGaussianMixtureModel({"means": means, "sigmas": covs, "weights": weights, "support": support})
+    plt.subplot(2, 1, 2)
+    plt.title('CGaussianMixtureModel({"means": %s, "sigmas": %s, "weights": %s})' %
+              (str(dist2.means), str(dist2.sigmas), str(dist2.weights)))
+    dist2.draw(plt.gca())
+    plt.show(block=True)
