@@ -26,11 +26,11 @@ class CTreePyramidNode:
         :param bw_div: The kernel bandwidth is computed as radius/bw_div. This param slightly tunes the amount of
                        smoothing because it is automatically adapted by being proportional to the node radii.
         """
-        self.center = center                        # n_c
-        self.radius = radius                        # n_r
-        self.children = [None] * (2**len(center))   # n_s
-        self.weight = weight                        # n_w
-        self.coords = t_tensor([[0] * len(center)]) # n_x
+        self.center = t_tensor(center)               # n_c
+        self.radius = t_tensor(radius)               # n_r
+        self.children = [None] * (2**len(center))    # n_s
+        self.weight = weight                         # n_w
+        self.coords = t_tensor([[0] * len(center)])  # n_x
         self.leaf_idx = leaf_idx
         self.node_idx = node_idx
         self.level = level
@@ -43,16 +43,11 @@ class CTreePyramidNode:
         Sampling kernel distribution. This shapes the proposal distribution represented by the tree pyramid.
         """
         if kernel == "haar":
-            support = t_tensor([self.center - self.radius, self.center + self.radius])
-
-            self.sampler = CMultivariateUniform({"center": self.center, "radius": self.radius,
-                                                 "dims": len(self.center), "support": support})
+            self.sampler = CMultivariateUniform({"center": self.center, "radius": self.radius})
         elif kernel == "normal":
-            support = t_tensor([self.center - self.radius/self.bw_div * 6, self.center - self.radius/self.bw_div * 6])
             self.sampler = CMultivariateNormal({"mean": self.center,
-                                                "sigma": np.diag(t_tensor([self.radius/self.bw_div] * len(self.center))),
-                                                "dims": 1,
-                                                "support": support})
+                                                "sigma": np.diag(t_tensor([self.radius/self.bw_div] * len(self.center)))
+                                                })
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
@@ -110,7 +105,7 @@ class CTreePyramidNode:
 
 class CTreePyramid:
     def __init__(self, dmin, dmax, kernel):
-        self.root = CTreePyramidNode(center=(dmin + dmax) / 2, radius=np.max((dmax - dmin) / 2),
+        self.root = CTreePyramidNode(center=(dmin + dmax) / 2, radius=np.array([np.max((dmax - dmin) / 2)]),
                                      leaf_idx=0, node_idx=0, level=0, kernel=kernel)
         self.ndims = len(dmin)
         self.nodes = [self.root]
@@ -129,15 +124,10 @@ class CTreePyramid:
         """
         if kernel == "haar":
             self.sampler = CMultivariateUniform({"center": np.zeros(self.ndims),
-                                                 "radius": np.ones(self.ndims)*0.5,
-                                                 "dims": self.ndims,
-                                                 "support": np.array([-np.ones(self.ndims)*0.5,
-                                                                      np.ones(self.ndims)*0.5])})
+                                                 "radius": np.ones(self.ndims)*0.5})
         elif kernel == "normal":
             self.sampler = CMultivariateNormal({"mean": np.zeros(self.ndims),
-                                                "sigma": np.diag(np.ones(self.ndims))*0.5,
-                                                "dims": self.ndims,
-                                                "support": np.array([-np.ones(self.ndims)*6, np.ones(self.ndims)*6])})
+                                                "sigma": np.diag(np.ones(self.ndims))*0.5})
         else:
             raise ValueError("Unknown kernel type. Must be 'normal' or 'haar'")
 
@@ -192,8 +182,8 @@ class CTreePyramid:
         self.leaves[node.leaf_idx] = new_nodes[0]
         self.nodes.append(new_nodes[0])
         # Add the node center and radius to the cached list
-        self.centers = np.concatenate((self.centers, np.array([new_nodes[0].center])))
-        self.radii = np.concatenate((self.radii, np.array([new_nodes[0].radius])))
+        self.centers = np.concatenate((self.centers, t_tensor([new_nodes[0].center])))
+        self.radii = np.concatenate((self.radii, t_tensor([new_nodes[0].radius])))
         self.samples = np.concatenate((self.samples, np.zeros((1, self.ndims))))
         self.weights = np.concatenate((self.weights, np.zeros(1)))
         self.leaves_idx.append(True)
@@ -208,8 +198,8 @@ class CTreePyramid:
             self.leaves.append(new_n)
             self.nodes.append(new_n)
             # Add the node center and radius to the cached list
-            self.centers = np.concatenate((self.centers, np.array([new_n.center])))
-            self.radii = np.concatenate((self.radii, np.array([new_n.radius])))
+            self.centers = np.concatenate((self.centers, t_tensor([new_n.center])))
+            self.radii = np.concatenate((self.radii, t_tensor([new_n.radius])))
             self.samples = np.concatenate((self.samples, np.zeros((1, self.ndims))))
             self.weights = np.concatenate((self.weights, np.zeros(1)))
             self.leaves_idx.append(True)
@@ -462,11 +452,10 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         models = []
         for c, r in zip(centers, radii):
             if self.kernel == "haar":
-                models.append(CMultivariateUniform({"center": c, "radius": r,
-                                                    "support": [c-r, c+r], "dims": self.ndims}))
+                models.append(CMultivariateUniform({"center": c, "radius": r}))
+
             elif self.kernel == "normal":
                 models.append(CMultivariateNormal({"mean": c,
-                                                   "sigma": np.diag(r * np.ones(self.ndims)),
-                                                   "support": [c-r*6, c+r*6], "dims": self.ndims}))
+                                                   "sigma": np.diag(r * np.ones(self.ndims))}))
         self._self_normalize()
         self.model = CMixtureModel(models, weights)
