@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-from distributions.CABCDistribution import ABCDistribution
-from distributions.CMultivariateUniform import CMultivariateUniform
-from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.derived.CABCDistribution import ABCDistribution
+from distributions.parametric.CMultivariateUniform import CMultivariateUniform
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 from sampling_methods.metropolis_hastings import CMetropolisHastings
 from sampling_methods.tree_pyramid import CTreePyramidSampling
-from distributions.CGenericNoisyFunction import GenericNoisyFunction
+from distributions.derived.CGenericNoisyFunction import GenericNoisyFunction
 
 
 def likelihood_f(o, o_hat, slack=0.1):
@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     # Prepare plot and draw true generating function
     fig = plt.figure()
-    plt.show(False)
+    plt.show(block=False)
     x = np.linspace(-1, 1, 100)
     plt.plot(x, gt_gen_f(x))
 
@@ -204,4 +204,4 @@ if __name__ == '__main__':
     plt.gca().set_ylim(-0.5, 4)
     plt.legend(scatterpoints=1)
     plt.pause(0.001)
-    plt.show(True)
+    plt.show(block=True)

@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.base import CDistribution
+from distributions.distributions import CDistribution
 
 
 class GenericNoisyFunction(CDistribution):
@@ -75,7 +75,7 @@ class GenericNoisyFunction(CDistribution):
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
-    from distributions.CMultivariateNormal import CMultivariateNormal
+    from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 
     mean = 0
     sigma = 0.01

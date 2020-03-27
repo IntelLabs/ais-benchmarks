@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.base import CDistribution
+from distributions.distributions import CDistribution
 
 
 class CMultivariateNormal(CDistribution):
@@ -15,7 +15,9 @@ class CMultivariateNormal(CDistribution):
 
         # Clip the normal support at 4 sigmas
         if "support" not in params:
-            params["support"] = [params["mean"] - np.sqrt(params["sigma"]) * 4.0, params["mean"] + np.sqrt(params["sigma"]) * 4.0]
+            # TODO: Compute the support accounting for the cross terms of the covariance
+            params["support"] = np.array([params["mean"] - np.sqrt(np.diag(params["sigma"])) * 4.0,
+                                          params["mean"] + np.sqrt(np.diag(params["sigma"])) * 4.0])
 
         super(CMultivariateNormal, self).__init__(params)
 
@@ -75,9 +77,18 @@ if __name__ == "__main__":
 
     mean = np.array([0.0])
     cov = np.diag([0.1])
-
-    dist = CMultivariateNormal({"mean": mean, "sigma": cov, "dims": 1})
+    dist = CMultivariateNormal({"mean": mean, "sigma": cov})
 
     plt.figure()
+    plt.subplot(2, 1, 1)
+    plt.title('CMultivariateNormal({"mean": %s, "sigma": %s})' % (str(mean), str(cov)))
     dist.draw(plt.gca())
+
+    mean = np.array([.0, .0])
+    cov = np.array([[0.1, .2], [.0, .2]])
+    dist2 = CMultivariateNormal({"mean": mean, "sigma": cov})
+
+    plt.subplot(2, 1, 2)
+    plt.title('CMultivariateNormal({"mean": %s, "sigma": %s})' % (str(mean), str(cov)))
+    dist2.draw(plt.gca())
     plt.show(True)

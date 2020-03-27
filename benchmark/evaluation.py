@@ -1,15 +1,13 @@
 import numpy as np
 import time
 from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 from scipy.stats import entropy
 
 from sampling_methods.base import t_tensor
 from sampling_methods.base import uniform_sample_distribution
 from sampling_methods.base import grid_sample_distribution
-from distributions.CKernelDensity import CKernelDensity
-from distributions.CNearestNeighbor import CNearestNeighbor
+from distributions.nonparametric.CKernelDensity import CKernelDensity
 from utils.plot_utils import plot_grid_sampled_pdfs
 from utils.plot_utils import plot_pdf
 from utils.video_writer import CVideoWriter

@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 from sampling_methods.base import CMixtureSamplingMethod
 from sampling_methods.base import t_tensor
 from utils.plot_utils import plot_pdf

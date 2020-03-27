@@ -1,14 +1,13 @@
 import numpy as np
 from scipy.special import gamma
 from sampling_methods.base import CMixtureSamplingMethod
-from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 from sklearn.cluster import KMeans
 import time
 import matplotlib.cm as cm
 import sys
-import distributions
 
 
 class CEllipsoid:

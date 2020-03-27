@@ -5,12 +5,12 @@ import itertools
 import matplotlib.patches as patches
 
 from sampling_methods.base import CMixtureISSamplingMethod
-from distributions.CMultivariateNormal import CMultivariateNormal
-from distributions.CMultivariateUniform import CMultivariateUniform
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
+from distributions.parametric.CMultivariateUniform import CMultivariateUniform
 from utils.plot_utils import plot_tpyramid_area
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
-from distributions.CMixtureModel import CMixtureModel
+from distributions.mixture.CMixtureModel import CMixtureModel
 
 
 class CTreePyramidNode:

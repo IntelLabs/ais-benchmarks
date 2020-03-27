@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from distributions.CABCDistribution import ABCDistribution
-from distributions.CMultivariateUniform import CMultivariateUniform
-from distributions.CMultivariateNormal import CMultivariateNormal
+from distributions.derived.CABCDistribution import ABCDistribution
+from distributions.parametric.CMultivariateUniform import CMultivariateUniform
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 from sampling_methods.metropolis_hastings import CMetropolisHastings
 from sampling_methods.tree_pyramid import CTreePyramidSampling
-from distributions.CGenericNoisyFunction import GenericNoisyFunction
+from distributions.derived.CGenericNoisyFunction import GenericNoisyFunction
 
 '''
 Sources of uncertainty

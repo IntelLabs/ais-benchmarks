@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.base import CDistribution
+from distributions.distributions import CDistribution
 
 
 class CMultivariateUniform(CDistribution):
@@ -29,11 +29,8 @@ class CMultivariateUniform(CDistribution):
     def sample(self, n_samples=1):
         minval = self.center - self.radius
         maxval = self.center + self.radius
-        # TODO: Fix the size problem here and sample in one instruction
-        res = np.random.uniform(low=minval, high=maxval, size=None)
-        for i in range(1, n_samples):
-            res = np.vstack((res, np.random.uniform(low=minval, high=maxval, size=None)))
-        return res.reshape(n_samples, self.dims)
+        res = np.random.uniform(low=minval, high=maxval, size=(n_samples, self.dims))
+        return res
 
     def log_prob(self, samples):
         return np.log(self.prob(samples))
@@ -74,5 +71,15 @@ if __name__ == "__main__":
     dist = CMultivariateUniform({"center": center, "radius": radius})
 
     plt.figure()
+    plt.subplot(2, 1, 1)
+    plt.title('CMultivariateUniform({"center": %s, "radius": %s})' % (str(center), str(radius)))
     dist.draw(plt.gca())
+
+    center = np.array([0.0, 0.1])
+    radius = np.array([0.5, 0.2])
+    dist2d = CMultivariateUniform({"center": center, "radius": radius})
+
+    plt.subplot(2, 1, 2)
+    plt.title('CMultivariateUniform({"center": %s, "radius": %s})' % (str(center), str(radius)))
+    dist2d.draw(plt.gca())
     plt.show(True)

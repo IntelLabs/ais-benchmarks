@@ -3,8 +3,8 @@ import time
 
 from numpy import array as t_tensor
 from sampling_methods.base import CMixtureISSamplingMethod
-from distributions.CMultivariateNormal import CMultivariateNormal
-from distributions.CMixtureModel import CMixtureModel
+from distributions.parametric.CMultivariateNormal import CMultivariateNormal
+from distributions.mixture.CMixtureModel import CMixtureModel
 
 
 class CDeterministicMixtureAIS(CMixtureISSamplingMethod):

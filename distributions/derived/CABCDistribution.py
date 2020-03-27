@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.base import CDistribution
+from distributions.distributions import CDistribution
 
 
 class ABCDistribution(CDistribution):
@@ -72,14 +72,14 @@ class ABCDistribution(CDistribution):
         # return self.likelihood_f(self.o, o_hat, self.slack).reshape(len(z), 1) * prior_prob * sensor_prob
         return self.likelihood_f(self.o, o_hat, self.slack).reshape(len(z), 1) * prior_prob
 
-    def sample(self):
-        z = self.prior_d.sample()
+    def sample(self, nsamples=1):
+        z = self.prior_d.sample(nsamples)
 
         self.gen_d.condition(z)
-        x = self.gen_d.sample()
+        x = self.gen_d.sample(nsamples)
 
         self.sensor_d.condition(x)
-        o_hat = self.sensor_d.sample()
+        o_hat = self.sensor_d.sample(nsamples)
 
         return o_hat
 
@@ -113,8 +113,8 @@ class ABCDistribution(CDistribution):
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
-    from distributions.CGenericNoisyFunction import GenericNoisyFunction
-    from distributions.CMultivariateNormal import CMultivariateNormal
+    from distributions.derived.CGenericNoisyFunction import GenericNoisyFunction
+    from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 
     # Set-up the surrogate likelihood function, this example is just a multivariate normal
     def loglikelihood_f(x, y, slack):

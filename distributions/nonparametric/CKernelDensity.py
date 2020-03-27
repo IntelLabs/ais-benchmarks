@@ -1,7 +1,7 @@
 import numpy as np
-from distributions.base import CDistribution
-from distributions.base import CKernel
-from distributions.CMixtureModel import CMixtureModel
+from distributions.distributions import CDistribution
+from distributions.distributions import CKernel
+from distributions.mixture.CMixtureModel import CMixtureModel
 
 
 class CKernelDensity(CDistribution):
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     params = dict()
     params["samples"] = samples
     params["weights"] = weights
-    params["kernel_f"] = distributions.base.CKernel.kernel_epanechnikov
+    params["kernel_f"] = distributions.parametric.CKernel.kernel_epanechnikov
     params["kernel_bw"] = np.array([5])
     params["support"] = support
     dist = CKernelDensity(params)
@@ -79,19 +79,19 @@ if __name__ == "__main__":
     plt.legend()
 
     plt.subplot(2, 2, 2)
-    params["kernel_f"] = distributions.base.CKernel.kernel_normal
+    params["kernel_f"] = distributions.parametric.CKernel.kernel_normal
     dist = CKernelDensity(params)
     dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
     plt.legend()
 
     plt.subplot(2, 2, 3)
-    params["kernel_f"] = distributions.base.CKernel.kernel_triangular
+    params["kernel_f"] = distributions.parametric.CKernel.kernel_triangular
     dist = CKernelDensity(params)
     dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
     plt.legend()
 
     plt.subplot(2, 2, 4)
-    params["kernel_f"] = distributions.base.CKernel.kernel_uniform
+    params["kernel_f"] = distributions.parametric.CKernel.kernel_uniform
     dist = CKernelDensity(params)
     dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
     plt.legend()
