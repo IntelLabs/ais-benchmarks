@@ -1,11 +1,11 @@
-import distributions.CABCDistribution
-import distributions.CGaussianMixtureModel
-import distributions.CGenericNoisyFunction
-import distributions.CKernelDensity
-import distributions.CMixtureModel
-import distributions.CMultivariateNormal
-import distributions.CMultivariateUniform
-import distributions.CNearestNeighbor
+from distributions.CABCDistribution import ABCDistribution
+from distributions.CGaussianMixtureModel import CGaussianMixtureModel
+from distributions.CGenericNoisyFunction import  GenericNoisyFunction
+from distributions.CKernelDensity import CKernelDensity
+from distributions.CMixtureModel import CMixtureModel
+from distributions.CMultivariateNormal import  CMultivariateNormal
+from distributions.CMultivariateUniform import  CMultivariateUniform
+from distributions.CNearestNeighbor import  CNearestNeighbor
 
 # TODO:
 # Missing processing to implement the CDistribution interface:

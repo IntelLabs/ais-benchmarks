@@ -4,6 +4,9 @@ from distributions.base import CDistribution
 
 class CMultivariateUniform(CDistribution):
     def __init__(self, params):
+        self._check_param(params, "center")
+        self._check_param(params, "radius")
+
         params["type"] = "uniform"
         params["family"] = "uniform"
         params["likelihood_f"] = self.prob
@@ -14,7 +17,14 @@ class CMultivariateUniform(CDistribution):
         self.center = params["center"]
         self.radius = params["radius"]
         self.dims = len(self.center)
-        self.volume = np.prod(np.array([self.radius*2]*self.dims))
+        # If there is only one value for the radius. All dimensions use the same radius.
+        if len(self.radius) == 1:
+            self.volume = (self.radius * 2) ** self.dims
+        elif len(self.radius) == self.dims:
+            self.volume = np.prod([self.radius * 2])
+        else:
+            raise ValueError("Radius dimensionality not valid. It has to be 1 dim (all dimensions will use the same \
+                             radius) or N dim, where N is the dimensionality")
 
     def sample(self, n_samples=1):
         minval = self.center - self.radius
@@ -47,7 +57,10 @@ class CMultivariateUniform(CDistribution):
         raise NotImplementedError
 
     def integral(self, a, b):
-        raise NotImplementedError
+        assert a < b
+        ini = np.maximum(a, self.support_vals[0])
+        end = np.minimum(b, self.support_vals[1])
+        return (1 / self.volume) * np.prod((end-ini))
 
     def marginal(self, dim):
         raise NotImplementedError
@@ -58,9 +71,7 @@ if __name__ == "__main__":
 
     center = np.array([0.0])
     radius = np.array([0.5])
-    support = np.array([-radius, radius])
-
-    dist = CMultivariateUniform({"center": center, "radius": radius, "dims": 1, "support": support})
+    dist = CMultivariateUniform({"center": center, "radius": radius})
 
     plt.figure()
     dist.draw(plt.gca())
