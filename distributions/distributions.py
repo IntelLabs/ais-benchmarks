@@ -2,6 +2,7 @@ import time
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from utils.plot_utils import plot_pdf2d
+from utils.plot_utils import plot_pdf
 
 
 class CDistribution(metaclass=ABCMeta):
@@ -137,12 +138,20 @@ class CDistribution(metaclass=ABCMeta):
 
     def integral(self, a, b, nsamples=1000000):
         print("WARNING! Distribution specific integral not implemented for %s. Resorting to Monte-Carlo integration." % __class__.__name__)
-        samples = self.sample(nsamples)
+        samples = np.random.uniform(a, b, size=(nsamples, self.dims))
         probs = self.prob(samples).flatten()
         height = np.max(probs)
         points = np.random.uniform(0, height, nsamples)
-        inliers = probs <= points
+        inliers = probs >= points
         inliers_count = np.sum(inliers)
+
+        # import matplotlib.pyplot as plt
+        # plt.figure()
+        # plt.scatter(samples[inliers], points[inliers], c="b", marker=".")
+        # plt.scatter(samples[np.logical_not(inliers)], points[np.logical_not(inliers)], c="r", marker=".")
+        # plot_pdf(plt.gca(), self, a, b)
+        # plt.show(block=True)
+
         volume = np.prod(b - a) * height
         print("%d inliers of %d samples. Ratio: %5.3f. Volume: %5.3f" % (inliers_count, nsamples, inliers_count / nsamples, volume))
         return (inliers_count / nsamples) * volume
