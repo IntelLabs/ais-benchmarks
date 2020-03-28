@@ -65,9 +65,6 @@ class CMultivariateNormal(CDistribution):
     def marginal(self, dim):
         raise NotImplementedError
 
-    def integral(self, a, b):
-        raise NotImplementedError
-
     def support(self):
         return self.support_vals
 

@@ -135,9 +135,17 @@ class CDistribution(metaclass=ABCMeta):
     def marginal(self, dim):
         raise NotImplementedError
 
-    @abstractmethod
-    def integral(self, a, b):
-        raise NotImplementedError
+    def integral(self, a, b, nsamples=1000000):
+        print("WARNING! Distribution specific integral not implemented for %s. Resorting to Monte-Carlo integration." % __class__.__name__)
+        samples = self.sample(nsamples)
+        probs = self.prob(samples).flatten()
+        height = np.max(probs)
+        points = np.random.uniform(0, height, nsamples)
+        inliers = probs <= points
+        inliers_count = np.sum(inliers)
+        volume = np.prod(b - a) * height
+        print("%d inliers of %d samples. Ratio: %5.3f. Volume: %5.3f" % (inliers_count, nsamples, inliers_count / nsamples, volume))
+        return (inliers_count / nsamples) * volume
 
     def support(self):
         return self.support_vals
@@ -185,6 +193,15 @@ class CDistribution(metaclass=ABCMeta):
             return np.log(self.likelihood_f(x))
         else:
             raise Exception("Likelihood and LogLikelihood functions not defined")
+
+    def cdf(self, z):
+        raise NotImplementedError
+
+    def log_cdf(self, z):
+        raise NotImplementedError
+
+    def entropy(self):
+        raise NotImplementedError
 
     def is_ready(self):
         return True
