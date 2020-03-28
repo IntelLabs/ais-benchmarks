@@ -58,6 +58,10 @@ class CMultivariateNormalTests(unittest.TestCase):
         print("CMultivariateNormal. Definite integral(%s, %s) = %5.3f, should be %5.3f" % (str(start), str(end), integral, integral_gt))
         self.assertTrue(np.allclose(integral, integral_gt, atol=.01))  # Be forgiving with the tolerance
 
+        integral = dist.integral(dist.support()[0], dist.support()[1])
+        print("CMultivariateNormal. Integral on the support = %5.3f, should be 1.0" % integral)
+        self.assertTrue(np.allclose(integral, np.array([1.0]), atol=.01))  # Be forgiving with the tolerance
+
     def test_CMultivariateNormal_prob_3d(self):
         mean = np.array([0.3, -1.0, 0.0])
         sigma = np.diag([0.4, 0.5, 0.7])
@@ -88,8 +92,13 @@ class CMultivariateNormalTests(unittest.TestCase):
         end = np.array([6.0, 6.0, 6.0])
         integral_gt = np.array([1.0 / 8.0])
         integral = dist.integral(start, end)
-        print("CMultivariateNormal. Definite integral(%s, %s) = %5.3f, should be %5.3f" % (str(start), str(end), integral, integral_gt))
+        print("CMultivariateNormal. Definite integral(%s, %s) = %5.3f, should be %5.3f" %
+              (str(start), str(end), integral, integral_gt))
         self.assertTrue(np.allclose(integral, integral_gt, atol=.01))  # Be forgiving with the tolerance
+
+        integral = dist.integral(dist.support()[0], dist.support()[1])
+        print("CMultivariateNormal. Integral on the support = %5.3f, should be 1.0" % integral)
+        self.assertTrue(np.allclose(integral, np.array([1.0]), atol=.01))  # Be forgiving with the tolerance
 
 
 if __name__ == '__main__':

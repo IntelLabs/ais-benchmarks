@@ -54,7 +54,7 @@ class CMultivariateUniform(CDistribution):
         raise NotImplementedError
 
     def integral(self, a, b):
-        assert a < b
+        assert np.all(a < b)
         ini = np.maximum(a, self.support_vals[0])
         end = np.minimum(b, self.support_vals[1])
         return (1 / self.volume) * np.prod((end-ini))
