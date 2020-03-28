@@ -144,14 +144,6 @@ class CDistribution(metaclass=ABCMeta):
         points = np.random.uniform(0, height, nsamples)
         inliers = probs >= points
         inliers_count = np.sum(inliers)
-
-        # import matplotlib.pyplot as plt
-        # plt.figure()
-        # plt.scatter(samples[inliers], points[inliers], c="b", marker=".")
-        # plt.scatter(samples[np.logical_not(inliers)], points[np.logical_not(inliers)], c="r", marker=".")
-        # plot_pdf(plt.gca(), self, a, b)
-        # plt.show(block=True)
-
         volume = np.prod(b - a) * height
         print("%d inliers of %d samples. Ratio: %5.3f. Volume: %5.3f" % (inliers_count, nsamples, inliers_count / nsamples, volume))
         return (inliers_count / nsamples) * volume

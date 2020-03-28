@@ -71,6 +71,10 @@ class CMultivariateUniformTests(unittest.TestCase):
         print("CMultivariateUniform. Definite integral(-1, 1) = %5.3f, should be 1.0" % dist.integral(-1, 1))
         self.assertTrue(np.allclose(dist.integral(-1, 1), 1.0))
 
+        integral = dist.integral(dist.support()[0], dist.support()[1])
+        print("CMultivariateUniform. Integral on the support = %5.3f, should be 1.0" % integral)
+        self.assertTrue(np.allclose(integral, np.array([1.0])))
+
     def test_CMultivariateUniform_prob_3d(self):
         # Each dimension has different radius
         center = np.array([0.0, 0.0, 0.0])
@@ -123,6 +127,10 @@ class CMultivariateUniformTests(unittest.TestCase):
         self.assertTrue(np.allclose(dist.integral(0, 1), 0.125))
         print("CMultivariateUniform. Definite integral(-1, 1) = %5.3f, should be 1.0" % dist.integral(-1, 1))
         self.assertTrue(np.allclose(dist.integral(-1, 1), 1.0))
+
+        integral = dist.integral(dist.support()[0], dist.support()[1])
+        print("CMultivariateUniform. Integral on the support = %5.3f, should be 1.0" % integral)
+        self.assertTrue(np.allclose(integral, np.array([1.0])))
 
 
 if __name__ == '__main__':
