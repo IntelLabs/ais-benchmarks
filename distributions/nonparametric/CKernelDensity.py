@@ -50,7 +50,7 @@ class CKernelDensity(CDistribution):
     def marginal(self, dim):
         raise NotImplementedError
 
-    def integral(self, a, b):
+    def integral(self, a, b, nsamples=None):
         raise NotImplementedError
 
     def support(self):
@@ -59,7 +59,6 @@ class CKernelDensity(CDistribution):
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
-    import distributions
 
     samples = np.array([-.1, .3, .2, .25, .31]).reshape(5, 1)
     weights = np.ones(len(samples)) / len(samples)
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     params = dict()
     params["samples"] = samples
     params["weights"] = weights
-    params["kernel_f"] = distributions.parametric.CKernel.kernel_epanechnikov
+    params["kernel_f"] = CKernel.kernel_epanechnikov
     params["kernel_bw"] = np.array([5])
     params["support"] = support
     dist = CKernelDensity(params)
@@ -79,21 +78,21 @@ if __name__ == "__main__":
     plt.legend()
 
     plt.subplot(2, 2, 2)
-    params["kernel_f"] = distributions.parametric.CKernel.kernel_normal
+    params["kernel_f"] = CKernel.kernel_normal
     dist = CKernelDensity(params)
     dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
     plt.legend()
 
     plt.subplot(2, 2, 3)
-    params["kernel_f"] = distributions.parametric.CKernel.kernel_triangular
+    params["kernel_f"] = CKernel.kernel_triangular
     dist = CKernelDensity(params)
     dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
     plt.legend()
 
     plt.subplot(2, 2, 4)
-    params["kernel_f"] = distributions.parametric.CKernel.kernel_uniform
+    params["kernel_f"] = CKernel.kernel_uniform
     dist = CKernelDensity(params)
     dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
     plt.legend()
 
-    plt.show(True)
+    plt.show(block=True)

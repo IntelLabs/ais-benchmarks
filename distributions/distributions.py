@@ -124,20 +124,47 @@ class CDistribution(metaclass=ABCMeta):
         """
         self.loglikelihood_f = loglikelihood_f
 
-    @abstractmethod
     def sample(self, nsamples=1):
+        """
+        Generate nsamples from the distribution represented by this instance. If the derived class does not implement
+        this method, it will fall back to the rejection sampling procedure implemented here. It is highly recommended
+        to implement your sampling method for each custom distribution to avoid the low sample efficiency of rejection
+        sampling.
+
+        :param nsamples: Desired number of samples to generate.
+        :return: N by M array with N = nsamples and M = dimensions of the random variable represented by
+                 this distribution.
+        """
+        # TODO: Implement generic rejection sampling
+        # TODO: Implement generic MCMC sampling
         raise NotImplementedError
 
     @abstractmethod
     def condition(self, dist):
+        """
+        Condition the current distribution with a known constraint that must be satisfied represented by the dist
+        passed as a parameter. Depending on the type and dimensionality of the distribution the behavior of the
+        condition method can change.
+        :param dist: Distribution or batch of values used to condition this distribution.
+        :return: None
+
+        TODO: Usage example and utility and examples of different behavior of this function.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def marginal(self, dim):
+        """
+        Marginalize the desired dimension of the random variable and return the marginalized distribution.
+        :param dim: Dimension to marginalize.
+        :return: Distribution resulting of marginalizing the desired dimension.
+
+        TODO: Usage example and utility
+        """
         raise NotImplementedError
 
     def integral(self, a, b, nsamples=1000000):
-        print("WARNING! Distribution specific integral not implemented for %s. Resorting to Monte-Carlo integration." % __class__.__name__)
+        print("WARNING! Distribution specific integral not implemented for %s. Resorting to Monte-Carlo integration." % self.__class__.__name__)
         samples = np.random.uniform(a, b, size=(nsamples, self.dims))
         probs = self.prob(samples).flatten()
         height = np.max(probs)
@@ -145,16 +172,20 @@ class CDistribution(metaclass=ABCMeta):
         inliers = probs >= points
         inliers_count = np.sum(inliers)
         volume = np.prod(b - a) * height
-        print("%d inliers of %d samples. Ratio: %5.3f. Volume: %5.3f" % (inliers_count, nsamples, inliers_count / nsamples, volume))
+        # print("%d inliers of %d samples. Ratio: %5.3f. Volume: %5.3f" % (inliers_count, nsamples, inliers_count / nsamples, volume))
         return (inliers_count / nsamples) * volume
 
     def support(self):
+        """
+
+        :return: A 2 by N array with the support of the distribution. [lower_bound, upper_bound] Where each component
+                 is N dimensional vector with the dimension-wise support boundaries.
+        """
         return self.support_vals
 
-    def draw(self, ax, n_points=100, label=None, color=None):
+    def draw(self, ax, resolution=.01, label=None, color=None):
         if self.dims == 1:
-            x = np.linspace(self.support()[0], self.support()[1], n_points).reshape(n_points, 1)
-            ax.plot(x.flatten(), self.prob(x).flatten(), label=label, c=color)
+            plot_pdf(ax, self, self.support()[0], self.support()[1], resolution, label=label, color=color)
         elif self.dims == 2:
             plot_pdf2d(ax, self, self.support()[0], self.support()[1])
         else:

@@ -31,13 +31,13 @@ def grid_sample_distribution(dist, space_min, space_max, resolution):
     return grid, prob, dims, shape
 
 
-def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-b", alpha=0.2, scale=1.0, label=None):
+def plot_pdf(ax, pdf, space_min, space_max, resolution=0.1, options="-", color="b", alpha=0.2, scale=1.0, label=None):
     x = np.linspace(space_min, space_max, int((space_max - space_min) / resolution)).reshape(-1, 1)
     y = pdf.prob(x) * scale
-    return ax.plot(x.flatten(), y.flatten(), options, alpha=alpha, label=label)
+    return ax.plot(x.flatten(), y.flatten(), options, color=color, alpha=alpha, label=label)
 
 
-def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes = None):
+def plot_sampled_pdfs(ax, samples, prob_p, shape=None, marginalize_axes=None):
     prob_p_margin = prob_p.reshape(shape)
     if marginalize_axes is not None:
         prob_p_margin = np.sum(prob_p_margin, axis=marginalize_axes)

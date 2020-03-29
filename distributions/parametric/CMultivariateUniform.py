@@ -16,6 +16,8 @@ class CMultivariateUniform(CDistribution):
         super(CMultivariateUniform, self).__init__(params)
         self.center = params["center"]
         self.radius = params["radius"]
+        self.loc = self.center
+        self.scale = self.radius
         self.dims = len(self.center)
         # If there is only one value for the radius. All dimensions use the same radius.
         if len(self.radius) == 1:
@@ -53,7 +55,7 @@ class CMultivariateUniform(CDistribution):
     def condition(self, dist):
         raise NotImplementedError
 
-    def integral(self, a, b):
+    def integral(self, a, b, nsamples=None):
         assert np.all(a < b)
         ini = np.maximum(a, self.support_vals[0])
         end = np.minimum(b, self.support_vals[1])

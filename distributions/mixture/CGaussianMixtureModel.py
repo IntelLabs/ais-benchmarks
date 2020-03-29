@@ -51,7 +51,7 @@ class CGaussianMixtureModel(CDistribution):
     def marginal(self, dim):
         raise NotImplementedError
 
-    def integral(self, a, b):
+    def integral(self, a, b, nsamples=None):
         raise NotImplementedError
 
 

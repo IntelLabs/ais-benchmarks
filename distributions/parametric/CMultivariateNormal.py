@@ -37,6 +37,8 @@ class CMultivariateNormal(CDistribution):
 
         self.mean = mean
         self.cov = cov
+        self.loc = self.mean
+        self.scale = self.cov
         self.inv_cov = np.linalg.inv(cov)
         self.log_det = np.log(self.det)
         self.term2 = - 0.5 * self.log_det
