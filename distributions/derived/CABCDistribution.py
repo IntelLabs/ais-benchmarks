@@ -84,6 +84,7 @@ class ABCDistribution(CDistribution):
         return o_hat
 
     def draw(self, ax, n_points=100, label=None, color=None):
+        # TODO: Check dimensions and make plot for 2d as well
         z = np.linspace(self.support()[0], self.support()[1], n_points)
         # z = self.prior_d.sample(n_points).flatten()
         self.gen_d.condition(z)
@@ -107,7 +108,7 @@ class ABCDistribution(CDistribution):
     def marginal(self, dim):
         raise NotImplementedError
 
-    def integral(self, a, b):
+    def integral(self, a, b, nsamples=None):
         raise NotImplementedError
 
 

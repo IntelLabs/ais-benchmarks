@@ -44,6 +44,8 @@ class GenericNoisyFunction(CDistribution):
         return
 
     def draw(self, axis, n_points=100, label=None, color=None):
+        # TODO: Check dimensions and make plot for 2d as well
+
         z = np.linspace(self.support_vals[0], self.support_vals[1], n_points).reshape(n_points, 1)
         self.condition(z)
         samples = self.sample()
