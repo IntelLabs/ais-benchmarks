@@ -64,19 +64,10 @@ def approx_gen_f(z):
     return (A*np.sin(z*2*np.pi*f + phi) + A) / 2
 
 
-def sensor_f(x):
-    """
-    Sensor transfer function. This is our model of the sensor transfer function that converts an observable state x
-    into a noiseless observation value.
-    :param x:
-    :return:
-    """
-    return x
-
-
 if __name__ == '__main__':
     space_min = -1.0
     space_max = 1.0
+    n_inference_samples = 100
 
     # Prepare plot and draw true generating function
     fig = plt.figure()
@@ -102,7 +93,7 @@ if __name__ == '__main__':
 
     # Configure the generative model
     gen_params = dict()
-    gen_params["noise_model"] = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([0.01])})
+    gen_params["noise_model"] = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([0.001])})
     gen_params["function"] = approx_gen_f
     gen_params["support"] = np.array([space_min, space_max])
     gen_params["dims"] = 1
@@ -110,17 +101,17 @@ if __name__ == '__main__':
 
     # Configure sensor model
     sensor_params = dict()
-    sensor_params["noise_model"] = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([0.01])})
-    sensor_params["function"] = sensor_f
+    sensor_params["noise_model"] = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([0.001])})
+    sensor_params["function"] = lambda x: x
     sensor_params["support"] = np.array([space_min, space_max])
     sensor_params["dims"] = 1
     sensor = GenericNoisyFunction(sensor_params)
 
     # Configure prior on the latent parameters (center and radius)
     prior_center = np.array([(space_min + space_max) / 2.0])
-    prior_radius = np.array([(space_max-space_min) / 2.0])
-    prior_support = np.array([prior_center - prior_radius, prior_center + prior_radius])
-    prior_d = CMultivariateUniform({"center": prior_center, "radius": prior_radius, "dims": 1, "support": prior_support})
+    prior_radius = np.array([(space_max-space_min) / 10.0])
+    # prior_d = CMultivariateUniform({"center": prior_center, "radius": prior_radius})
+    prior_d = CMultivariateNormal({"mean": prior_center, "sigma": np.diag(prior_radius)})
     prior_d.draw(plt.gca(), label="prior", color="b")
 
     # Configure the ABC distribution with the prior, the sensor model, the generative process (in this case is equal
@@ -136,8 +127,8 @@ if __name__ == '__main__':
     params["support"] = np.array([space_min, space_max])
     target_d = ABCDistribution(params)
 
-    # Randomly sample the ground truth point from the support
-    gt_z = np.array([np.random.uniform(space_min, space_max)])
+    # Randomly sample the ground truth point from the prior
+    gt_z = prior_d.sample(1)
 
     # Generate and display the true state with the generative model
     gt_x = gt_gen_f(gt_z)
@@ -162,7 +153,7 @@ if __name__ == '__main__':
 
     # Do posterior inference with ABC and the MCMC method
     tic = time.time()
-    posterior_samples, weights = algo_mcmc.importance_sample(target_d, 50)
+    posterior_samples, weights = algo_mcmc.importance_sample(target_d, n_inference_samples)
     print("MCMC inference. %d samples. %5.3f  seconds." % (len(posterior_samples), time.time() - tic))
 
     # Plot the MCMC results
@@ -171,7 +162,7 @@ if __name__ == '__main__':
 
     # Do posterior inference with TP-AIS method
     tic = time.time()
-    posterior_samples, weights = algo_tpais.importance_sample(target_d, 50)
+    posterior_samples, weights = algo_tpais.importance_sample(target_d, n_inference_samples)
     print("TP-AIS inference. %d samples. %5.3f seconds." % (len(posterior_samples), time.time() - tic))
 
     # Plot the TPAIS results
@@ -181,7 +172,7 @@ if __name__ == '__main__':
     plt.pause(0.001)
     plt.gca().scatter(list(posterior_samples), [-0.4] * len(posterior_samples), marker="x", c='g', label="TP-AIS: Samples")
 
-    # Plot extremely densely sampled posterior as the ground truth posterior
+    # Plot densely sampled posterior as the ground truth posterior
     tic = time.time()
     z = np.linspace(-1, 1, 200).reshape(200, 1)
     px = np.array([])

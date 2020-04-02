@@ -60,17 +60,25 @@ class ABCDistribution(CDistribution):
             raise ValueError("ABCDistribution prob or logprob cannot be evaluated w/o conditioning it first with \
                              an observation. Make sure to call self.condition(obs) first.")
 
-        self.gen_d.condition(z)
-        x = self.gen_d.sample()
+        self.gen_d.set_params(z)        # Set the model parameters to the evaluated params
+        self.gen_d.condition(self.o)    # Condition the generative model at the points to be evaluated
+        fx = self.gen_d.sample()        # Evaluate the generative model at the observed values
 
-        # The sensor model is applied w/o noise to compute the prob of a hypothesis z. The noise is in the observation o
-        self.sensor_d.condition(x)
-        o_hat = self.sensor_d.sample()
+        self.sensor_d.condition(fx)     # Condition the sensor model on the generated observation
+        o_hat = self.sensor_d.sample()  # Obtain the generated observation from the sensor model
 
-        prior_prob = self.prior_d.prob(z).reshape(len(z), 1)
-        sensor_prob = self.sensor_d.prob(o_hat)
-        # return self.likelihood_f(self.o, o_hat, self.slack).reshape(len(z), 1) * prior_prob * sensor_prob
-        return self.likelihood_f(self.o, o_hat, self.slack).reshape(len(z), 1) * prior_prob
+        prior_prob = self.prior_d.prob(z).reshape(len(z), 1)    # Evaluate the prior probability of the latent values
+        sensor_prob = self.sensor_d.prob(o_hat)                 # Evaluate the measurement probability of the generated observation
+
+        # Evaluate the ABC posterior using the proxy likelihood function with the generated and the observed
+        # values, the prior probability of the parameter values and the measurement probability
+        if self.likelihood_f is not None:
+            return self.likelihood_f(self.o, o_hat, self.slack).reshape(len(z), 1) * prior_prob * sensor_prob
+        elif self.loglikelihood_f is not None:
+            return np.exp(self.loglikelihood_f(self.o, o_hat, self.slack)).reshape(len(z), 1) * prior_prob * sensor_prob
+        else:
+            raise Exception("ABCDistribution. likelihood_f and loglikelihood_f not defined. Must define at least one \
+                             of them.")
 
     def sample(self, nsamples=1):
         z = self.prior_d.sample(nsamples)
