@@ -163,7 +163,7 @@ class CDistribution(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def integral(self, a, b, nsamples=1000000):
+    def integral(self, a, b, nsamples=10000000):
         print("WARNING! Distribution specific integral not implemented for %s. Resorting to Monte-Carlo integration." % self.__class__.__name__)
         samples = np.random.uniform(a, b, size=(nsamples, self.dims))
         probs = self.prob(samples).flatten()

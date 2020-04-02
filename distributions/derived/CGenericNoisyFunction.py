@@ -20,10 +20,11 @@ class GenericNoisyFunction(CDistribution):
         assert callable(self.function), "Function must be callable"
 
         self.x = None
+        self.z = None
 
     def sample(self):
         noise = self.noise_model.sample(len(self.x))
-        fx = self.function(self.x) + noise
+        fx = self.function(self.x, self.z).reshape(len(self.x), self.dims) + noise
         return fx
 
     def log_prob(self, x):
@@ -64,6 +65,9 @@ class GenericNoisyFunction(CDistribution):
         else:
             axis.fill_between(z.flatten(), means - 3 * stdevs, means + 3 * stdevs, color=color, alpha=0.5)
             axis.plot(z.flatten(), means, color=color)
+
+    def set_params(self, z):
+        self.z = z
 
     def condition(self, x):
         self.x = x
