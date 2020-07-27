@@ -1,7 +1,7 @@
 # Define the methods to be evaluated and its parameter configuration
 methods:
     - name: m_pmc
-      type: sampling_methods.m_pmc.CMixturePMC
+      type: sampling_methods.CMixturePMC
       params:
         K: 20         # Number of samples per proposal distribution
         N: 10          # Number of proposal distributions
@@ -9,7 +9,7 @@ methods:
         sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
 
     - name: mcmc_mh
-      type: sampling_methods.metropolis_hastings.CMetropolisHastings
+      type: sampling_methods.CMetropolisHastings
       params:
         n_burnin: 10
         n_steps: 2
@@ -17,14 +17,14 @@ methods:
         proposal_sigma: 0.01 # Scaling parameter of the spherical gaussian MC proposal distribution
 
     - name: rejection
-      type: sampling_methods.rejection.CRejectionSampling
+      type: sampling_methods.CRejectionSampling
       params:
         scaling: 1
-        proposal: "'distributions.CMultivariateUniform.CMultivariateUniform(np.zeros(self.ndims), (self.space_max-self.space_min) / 2)'"
+        proposal: "'distributions.CMultivariateUniform({\"center\": np.zeros(self.ndims), \"radius\":(self.space_max-self.space_min) / 2})'"
         kde_bw: 0.01
 
     - name: lais
-      type: sampling_methods.layered_ais.CLayeredAIS
+      type: sampling_methods.CLayeredAIS
       params:
         K: 3          # Number of samples per proposal distribution
         N: 5          # Number of proposal distributions
@@ -34,7 +34,7 @@ methods:
         mh_sigma: 0.005  # Scaling parameter of the mcmc proposal distributions moment update
 
     - name: dm_ais
-      type: sampling_methods.dm_ais.CDeterministicMixtureAIS
+      type: sampling_methods.CDeterministicMixtureAIS
       params:
         K: 10         # Number of samples per proposal distribution
         N: 2          # Number of proposal distributions
@@ -42,51 +42,51 @@ methods:
         sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
 
     - name: tp_mixture_leaf_haar
-      type: sampling_methods.tree_pyramid.CTreePyramidSampling
+      type: sampling_methods.CTreePyramidSampling
       params:
         method: "'mixture'"
         resampling: "'leaf'"
         kernel: "'haar'"
 
     - name: tp_mixture_none_haar
-      type: sampling_methods.tree_pyramid.CTreePyramidSampling
+      type: sampling_methods.CTreePyramidSampling
       params:
         method: "'mixture'"
         resampling: "'none'"
         kernel: "'haar'"
 
     - name: tp_simple_none_haar
-      type: sampling_methods.tree_pyramid.CTreePyramidSampling
+      type: sampling_methods.CTreePyramidSampling
       params:
         method: "'simple'"
         resampling: "'none'"
         kernel: "'haar'"
 
     - name: tp_simple_leaf_haar
-      type: sampling_methods.tree_pyramid.CTreePyramidSampling
+      type: sampling_methods.CTreePyramidSampling
       params:
         method: "'simple'"
         resampling: "'leaf'"
         kernel: "'haar'"
 
     - name: tp_dm_leaf_normal
-      type: sampling_methods.tree_pyramid.CTreePyramidSampling
+      type: sampling_methods.CTreePyramidSampling
       params:
         method: "'dm'"
         resampling: "'leaf'"
         kernel: "'normal'"
 
     - name: nested
-      type: sampling_methods.nested.CNestedSampling
+      type: sampling_methods.CNestedSampling
       params:
-        proposal: "'distributions.CMultivariateNormal.CMultivariateNormal(np.zeros(self.ndims), np.diag(np.ones(self.ndims) * 0.01))'"
+        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
         N: 2          # Number of proposal distributions
         kde_bw: 0.01
 
     - name: multi_nested
-      type: sampling_methods.multi_nested.CMultiNestedSampling
+      type: sampling_methods.CMultiNestedSampling
       params:
-        proposal: "'distributions.CMultivariateNormal.CMultivariateNormal(np.zeros(self.ndims), np.diag(np.ones(self.ndims) * 0.01))'"
+        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
         N: 2          # Number of proposal distributions
         kde_bw: 0.01
 

@@ -21,7 +21,7 @@ class CMultivariateNormal(CDistribution):
 
         super(CMultivariateNormal, self).__init__(params)
 
-        self.set_moments(params["mean"], params["sigma"])
+        self.set_moments(np.array(params["mean"]), np.array(params["sigma"]))
 
         assert self.cov.shape == (self.dims, self.dims)
         self.det = np.linalg.det(self.cov)

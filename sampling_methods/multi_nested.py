@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 import time
 import matplotlib.cm as cm
 import sys
+import distributions
 
 
 class CEllipsoid:

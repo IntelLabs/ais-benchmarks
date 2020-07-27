@@ -45,6 +45,14 @@ class CDistribution(metaclass=ABCMeta):
     An example of generative models are sensor models which can be implemented by conditioning the distribution on
     the true value "x" and implementing a sample method that models the sensor behavior given the known true state
     "o ~ p(o|x)" that can be used to simulate an observation from the sensor.
+
+    TODO:
+        Add other useful abstract methods and propagate to existing implementations and tests
+            def prob_grad(self, x)
+            def log_prob_grad(self, x)
+            def cdf(self, x)
+            def log_cdf(self, x)
+            def entropy(self)
     """
 
     def __init__(self, params):
@@ -145,7 +153,7 @@ class CDistribution(metaclass=ABCMeta):
         Condition the current distribution with a known constraint that must be satisfied represented by the dist
         passed as a parameter. Depending on the type and dimensionality of the distribution the behavior of the
         condition method can change.
-        :param dist: Distribution or batch of values used to condition this distribution.
+        :param dist: Distribution used to condition this distribution.
         :return: None
 
         TODO: Usage example and utility and examples of different behavior of this function.
@@ -172,7 +180,6 @@ class CDistribution(metaclass=ABCMeta):
         inliers = probs >= points
         inliers_count = np.sum(inliers)
         volume = np.prod(b - a) * height
-        # print("%d inliers of %d samples. Ratio: %5.3f. Volume: %5.3f" % (inliers_count, nsamples, inliers_count / nsamples, volume))
         return (inliers_count / nsamples) * volume
 
     def support(self):
@@ -225,15 +232,6 @@ class CDistribution(metaclass=ABCMeta):
             return np.log(self.likelihood_f(x))
         else:
             raise Exception("Likelihood and LogLikelihood functions not defined")
-
-    def cdf(self, z):
-        raise NotImplementedError
-
-    def log_cdf(self, z):
-        raise NotImplementedError
-
-    def entropy(self):
-        raise NotImplementedError
 
     def is_ready(self):
         return True

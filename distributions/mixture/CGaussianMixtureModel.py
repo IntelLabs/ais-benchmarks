@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.parametric import CDistribution
+from distributions.distributions import CDistribution
 from distributions.mixture.CMixtureModel import CMixtureModel
 from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 

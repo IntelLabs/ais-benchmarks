@@ -1,5 +1,8 @@
 import yaml
 import numpy as np
+import distributions
+import sampling_methods
+from pprint import pformat
 
 from benchmark.evaluation import evaluate_method
 
@@ -31,7 +34,7 @@ class CBenchmark(object):
     def load_methods(self, methods_file, space_min, space_max, dims):
         self.methods.clear()
         m_yaml = open(methods_file, mode="r")
-        methods = yaml.load(m_yaml)
+        methods = yaml.load(m_yaml, Loader=yaml.FullLoader)
         for method in methods["methods"]:
 
             params = ['"space_min":np.array(%s)' % np.array2string(space_min, separator=', '), ",",
@@ -61,7 +64,7 @@ class CBenchmark(object):
         self.nsamples.clear()
 
         b_yaml = open(benchmark_file, mode="r")
-        bench = yaml.load(b_yaml)
+        bench = yaml.load(b_yaml, Loader=yaml.FullLoader)
 
         # Get the metrics to compute
         self.metrics = bench["metrics"]
@@ -82,17 +85,11 @@ class CBenchmark(object):
             self.batch_sizes.append(target["batch_size"])
 
             # Build the target distribution
-            params = []
-            for p in target["params"].items():
-                params.append("%s=np.array(%s)" % (p[0], p[1]))
-                params.append(",")
-
-            params_str = ""
-            for p in params[0:len(params)-1]:
-                params_str += p
-            dist_code = "%s(%s)" % (target["type"], params_str)
-            target_dist = eval(dist_code)
-            if target_dist is None:
+            dist_code = "%s(%s)" % (target["type"], pformat(target["params"]))
+            try:
+                target_dist = eval(dist_code)
+            except BaseException as e:
+                print(e)
                 raise ValueError("Error creating target dist: %s" % dist_code)
             target_dist.name = target["name"]
             target_dist.domain_min = eval(target["domain_min"])
