@@ -1,5 +1,19 @@
 # Define the methods to be evaluated and its parameter configuration
 methods:
+    - name: multi_nested
+      type: sampling_methods.CMultiNestedSampling
+      params:
+        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
+        N: 2          # Number of proposal distributions
+        kde_bw: 0.01
+
+    - name: rejection
+      type: sampling_methods.CRejectionSampling
+      params:
+        scaling: 1
+        proposal: "'distributions.CMultivariateUniform({\"center\": np.zeros(self.ndims), \"radius\":(self.space_max-self.space_min) / 2})'"
+        kde_bw: 0.01
+
     - name: m_pmc
       type: sampling_methods.CMixturePMC
       params:
@@ -15,13 +29,6 @@ methods:
         n_steps: 2
         kde_bw: 0.01
         proposal_sigma: 0.01 # Scaling parameter of the spherical gaussian MC proposal distribution
-
-    - name: rejection
-      type: sampling_methods.CRejectionSampling
-      params:
-        scaling: 1
-        proposal: "'distributions.CMultivariateUniform({\"center\": np.zeros(self.ndims), \"radius\":(self.space_max-self.space_min) / 2})'"
-        kde_bw: 0.01
 
     - name: lais
       type: sampling_methods.CLayeredAIS
@@ -78,13 +85,6 @@ methods:
 
     - name: nested
       type: sampling_methods.CNestedSampling
-      params:
-        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
-        N: 2          # Number of proposal distributions
-        kde_bw: 0.01
-
-    - name: multi_nested
-      type: sampling_methods.CMultiNestedSampling
       params:
         proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
         N: 2          # Number of proposal distributions

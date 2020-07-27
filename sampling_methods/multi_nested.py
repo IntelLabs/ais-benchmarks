@@ -21,13 +21,13 @@ class CEllipsoid:
         else:
             if scale <= 0:
                 raise ValueError
-            scale = scale.reshape(1,1)
+            scale = scale.reshape(1, 1)
 
         self.loc = loc
         self.scale = scale
         self.indices = indices
 
-        self.sampler = CMultivariateNormal(mean=loc, cov=scale)
+        self.sampler = CMultivariateNormal({"mean": loc, "sigma": scale})
 
         d = len(loc)
         sphere_vol = 2/d * (np.pi ** (d/2) / gamma(d/2))

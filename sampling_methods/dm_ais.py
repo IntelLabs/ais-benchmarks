@@ -71,7 +71,7 @@ class CDeterministicMixtureAIS(CMixtureISSamplingMethod):
             for s in new_samples:
                 w = target_d.prob(s) / self.prob(s)
                 self._num_pi_evals += 1
-                new_weights = np.concatenate((new_weights, w)) if new_weights.size else w
+                new_weights = np.concatenate((new_weights, w.reshape(-1))) if new_weights.size else w.reshape(-1)
 
             # Adaptation
             self.resample(new_samples, new_weights)

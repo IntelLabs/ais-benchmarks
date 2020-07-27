@@ -32,13 +32,16 @@ class CRejectionSampling(CMixtureSamplingMethod):
             acceptance_ratio = proposals_prob_p / proposals_prob_q
 
             # Generate acceptance probability values from U[0,1)
-            acceptance_prob = np.random.uniform(0,1, size=n_samples - len(self.samples))
+            acceptance_prob = np.random.uniform(0, 1, size=n_samples - len(self.samples)).reshape(-1, 1)
 
             # Obtain the indices of the accepted samples
-            accept_idx = acceptance_ratio > acceptance_prob
+            accept_idx = (acceptance_ratio > acceptance_prob).reshape(-1)
 
-            self.samples = np.vstack((self.samples, proposals[accept_idx])) if self.samples.size else proposals[accept_idx]
-            self.weights = np.concatenate((self.weights, acceptance_ratio[accept_idx])) if self.weights.size else acceptance_ratio[accept_idx]
+            self.samples = np.vstack((self.samples, proposals[accept_idx])) \
+                if self.samples.size else proposals[accept_idx]
+
+            self.weights = np.concatenate((self.weights, acceptance_ratio[accept_idx].reshape(-1))) \
+                if self.weights.size else acceptance_ratio[accept_idx].reshape(-1)
 
             t_elapsed = time.time() - t_ini
 
