@@ -2,6 +2,20 @@
 targets:
     - name: gmm
       type: distributions.CGaussianMixtureModel
+      params: {means: [[0.0], [-0.2]],
+               sigmas: [[0.01], [0.001]],  # WARNING!! Notice the double bracket when defining the cov
+               weights:[0.5, 0.5],
+               support:[[-1, -1], [1, 1]]}
+      space_size: 1.0
+      batch_size: 2
+      nsamples: 100
+      nsamples_eval: 2000
+      domain_min: np.array([-1])
+      domain_max: np.array([1])
+      tags: [high_kurtosis, low_skew, multimodal, close_modes]
+
+    - name: gmm
+      type: distributions.CGaussianMixtureModel
       params: {means: [[0.0, 0.0], [-0.2, 0.4]],
                sigmas: [[0.01, 0.1], [0.001, 0.01]],  # WARNING!! Notice the double bracket when defining the sigmas
                weights:[0.5, 0.5],
@@ -24,20 +38,6 @@ targets:
       domain_min: np.array([-1])
       domain_max: np.array([1])
       tags: [low_kurtosis, low_skew, unimodal]
-
-    - name: gmm
-      type: distributions.CGaussianMixtureModel
-      params: {means: [[0.0], [-0.2]],
-               sigmas: [[0.01], [0.001]],  # WARNING!! Notice the double bracket when defining the cov
-               weights:[0.5, 0.5],
-               support:[[-1, -1], [1, 1]]}
-      space_size: 1.0
-      batch_size: 2
-      nsamples: 100
-      nsamples_eval: 2000
-      domain_min: np.array([-1])
-      domain_max: np.array([1])
-      tags: [high_kurtosis, low_skew, multimodal, close_modes]
 
 
 metrics: [NESS, JSD, T]
