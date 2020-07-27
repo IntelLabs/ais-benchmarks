@@ -1,7 +1,7 @@
 import numpy as np
 import time
-
 import distributions
+
 from sampling_methods.base import CMixtureSamplingMethod
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d

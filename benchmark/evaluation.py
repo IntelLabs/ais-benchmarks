@@ -77,7 +77,7 @@ def evaluate_proposal(proposal_dist, target_dist, space_min, space_max, sampling
     eval_samples, p_samples_logprob = uniform_sample_distribution(target_dist, space_min, space_max, nsamples=sampling_eval_samples)
 
     # Obtain the density at the sampled points from the proposal distribution
-    q_samples_logprob = proposal_dist.logprob(eval_samples)
+    q_samples_logprob = proposal_dist.log_prob(eval_samples)
 
     # Compute the empirical Jensen-Shannon Divergence
     js_div_comps = js_divergence_logprob(p_samples_logprob, q_samples_logprob)
@@ -110,7 +110,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     space_max = t_tensor([space_size] * ndims)
 
     samples_acc = np.random.uniform(space_min, space_max).reshape(-1, ndims)
-    samples_logprob_acc = target_dist.logprob(samples_acc)
+    samples_logprob_acc = target_dist.log_prob(samples_acc)
 
     # Frame collection for the videofile
     if videofile is not None:
@@ -154,7 +154,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                                                                              n_samples=n_samples,
                                                                              timeout=max_sampling_time - sampling_time)
 
-        samples_logprob_acc = sampling_method.logprob(samples_acc)
+        samples_logprob_acc = sampling_method.log_prob(samples_acc)
 
         n_samples = len(samples_acc) + batch_samples
 

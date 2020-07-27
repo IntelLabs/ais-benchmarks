@@ -8,7 +8,7 @@ class CMixtureModel:
         assert len(models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(models), len(weights))
         self.models = models
         self.weights = weights
-        self.set_weights(weights)
+        self.set_weights(np.array(weights))
 
     def set_weights(self, weights):
         assert len(self.models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(self.models), len(weights))
@@ -38,9 +38,9 @@ class CMixtureModel:
             raise ValueError("Unsupported samples data format: " + str(data.shape))
 
         for i in range(len(self.models)):
-            llikelihood[i] = self.models[i].logprob(data)
+            llikelihood[i] = self.models[i].log_prob(data).reshape(-1)
 
-        logprob = logsumexp(llikelihood, b=self.weights.reshape(-1,1), axis=0)
+        logprob = logsumexp(llikelihood, b=self.weights.reshape(-1, 1), axis=0)
         return logprob
 
     def prob(self, data):

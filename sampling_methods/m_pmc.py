@@ -39,7 +39,8 @@ class CMixturePMC(CMixtureISSamplingMethod):
         self.proposals = []
         for _ in range(self.N):
             prop_center = np.random.uniform(self.space_min, self.space_max)
-            prop_d = CMultivariateNormal(prop_center, np.diag(t_tensor([self.sigma] * len(self.space_max))))
+            prop_d = CMultivariateNormal({"mean": prop_center,
+                                          "sigma": np.diag(t_tensor([self.sigma] * len(self.space_max)))})
             self.proposals.append(prop_d)
 
         # Set uniform weights
