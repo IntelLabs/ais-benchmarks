@@ -1,5 +1,12 @@
 # Sampling methods benchmark 
 
+    # TODO: Use the batch size
+    # TODO: Use the display plot paths and generate the result plots
+    # TODO: Generate latex result tables
+    # TODO: Use the desired metrics
+    # TODO: Generate the animation
+
+
 A framework, based on python and numpy, for evaluation of sampling methods. The framework consists of common interfaces 
 for sampling methods, an evaluation methodology with different metrics and an automated result and plots generation.
 
@@ -26,8 +33,8 @@ methods. The repo welcomes new algorithms to be added as they become available.
 - Nested sampling [5]
 - Multi-nested sampling [6]
 - Rejection Importance Sampling [7]
-- TODO: Adaptive Population Importance Sampling [8]
 - Tree-pyramidal Adaptive Importance Sampling (TP-AIS) [9]
+- TODO: Adaptive Population Importance Sampling [8]
 
 
 ## Evaluation methodology
