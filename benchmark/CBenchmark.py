@@ -34,7 +34,8 @@ class CBenchmark(object):
     def load_methods(self, methods_file, space_min, space_max, dims):
         self.methods.clear()
         m_yaml = open(methods_file, mode="r")
-        methods = yaml.load(m_yaml, Loader=yaml.FullLoader)
+        # methods = yaml.load(m_yaml, Loader=yaml.FullLoader)
+        methods = yaml.load(m_yaml, Loader=yaml.SafeLoader)
         for method in methods["methods"]:
 
             params = ['"space_min":np.array(%s)' % np.array2string(space_min, separator=', '), ",",
@@ -64,7 +65,8 @@ class CBenchmark(object):
         self.nsamples.clear()
 
         b_yaml = open(benchmark_file, mode="r")
-        bench = yaml.load(b_yaml, Loader=yaml.FullLoader)
+        # bench = yaml.load(b_yaml, Loader=yaml.FullLoader)
+        bench = yaml.load(b_yaml, Loader=yaml.SafeLoader)
 
         # Get the metrics to compute
         self.metrics = bench["metrics"]
@@ -107,8 +109,10 @@ class CBenchmark(object):
         assert len(self.targets) == len(self.ndims) == len(self.space_size) == len(self.nsamples)
 
         # TODO: Use the batch size
-        # TODO: Use the display plot paths
-        # TODO: Use the metrics
+        # TODO: Use the display plot paths and generate the result plots
+        # TODO: Generate latex result tables
+        # TODO: Use the desired metrics
+        # TODO: Generate the animation
 
         for target_dist, ndims, space_size, max_samples_dim, eval_sampl in zip(self.targets, self.ndims, self.space_size, self.nsamples, self.eval_sampl):
             self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
