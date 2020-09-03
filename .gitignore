@@ -1,2 +1,4 @@
 .idea
 *.pyc
+visualization/manim/media
+benchmark/results.txt
