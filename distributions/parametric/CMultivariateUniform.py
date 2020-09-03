@@ -43,11 +43,11 @@ class CMultivariateUniform(CDistribution):
         elif len(samples.shape) == 2:
             samples = samples.reshape(len(samples), self.dims)
         else:
-            raise ValueError("Shape of samples does not match self.dims")
+            raise ValueError("Shape of samples does not match self.dims = %d" % self.dims)
 
         min_val = self.center - self.radius
         max_val = self.center + self.radius
-        inliers = np.all(np.logical_and(min_val < samples, samples < max_val), axis=1)  # Select the inliers if all the coordinates are in range
+        inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)  # Select the inliers if all the coordinates are in range
         res = np.ones(len(samples)) / self.volume
         res[np.logical_not(inliers.flatten())] = 0
         return res.reshape(len(samples), 1)
