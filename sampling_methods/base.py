@@ -153,12 +153,11 @@ class CMixtureSamplingMethod(CSamplingMethod):
     def draw1d(self, ax):
         res = []
         for q, w in zip(self.model.models, self.model.weights):
-            res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
-            res.extend(plot_pdf(ax, q, self.space_min, self.space_max, alpha=1.0,
+            # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
+            res.extend(plot_pdf(ax, q, self.space_min, self.space_max, alpha=1.0, color="r",
                                 options="r--", resolution=0.01, scale=w))
 
-        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
-        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
+        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$", color="r",
                             alpha=1.0, options="r--", resolution=0.01, scale=w))
 
         for s, w in zip(self.samples, self.weights):
@@ -166,7 +165,7 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
         res.append(ax.vlines(s, 0, w, "g", alpha=0.1, label="$w_k = \pi(x_k) / \\frac{1}{N}\sum_{n=0}^N q_n(x_k)$"))
 
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", color="r", resolution=0.01, label="$q(x)$"))
 
         return res
 
