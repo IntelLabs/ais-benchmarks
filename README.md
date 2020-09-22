@@ -186,7 +186,13 @@ TODO: Explain here how a sampling method is implemented, the methods that it mus
 weights must be stored and updated. Comment also on the behavior of the importance_sample method and how it
 should be used when the sampling method is not IS but simulation like MCMC or Nested.
 
+Reminder to mention the batching and provide an example.
+
+Comment on the optional requirement of methods to handle different dimensionality RV
+
 ### Adding target distributions
+
+### Adding metrics
 
 
 
