@@ -19,4 +19,6 @@ class BenchDenUniform(CMultivariateUniform):
         """
         params["dims"] = 1
         params["support"] = np.array([0, 1])
+        params["center"] = np.array([.5])
+        params["radius"] = np.array([1])
         super(self.__class__, self).__init__(params)

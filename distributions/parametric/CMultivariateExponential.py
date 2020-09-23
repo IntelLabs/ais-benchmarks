@@ -16,7 +16,7 @@ class CMultivariateExponential(CDistribution):
         if "support" not in params:
             params["support"] = np.array([np.zeros_like(params["mean"]), 4 * params["mean"]])
 
-        super(self.__class__, self).__init__(params)
+        super(CMultivariateExponential, self).__init__(params)
 
         self.set_moments(np.array(params["mean"]))
 

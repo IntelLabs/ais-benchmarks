@@ -6,7 +6,7 @@ from benchmark.CBenchmark import CBenchmark
 benchmark = CBenchmark()
 
 # TODO: make this paths relative to this file
-b_file = "def_benchmark.yaml"
+b_file = "def_benchmark_benchden.yaml"
 m_file = "def_methods.yaml"
 
 if len(sys.argv) == 3:
