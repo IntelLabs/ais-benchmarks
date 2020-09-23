@@ -51,6 +51,9 @@ def plot_grid_sampled_pdfs(ax, dims, prob_p, shape=None, marginalize_axes=None, 
     if marginalize_axes is not None:
         prob_p_margin = np.sum(prob_p_margin, axis=marginalize_axes)
 
+    if not (np.all(np.min(prob_p_margin) < np.max(prob_p_margin))):
+        return []
+
     levels = np.arange(np.min(prob_p_margin), np.max(prob_p_margin), (np.max(prob_p_margin)-np.min(prob_p_margin)) / 15)
     CS = ax.contour(dims[0], dims[1], prob_p_margin, cmap=cmap, levels=levels, linestyles=linestyles, alpha=alpha)
     return CS.collections if len(CS.collections) else []
