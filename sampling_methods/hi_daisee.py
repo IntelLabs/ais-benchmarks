@@ -87,9 +87,16 @@ class CHiDaiseeTree:
 
     def split(self, node_id, target_d):
         n = self.nodes[node_id]
-        new_rad = n.radius / 2
-        n_left = CHiDaiseeNode(len(self.nodes), n.center - new_rad, new_rad)
-        n_right = CHiDaiseeNode(len(self.nodes) + 1, n.center + new_rad, new_rad)
+        new_rad = np.copy(n.radius)
+        # Select a dimension to split
+        sel_dim = np.random.randint(0, self.dims)
+        new_rad[sel_dim] /= 2
+        c_left = np.copy(n.center)
+        c_right = np.copy(n.center)
+        c_left[sel_dim] -= new_rad[sel_dim]
+        c_right[sel_dim] += new_rad[sel_dim]
+        n_left = CHiDaiseeNode(len(self.nodes), c_left, new_rad)
+        n_right = CHiDaiseeNode(len(self.nodes) + 1, c_right, new_rad)
         n_left.parent = node_id
         n_right.parent = node_id
         n_left.q = n.q / 2
@@ -103,12 +110,16 @@ class CHiDaiseeTree:
 
         # Push the samples from the parent to the children. Because the children have different
         # proposal distributions we have to recompute the weights of existing samples
-        for x, w in zip(n.samples, n.weights):
-            if x < n_left.center + n_left.radius:
-                w = np.exp(target_d.log_prob(x) - n_left.log_prob(x))
+        for x in n.samples:
+            if x[sel_dim] < n_left.center[sel_dim] + n_left.radius[sel_dim]:
+                if n_left.prob(x) <= 0:
+                    raise ValueError("pl(x) = %f ; pr(x) = %f " % (n_left.prob(x), n_right.prob(x)))
+                w = target_d.prob(x) / n_left.prob(x)
                 n_left.add_sample(np.array([x]), w)
             else:
-                w = np.exp(target_d.log_prob(x) - n_right.log_prob(x))
+                if n_right.prob(x) <= 0:
+                    raise ValueError("pl(x) = %f ; pr(x) = %f " % (n_left.prob(x), n_right.prob(x)))
+                w = target_d.prob(x) / n_right.prob(x)
                 n_right.add_sample(np.array([x]), w)
 
         # Remove parent from the leaf list and add children
@@ -210,8 +221,8 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
             self._num_q_samples += 1
 
             # Compute the sample weight. Line 10. Partially in log form for numerical stability.
-            # TODO: Should look at how to keep the weights in log form as much as possible.
-            w_i = np.exp(target_d.log_prob(x_i) - n.log_prob(x_i))
+            assert n.prob(x_i) > 0
+            w_i = target_d.prob(x_i) / n.prob(x_i)
             self._num_q_evals += 1
             self._num_pi_evals += 1
 
@@ -220,6 +231,7 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
             if self.debug:
                 print(self.__class__.__name__, "== Debug ==> ", "    | Added sample x:%5.3f w:%5.3f" % (x_i, w_i))
                 print(self.__class__.__name__, "== Debug ==> ", "    | Node %d now has %d samples with ESS: %5.3f" % (n_id, n.N, n.ESS))
+                print(self.__class__.__name__, "== Debug ==> ", "    | and weights %s" % str(n.weights.flatten()))
 
             # Update the leaf and ancestors proposal expected evidence values. Line 11
             # Because the traversal trajectory is stored in P. The last node is a leaf node and the remaining nodes
@@ -256,6 +268,7 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
             if self.debug:
                 print(self.__class__.__name__, "== Debug ==> ", "    | Current tree: \n", self.T.__repr__())
 
+        self._update_model()
         return self._get_samples()
 
     def _self_normalize(self):
@@ -290,5 +303,4 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         for c, r in zip(centers, radii):
             models.append(CMultivariateUniform({"center": np.array(c), "radius": np.array(r)}))
 
-        weights = weights / np.sum(weights)
         self.model = CMixtureModel(models, weights)
