@@ -171,10 +171,11 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
     def draw2d(self, ax):
         res = []
-        for q in self.proposals:
-            res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o"))
-            res.extend(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.3, resolution=0.02, colormap=cm.viridis, linestyles='dashed', scale=1/len(self.proposals)))
-        res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o", label="$q_n(x)$"))
+        if hasattr(self, "proposals"):
+            for q in self.proposals:
+                res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o"))
+                res.extend(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.3, resolution=0.02, colormap=cm.viridis, linestyles='dashed', scale=1/len(self.proposals)))
+            res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o", label="$q_n(x)$"))
 
         # for s, w in zip(self.samples, self.weights):
         #     res.append(ax.scatter(s[0], s[1], w, c="g", marker="o", alpha=0.2))
