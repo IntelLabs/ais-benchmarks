@@ -32,6 +32,10 @@ from sampling_methods.base import CMixtureISSamplingMethod
 from distributions.mixture.CMixtureModel import CMixtureModel
 from distributions.parametric.CMultivariateUniform import CMultivariateUniform
 
+from matplotlib.patches import Rectangle
+from matplotlib.collections import PatchCollection
+from matplotlib import cm
+
 
 class CHiDaiseeNode:
     def __init__(self, idx, center, radius):
@@ -67,6 +71,10 @@ class CHiDaiseeNode:
         return
 
     def __str__(self):
+        if self.N > 0:
+            return "[ idx:" + str(self.idx) + " , c:" + str(self.center) + " , r:" + str(self.radius) + \
+                   " , q: %8.6f" % self.q + " , ESS: %5.3f" % (self.ESS / self.N) + " , N:" + str(self.N) + " ]"
+
         return "[ idx:" + str(self.idx) + " , c:" + str(self.center) + " , r:" + str(self.radius) + \
                " , q: %8.6f" % self.q + " , ESS: %5.3f" % self.ESS + " , N:" + str(self.N) + " ]"
 
@@ -188,7 +196,7 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         if self.debug:
             print(self.__class__.__name__, "== Debug ==> ", "importance_sample(n_samples=%d)" % n_samples)
 
-        for t in range(1, n_samples+1):
+        for t in range(1, n_samples - len(self.samples)):
             # Initialize traversal path and node to the root. Line 3.
             P = [0]
             n_id = 0
@@ -229,7 +237,7 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
             # Add the sample to the leaf node and update ESS and N. Line 12
             n.add_sample(x_i, w_i)
             if self.debug:
-                print(self.__class__.__name__, "== Debug ==> ", "    | Added sample x:%5.3f w:%5.3f" % (x_i, w_i))
+                print(self.__class__.__name__, "== Debug ==> ", "    | Added sample x:%5s w:%5s" % (str(x_i), str(w_i)))
                 print(self.__class__.__name__, "== Debug ==> ", "    | Node %d now has %d samples with ESS: %5.3f" % (n_id, n.N, n.ESS))
                 print(self.__class__.__name__, "== Debug ==> ", "    | and weights %s" % str(n.weights.flatten()))
 
@@ -304,3 +312,27 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
             models.append(CMultivariateUniform({"center": np.array(c), "radius": np.array(r)}))
 
         self.model = CMixtureModel(models, weights)
+
+    @staticmethod
+    def draw_2d_tree(T, ax, facecolor=(1, 1, 1), edgecolor=(0, 0, 0), alpha=1.0):
+        res = []
+        for l in T.leaves:
+            c = T.nodes[l].center
+            r = T.nodes[l].radius
+            q = T.nodes[l].q
+            rect = Rectangle((c[0] - r[0], c[1] - r[1]), 2*r[0], 2*r[1])
+
+            # Create patch collection with specified colour/alpha
+            # pc = PatchCollection([rect], facecolor=cm.hot(1-q), alpha=alpha, edgecolor=edgecolor)
+            if T.nodes[l].N > 0:
+                pc = PatchCollection([rect], facecolor=cm.hot(T.nodes[l].ESS / T.nodes[l].N), alpha=alpha, edgecolor=edgecolor)
+            else:
+                pc = PatchCollection([rect], facecolor=cm.hot(0), alpha=alpha, edgecolor=edgecolor)
+            ax.add_collection(pc)
+            res.append(pc)
+
+        return res
+
+    def draw2d(self, ax):
+        res = self.draw_2d_tree(self.T, ax)
+        return res
