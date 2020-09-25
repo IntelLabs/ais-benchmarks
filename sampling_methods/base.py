@@ -153,12 +153,11 @@ class CMixtureSamplingMethod(CSamplingMethod):
     def draw1d(self, ax):
         res = []
         for q, w in zip(self.model.models, self.model.weights):
-            res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
-            res.extend(plot_pdf(ax, q, self.space_min, self.space_max, alpha=1.0,
+            # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20))
+            res.extend(plot_pdf(ax, q, self.space_min, self.space_max, alpha=1.0, color="r",
                                 options="r--", resolution=0.01, scale=w))
 
-        # res.extend(ax.plot(q.mean.flatten(), 0, "gx", markersize=20, label="$\mu_n$"))
-        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$",
+        res.extend(plot_pdf(ax, q, self.space_min, self.space_max, label="$q_n(x)$", color="r",
                             alpha=1.0, options="r--", resolution=0.01, scale=w))
 
         for s, w in zip(self.samples, self.weights):
@@ -166,16 +165,17 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
         res.append(ax.vlines(s, 0, w, "g", alpha=0.1, label="$w_k = \pi(x_k) / \\frac{1}{N}\sum_{n=0}^N q_n(x_k)$"))
 
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="$q(x)$"))
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", color="r", resolution=0.01, label="$q(x)$"))
 
         return res
 
     def draw2d(self, ax):
         res = []
-        for q in self.proposals:
-            res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o"))
-            res.extend(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.3, resolution=0.02, colormap=cm.viridis, linestyles='dashed', scale=1/len(self.proposals)))
-        res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o", label="$q_n(x)$"))
+        if hasattr(self, "proposals"):
+            for q in self.proposals:
+                res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o"))
+                res.extend(plot_pdf2d(ax, q, self.space_min, self.space_max, alpha=0.3, resolution=0.02, colormap=cm.viridis, linestyles='dashed', scale=1/len(self.proposals)))
+            res.append(ax.scatter(q.mean[0], q.mean[1], c="g", marker="o", label="$q_n(x)$"))
 
         # for s, w in zip(self.samples, self.weights):
         #     res.append(ax.scatter(s[0], s[1], w, c="g", marker="o", alpha=0.2))

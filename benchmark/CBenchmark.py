@@ -23,6 +23,8 @@ class CBenchmark(object):
         self.timeout = 3600     # Max time allowed for evaluation of each pair (method, target)
         self.eval_sampl = []    # Number of samples used for computing evaluation metrics
         self.metrics = []       # List of metrics to compute. Must be in the implemented metrics list
+        self.n_experiment = 10  # Number of times a method is evaluated on a target
+        self.rseed = 0          # Random seed in use
 
         # Info about result storage and representation
         self.output_file = "results.txt"            # Filename to store the text results
@@ -74,6 +76,10 @@ class CBenchmark(object):
         # Collect display configuration
         self.display = bench["display"]["value"]
         self.display_path = bench["display"]["display_path"]
+
+        self.n_experiment = bench["nreps"]
+        self.rseed = bench["rseed"]
+        np.random.seed(self.rseed)
 
         # Collect output configuration
         self.output_file = bench["output"]["file"]

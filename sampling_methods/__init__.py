@@ -6,3 +6,4 @@ from sampling_methods.multi_nested import CMultiNestedSampling
 from sampling_methods.nested import CNestedSampling
 from sampling_methods.rejection import CRejectionSampling
 from sampling_methods.tree_pyramid import CTreePyramidSampling
+from sampling_methods.hi_daisee import CHiDaiseeSampling

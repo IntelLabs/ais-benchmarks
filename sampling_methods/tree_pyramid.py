@@ -245,9 +245,9 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
     def __init__(self, params):
         """
         Initialize the Tree Pyramid sampling with the specific parameters
-        :param space_min: Lower space domain values
-        :param space_max: Upper space domain values
         :param params: Dictionary with sampling algorithm specific parameters
+            space_min: Lower space domain values
+            space_max: Upper space domain values
             method: Importance sampling method used. Options are: "simple", "dm" and "mixture":
                 - simple: Simple tree pyramid IS. Uses the simple muti-importance sampling approach by generating
                 samples from all the isolated proposal distributions and computes weights with the individual
@@ -280,6 +280,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         assert self.kernel in ["normal", "haar"], "Invalid kernel type."
 
         self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
+
+        self.model = self.T.root.sampler
 
     def reset(self):
         super(self.__class__, self).reset()
@@ -405,7 +407,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         res = []
         if self.ndims == 1:
             res = plot_tpyramid_area(ax, self.T, label="TP-AIS $w(x) = \pi(x)/q(x)$")
-            res.extend(plot_pdf(ax, self, self.space_min, self.space_max, resolution=0.01,
+            res.extend(plot_pdf(ax, self, self.space_min, self.space_max, resolution=0.01, color="r",
                                 options="-g", alpha=1.0, label="TP-AIS $q(x)$"))
 
             if self.kernel == "normal":
