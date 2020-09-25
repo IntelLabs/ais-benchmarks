@@ -1,28 +1,35 @@
 # Sampling methods benchmark 
 
-    # TODO: Use the batch size
-    # TODO: Use the display plot paths and generate the result plots
-    # TODO: Generate latex result tables
-    # TODO: Use the desired metrics
-    # TODO: Generate the animation
-
-
 A framework, based on python and numpy, for evaluation of sampling methods. The framework consists of common interfaces 
 for sampling methods, an evaluation methodology with different metrics and an automated result and plots generation.
-
-##WARNING!!!! The rest of this document is tentative of what the benchmark will be in the future and the features are not yet implemented.
-
 
 It is our hope that this package helps researches to benchmark their sampling algorithms and compare them to state
 of the art implementations, if you find this package useful for your research please consider citing it, see citation
 info below. 
 
-## Batching:
+### Installation and quickstart
+
+### Ubuntu Linux
+```shell script
+sudo apt install python python-pip python-tk
+git clone https://github.com/jfelip/ais-benchmarks.git
+cd ais-benchmarks
+pip install -r requirements.txt
+python benchmark/run_benchmark.py
+```
+### Windows
+TODO
+
+
+## WARNING!!!! The rest of this document is tentative of what the benchmark will be in the future and some features 
+## are not yet implemented.
+
+### Batching:
 All methods assume the first dimension to be the batch dimension to support vectorized implementations. The results
 are also in batch form even if there is only one component in the batch dimension.
 
 
-## Baselines
+### Baselines
 Several well-known and state-of-the-art algorithms are provided as a baseline for evaluation of new implementation of 
 methods. The repo welcomes new algorithms to be added as they become available.
 
@@ -35,9 +42,10 @@ methods. The repo welcomes new algorithms to be added as they become available.
 - Rejection Importance Sampling [7]
 - Tree-pyramidal Adaptive Importance Sampling (TP-AIS) [9]
 - TODO: Adaptive Population Importance Sampling [8]
+- Hierarchical Adaptive Importance Sampling via Exploration and Exploitation. (HiDaisee) [10]
 
 
-## Evaluation methodology
+### Evaluation methodology
 The benchmark aims to evaluate multiple aspects of sampling algorithms.
 - **Sampling efficiency**: How good are the estimates with the minimum number of sample operations, including rejected 
 samples.
@@ -54,7 +62,7 @@ parameters and modality. Combined results provide a good idea of how the methods
 distributions results are also available for analysis.
 
 
-## Evaluation metrics
+### Evaluation metrics
 As part of the evaluation process, several metrics are computed and stored in the results file.
 - Jensen Shannon Divergence (JSD)
 - Kullback–Leibler divergence (KLD)
@@ -66,7 +74,7 @@ As part of the evaluation process, several metrics are computed and stored in th
 - Sampling runtime (T)
 
 
-## Benchmark configuration and execution
+### Benchmark configuration and execution
 The evaluation process uses a benchmark YAML file that defines the different target distributions and metrics that will be 
 used to produce the evaluation results. See an example below: 
 
@@ -178,7 +186,13 @@ TODO: Explain here how a sampling method is implemented, the methods that it mus
 weights must be stored and updated. Comment also on the behavior of the importance_sample method and how it
 should be used when the sampling method is not IS but simulation like MCMC or Nested.
 
+Reminder to mention the batching and provide an example.
+
+Comment on the optional requirement of methods to handle different dimensionality RV
+
 ### Adding target distributions
+
+### Adding metrics
 
 
 
@@ -214,3 +228,6 @@ USA, 2004.
 Learning from uncertainty.IEEE Transactions on Signal Processing,63(16):4422–4437, 2015
 
 [9] Felip et. al. Tree pyramid adaptive importance sampling
+
+[10] Lu, Xiaoyu, Tom Rainforth, Yuan Zhou, Jan-Willem van de Meent, and Yee Whye Teh. “On Exploration, 
+Exploitation and Learning in Adaptive Importance Sampling.” ArXiv:1810.13296 [Cs, Stat], October 31, 2018. 

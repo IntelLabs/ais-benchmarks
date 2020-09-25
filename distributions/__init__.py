@@ -6,6 +6,8 @@ from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 from distributions.parametric.CMultivariateUniform import CMultivariateUniform
 from distributions.nonparametric.CNearestNeighbor import CNearestNeighbor
 from distributions.nonparametric.CKernelDensity import CKernelDensity
+import distributions.benchden
+import distributions.rare
 
 """
 TODO LIST
