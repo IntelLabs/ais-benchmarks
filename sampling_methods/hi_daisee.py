@@ -323,11 +323,11 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
             rect = Rectangle((c[0] - r[0], c[1] - r[1]), 2*r[0], 2*r[1])
 
             # Create patch collection with specified colour/alpha
-            # pc = PatchCollection([rect], facecolor=cm.hot(1-q), alpha=alpha, edgecolor=edgecolor)
-            if T.nodes[l].N > 0:
-                pc = PatchCollection([rect], facecolor=cm.hot(T.nodes[l].ESS / T.nodes[l].N), alpha=alpha, edgecolor=edgecolor)
-            else:
-                pc = PatchCollection([rect], facecolor=cm.hot(0), alpha=alpha, edgecolor=edgecolor)
+            pc = PatchCollection([rect], facecolor=cm.hot(1-q), alpha=alpha, edgecolor=edgecolor)
+            # if T.nodes[l].N > 0:
+            #     pc = PatchCollection([rect], facecolor=cm.hot(T.nodes[l].ESS / T.nodes[l].N), alpha=alpha, edgecolor=edgecolor)
+            # else:
+            #     pc = PatchCollection([rect], facecolor=cm.hot(0), alpha=alpha, edgecolor=edgecolor)
             ax.add_collection(pc)
             res.append(pc)
 
