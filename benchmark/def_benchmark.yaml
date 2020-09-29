@@ -3,12 +3,12 @@ targets:
     - name: banana2D
       type: distributions.rare.banana2d.Banana2D
       params: {}
-      space_size: 10.0
-      batch_size: 2
-      nsamples: 1000
+      space_size: 15.0
+      batch_size: 1
+      nsamples: 2000
       nsamples_eval: 2000
-      domain_min: np.array([-10, -10])
-      domain_max: np.array([10, 10])
+      domain_min: np.array([-15, -15])
+      domain_max: np.array([15, 15])
       tags: [benchden, low_kurtosis, low_skew]
 
     - name: gmm
