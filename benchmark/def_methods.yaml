@@ -21,14 +21,22 @@ methods:
 #        N: 10          # Number of proposal distributions
 #        J: 1000       # Limit number of samples
 #        sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
+    - name: tp_simple_leaf_haar
+      type: sampling_methods.CTreePyramidSampling
+      params:
+        method: "'simple'"
+        resampling: "'leaf'"
+        kernel: "'haar'"
+        ess_target: .75
+        parallel_samples: 512
 
     - name: hi_daisee
       type: sampling_methods.CHiDaiseeSampling
       params:
-        target_ess: 0.9
+        target_ess: 0.7
         n_min: 10
         tau: .01
-        debug: 0
+        debug: 1
 
 #    - name: mcmc_mh
 #      type: sampling_methods.CMetropolisHastings
@@ -77,12 +85,6 @@ methods:
 #        resampling: "'none'"
 #        kernel: "'haar'"
 
-    - name: tp_simple_leaf_haar
-      type: sampling_methods.CTreePyramidSampling
-      params:
-        method: "'simple'"
-        resampling: "'leaf'"
-        kernel: "'haar'"
 
 #    - name: tp_dm_leaf_normal
 #      type: sampling_methods.CTreePyramidSampling
