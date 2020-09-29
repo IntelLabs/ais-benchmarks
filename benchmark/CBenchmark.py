@@ -3,6 +3,7 @@ import numpy as np
 import distributions
 import sampling_methods
 from pprint import pformat
+import time
 
 from benchmark.evaluation import evaluate_method
 
@@ -19,12 +20,12 @@ class CBenchmark(object):
         self.batch_sizes = []   # number of samples to generate per iteration
 
         # Info about the evaluation and metrics
-        self.nsamples = []      # Number of samples to obtain after concluding evaluation of each method
-        self.timeout = 3600     # Max time allowed for evaluation of each pair (method, target)
-        self.eval_sampl = []    # Number of samples used for computing evaluation metrics
-        self.metrics = []       # List of metrics to compute. Must be in the implemented metrics list
-        self.n_experiment = 10  # Number of times a method is evaluated on a target
-        self.rseed = 0          # Random seed in use
+        self.nsamples = []       # Number of samples to obtain after concluding evaluation of each method
+        self.timeout = 3600      # Max time allowed for evaluation of each pair (method, target)
+        self.eval_sampl = []     # Number of samples used for computing evaluation metrics
+        self.metrics = []        # List of metrics to compute. Must be in the implemented metrics list
+        self.n_experiments = 10  # Number of times a method is evaluated on a target
+        self.rseed = 0           # Random seed in use
 
         # Info about result storage and representation
         self.output_file = "results.txt"            # Filename to store the text results
@@ -77,7 +78,7 @@ class CBenchmark(object):
         self.display = bench["display"]["value"]
         self.display_path = bench["display"]["display_path"]
 
-        self.n_experiment = bench["nreps"]
+        self.n_experiments = bench["nreps"]
         self.rseed = bench["rseed"]
         np.random.seed(self.rseed)
 
@@ -114,18 +115,30 @@ class CBenchmark(object):
         assert len(self.targets) > 0
         assert len(self.targets) == len(self.ndims) == len(self.space_size) == len(self.nsamples)
 
-        # TODO: Use the batch size
         # TODO: Use the display plot paths and generate the result plots
         # TODO: Generate latex result tables
         # TODO: Use the desired metrics
         # TODO: Generate the animation
 
-        for target_dist, ndims, space_size, max_samples_dim, eval_sampl in zip(self.targets, self.ndims, self.space_size, self.nsamples, self.eval_sampl):
+        for target_dist, ndims, space_size, max_samples_dim, eval_sampl, batch_size in \
+                zip(self.targets, self.ndims,self.space_size, self.nsamples, self.eval_sampl, self.batch_sizes):
             self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
 
             for sampling_method in self.methods:
-                print("EVALUATING: %s with %d max samples %d dims" % (sampling_method.name, max_samples_dim, ndims))
+                print("EVALUATING: %s with %d max samples %d dims on dist: %s " % (sampling_method.name, max_samples_dim, ndims, target_dist.name))
                 sampling_method.reset()
-                evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples_dim,
-                                eval_sampl, max_sampling_time=self.timeout,
-                                debug=self.display, filename=self.output_file)
+                t_ini = time.time()
+                evaluate_method(ndims=ndims,
+                                space_size=space_size,
+                                target_dist=target_dist,
+                                sampling_method=sampling_method,
+                                max_samples=max_samples_dim,
+                                max_sampling_time=self.timeout,
+                                batch_size=batch_size,
+                                debug=self.display,
+                                metrics=self.metrics,
+                                rseed=self.rseed,
+                                n_reps=self.n_experiments,
+                                sampling_eval_samples=eval_sampl,
+                                filename=self.output_file)
+                print("TOOK: %5.3fs" % (time.time()-t_ini))
