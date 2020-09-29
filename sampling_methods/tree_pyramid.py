@@ -12,6 +12,10 @@ from utils.plot_utils import plot_pdf
 from utils.plot_utils import plot_pdf2d
 from distributions.mixture.CMixtureModel import CMixtureModel
 
+from matplotlib.patches import Rectangle
+from matplotlib.collections import PatchCollection
+from matplotlib import cm
+
 
 class CTreePyramidNode:
     def __init__(self, center, radius, node_idx, leaf_idx, level, kernel="haar", bw_div=4, weight=t_tensor(0)):
@@ -35,8 +39,8 @@ class CTreePyramidNode:
         self.node_idx = node_idx
         self.level = level
         self.value = self.weight * self.radius ** len(center)  # Importance volume used to sort nodes
-        self.coords_hist = []
-        self.weight_hist = []
+        self.coords_hist = None
+        self.weight_hist = None
         self.bw_div = bw_div
 
         """
@@ -57,7 +61,7 @@ class CTreePyramidNode:
         by a proposal distribution parameterized by the node center (n_c) and radius (n_r).
         """
         self.coords = sampler.sample(1)
-        self.coords_hist.append(self.coords)
+        self.coords_hist = np.concatenate((self.coords_hist, self.coords)) if self.coords_hist is not None else self.coords
 
     def weigh(self, target_d, importance_d, target_f=lambda x: 1):
         """
@@ -75,8 +79,8 @@ class CTreePyramidNode:
         importance = importance_d.prob(self.coords)
         self.weight = (target_f(self.coords) * target_d.prob(self.coords)) / importance
         # self.weight = (target_f(self.center) * target_d.prob(self.center)) / importance_d.prob(self.center)
-        self.value = self.weight * (self.radius ** len(self.center))
-        self.weight_hist.append(self.weight)
+        self.weight_hist = np.concatenate((self.weight_hist, self.weight)) if self.weight_hist is not None else self.weight
+        self.value = np.mean(self.weight_hist) * (self.radius ** len(self.center))
 
     def get_child(self, val):
         """
@@ -115,7 +119,6 @@ class CTreePyramid:
         self.samples = np.zeros((1, self.ndims))
         self.weights = np.array([0])
         self.leaves_idx = [True]
-
         self.kernel = kernel
 
         """
@@ -145,8 +148,15 @@ class CTreePyramid:
         else:
             return self.find(val, prev=prev.get_child(val))
 
-    def expand(self, node):
+    def expand(self, node, ess_target=None):
         assert node.is_leaf(), "Non leaf node expansion is not allowed: " + repr(node)
+        ################################################
+        # Compute the leaf ESS and only expand if the criteria is met
+        ################################################
+        if ess_target is not None:
+            ESS = np.sum(node.weight_hist) * np.sum(node.weight_hist) / np.sum(node.weight_hist * node.weight_hist)
+            if ESS > ess_target * len(node.weight_hist):
+                return None
 
         ################################################
         # Compute new node centers and radii
@@ -248,6 +258,11 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         :param params: Dictionary with sampling algorithm specific parameters
             space_min: Lower space domain values
             space_max: Upper space domain values
+            ess_target: Exploration threshold. When a subspace achieves the target ESS it is not further subdivided.
+                        Use None to not use this subdivision criterion and use the default split the subspaces with
+                        higher density.
+            parallel_samples: Number of sampling units to use in parallel. This is used for the sample and resample
+                              process to determine how many sampling operations to perform simultaneously.
             method: Importance sampling method used. Options are: "simple", "dm" and "mixture":
                 - simple: Simple tree pyramid IS. Uses the simple muti-importance sampling approach by generating
                 samples from all the isolated proposal distributions and computes weights with the individual
@@ -273,6 +288,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         self.method = params["method"]
         assert self.method in ["simple", "dm", "mixture"], "Invalid method."
 
+        self.ess_target = params["ess_target"]
+
         self.resampling = params["resampling"]
         assert self.resampling in ["leaf", "none"], "Invalid resampling strategy"
 
@@ -280,6 +297,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         assert self.kernel in ["normal", "haar"], "Invalid kernel type."
 
         self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
+
+        self.parallel_samples = params["parallel_samples"]
 
         self.model = self.T.root.sampler
 
@@ -325,7 +344,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         t_ini = time.time()
 
         # When the tree is created the root node is not sampled. Make sure it has one sample.
-        if len(self.T.root.weight_hist) == 0:
+        if self.T.root.weight_hist is None:
             self.T.root.sample(self.T.root.sampler)
             self.T.samples[self.T.root.node_idx] = self.T.root.coords
             self._num_q_samples += 1
@@ -416,16 +435,36 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                                         resolution=0.01, options="--r", alpha=0.5))
 
         elif self.ndims == 2:
-            res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="TP-AIS $q(x)$"))
+            res = self.draw_2d_tree(self.T, ax)
+            # res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="TP-AIS $q(x)$"))
+        return res
+
+    @staticmethod
+    def draw_2d_tree(T, ax, facecolor=(1, 1, 1), edgecolor=(0, 0, 0), alpha=1.0):
+        res = []
+        for l in T.leaves:
+            c = l.center
+            r = l.radius
+            w = l.value
+            rect = Rectangle((c[0] - r, c[1] - r), 2*r, 2*r)
+
+            # Create patch collection with specified colour/alpha
+            pc = PatchCollection([rect], facecolor=cm.hot(1-w), alpha=alpha, edgecolor=edgecolor)
+            ax.add_collection(pc)
+            res.append(pc)
+
         return res
 
     def _expand_nodes(self, particles, max_parts):
         new_particles = []
         for p in particles:
-            new_parts = self.T.expand(p)
-            new_particles.extend(new_parts)
-            if len(new_particles) > max_parts:
-                return new_particles
+            new_parts = self.T.expand(p, self.ess_target)
+            if new_parts is not None:
+                new_particles.extend(new_parts)
+                if len(new_particles) > max_parts:
+                    return new_particles
+            else:
+                new_particles.append(p)
 
         return new_particles
 
@@ -442,6 +481,13 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         return res
 
     def _get_samples(self):
+        # samples = None
+        # weights = None
+        # for l in self.T.leaves:
+        #     samples = np.concatenate((samples, l.coords_hist)) if samples is not None else l.coords_hist
+        #     weights = np.concatenate((weights, l.weight_hist)) if weights is not None else l.weight_hist
+        #
+        # return samples, weights
         return self.T.samples[self.T.leaves_idx], self.T.weights[self.T.leaves_idx]
 
     def _self_normalize(self):
