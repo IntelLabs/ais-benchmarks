@@ -103,9 +103,12 @@ def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max
     return evaluate_proposal(approximate_pdf, target_dist, space_min, space_max, sampling_eval_samples)
 
 
-def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples, debug=True, filename=None, max_sampling_time=600, videofile=None):
-    batch_samples = int(ndims ** 2) + 1  # Number of samples per batch of samples
-    # batch_samples = 10
+def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples,
+                    metrics=["NESS", "JSD", "T"], rseed=0, n_reps=10, batch_size=1,
+                    debug=True, filename=None, max_sampling_time=600, videofile=None):
+
+    np.random.seed(rseed)
+    batch_samples = batch_size
     space_min = t_tensor([-space_size] * ndims)
     space_max = t_tensor([space_size] * ndims)
 
