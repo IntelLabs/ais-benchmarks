@@ -145,73 +145,71 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             plt.ylim(space_min[1], space_max[1])
             # ax.set_zlim(ax.get_zlim())
 
-    # Perform sampling
-    sampling_time = 0
-    sampling_method.reset()
-    # pts = []
-    n_samples = batch_samples
-    while len(samples_acc) < max_samples:
-        t_ini = time.time()
+    for nexp in range(n_reps):
+        print("Experiment %d/%d || method: %s || dist: %s || dims: %d " % (nexp+1, n_reps, sampling_method.name, target_dist.name, ndims))
 
-        samples_acc, samples_weights_acc = sampling_method.importance_sample(target_d=target_dist,
-                                                                             n_samples=n_samples,
-                                                                             timeout=max_sampling_time - sampling_time)
+        # Perform sampling
+        sampling_time = 0
+        sampling_method.reset()
+        # pts = []
+        n_samples = batch_samples
+        while len(samples_acc) < max_samples:
+            t_ini = time.time()
 
-        samples_logprob_acc = sampling_method.log_prob(samples_acc)
+            samples_acc, samples_weights_acc = sampling_method.importance_sample(target_d=target_dist,
+                                                                                 n_samples=n_samples,
+                                                                                 timeout=max_sampling_time - sampling_time)
 
-        n_samples = len(samples_acc) + batch_samples
+            samples_logprob_acc = sampling_method.log_prob(samples_acc)
 
-        sampling_time += time.time()-t_ini
+            n_samples = len(samples_acc) + batch_samples
 
-        sampling_method._update_model()
+            sampling_time += time.time()-t_ini
 
-        if filename is not None:
-            # t_ini = time.time()
-            [js_div, bhattacharyya_dist, ev_mse] = \
-                evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
-            # print("Evaluation time: %5.3f nsamples: %d samples/sec: %5.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
+            sampling_method._update_model()
 
-            log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d" % (
-                ndims, len(samples_acc), js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
-                sampling_method.name, target_dist.name, sampling_method.get_acceptance_rate(),
-                sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
+            if filename is not None:
+                # t_ini = time.time()
+                [js_div, bhattacharyya_dist, ev_mse] = \
+                    evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
+                # print("Evaluation time: %5.3f nsamples: %d samples/sec: %5.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
 
+                log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d" % (
+                    ndims, len(samples_acc), js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
+                    sampling_method.name, target_dist.name, sampling_method.get_acceptance_rate(),
+                    sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
+
+                if debug:
+                    plt.suptitle("%s | #smpl: %d | JSD: %3.3f | BHT: %3.3f | NESS: %.3f | AcceptRatio:%3.3f" %
+                                 (sampling_method.name, n_samples, js_div, bhattacharyya_dist, sampling_method.get_NESS(),
+                                  sampling_method.get_acceptance_rate()))
+
+            if sampling_time > max_sampling_time:
+                break
+
+            # DEBUG CODE HERE
             if debug:
-                plt.suptitle("%s | #smpl: %d | JSD: %3.3f | BHT: %3.3f | NESS: %.3f | AcceptRatio:%3.3f" %
-                             (sampling_method.name, n_samples, js_div, bhattacharyya_dist, sampling_method.get_NESS(),
-                              sampling_method.get_acceptance_rate()))
+                # Remove previous points
+                for element in pts:
+                    element.remove()
+                pts.clear()
+                if ndims == 1:
+                    pts.extend(sampling_method.draw(ax))
+                    # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
+                    pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "ro"))
+                    plt.pause(0.01)
+                    if videofile is not None:
+                        vid_writer.add_frame(fig)
+                if ndims == 2:
+                    pts.extend(sampling_method.draw(ax))
+                    pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker="o", alpha=0.4))
+                    if videofile is not None:
+                        vid_writer.add_frame(fig)
+                    plt.pause(0.01)
+                plt.legend(framealpha=0.5, loc="best")
 
-        if sampling_time > max_sampling_time:
-            break
-
-        # DEBUG CODE HERE
-        if debug:
-            # Remove previous points
-            for element in pts:
-                element.remove()
-            pts.clear()
-            if ndims == 1:
-                pts.extend(sampling_method.draw(ax))
-                # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
-                pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "ro"))
-                plt.pause(0.01)
-                if videofile is not None:
-                    vid_writer.add_frame(fig)
-            if ndims == 2:
-                pts.extend(sampling_method.draw(ax))
-                pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker="o", alpha=0.4))
-                if videofile is not None:
-                    vid_writer.add_frame(fig)
-                plt.pause(0.01)
-            plt.legend(framealpha=0.5, loc="best")
-
-    res = evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
-    res = list(res)
-    res.append(sampling_method.get_NESS())
-    res.append(len(samples_acc))
-    if debug and (ndims == 1 or ndims == 2):
-        if videofile is not None:
-            vid_writer.add_frame(fig)
-            vid_writer.save()
-        plt.close()
-    return res
+        if debug and (ndims == 1 or ndims == 2):
+            if videofile is not None:
+                vid_writer.add_frame(fig)
+                vid_writer.save()
+            plt.close()
