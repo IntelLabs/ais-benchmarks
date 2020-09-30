@@ -97,7 +97,7 @@ class CHiDaiseeTree:
         n = self.nodes[node_id]
         new_rad = np.copy(n.radius)
         # Select a dimension to split
-        sel_dim = np.random.randint(0, self.dims)
+        sel_dim = np.random.randint(low=0, high=self.dims)
         new_rad[sel_dim] /= 2
         c_left = np.copy(n.center)
         c_right = np.copy(n.center)
