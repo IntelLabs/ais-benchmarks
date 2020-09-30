@@ -303,7 +303,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         self.model = self.T.root.sampler
 
     def reset(self):
-        super(self.__class__, self).reset()
+        super(CTreePyramidSampling, self).reset()
         self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
         self.model = self.T.root.sampler
 
