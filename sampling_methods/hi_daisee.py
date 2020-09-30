@@ -182,6 +182,8 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         self.reset()
 
     def reset(self):
+        super(CHiDaiseeSampling, self).reset()
+
         if self.debug:
             print(self.__class__.__name__, "== Debug ==> ", "reset")
 
