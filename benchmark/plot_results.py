@@ -20,7 +20,6 @@ def load_files_regexp(path, regexp):
 def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, labels=None, mark_points=10):
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    fig.hold(True)
 
     markers = ["x", "d", "+", "*", 4, 5, 6, 7]
 
@@ -96,18 +95,19 @@ def make_2d_barplot(data, xaxis, yaxis, methods, bar_points, selector=None, sele
 
 
 # dims samples kl_kde bhat_kde kl_nn bhat_nn time method final_samples
-data = pd.read_table("raw_results/results.txt", delim_whitespace=True)
+data = pd.read_table("results.txt", sep=" ", index_col=False, skipinitialspace=True)
 
-methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "DM_AIS", "LAIS", "multi-nested"]
-labels = ["TP_AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[26]", "LAIS[3]", "multi-nest[27]"]
+# methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "DM_AIS", "LAIS", "multi-nested"]
+# labels = ["TP_AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[26]", "LAIS[3]", "multi-nest[27]"]
 
-# methods = ["TP_simple_leaf_haar", "M-PMC", "MCMC-MH", "rejection", "DM_AIS", "LAIS", "nested",
-#            "TP_simple_none_haar", "TP_simple_leaf_normal"]
+methods = ["hi_daisee", "tp_simple_leaf_haar"]
+labels = ["HiDaisee", "TP_AIS (ours)"]
 
 plot_mode = "lines"
-dimensions = [1,2,3,4,5,6,7]
-# dimensions = [1,2,3]
-dists = ["gmm", "normal", "egg"]
+# dimensions = [1,2,3,4,5,6,7]
+dimensions = [1, 2]
+# dists = ["gmm", "normal", "egg"]
+dists = ["gmm", "normal", "banana2D"]
 path = "results" + os.sep
 dpi = 1600
 for dist in dists:
