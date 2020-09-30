@@ -146,11 +146,13 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             # ax.set_zlim(ax.get_zlim())
 
     for nexp in range(n_reps):
-        print("Experiment %d/%d || method: %s || dist: %s || dims: %d " % (nexp+1, n_reps, sampling_method.name, target_dist.name, ndims))
+        print("Experiment %d/%d || method: %s || dist: %s || dims: %d " % (nexp+1, n_reps, sampling_method.name, target_dist.name, ndims), end="", flush=True)
+        t_start = time.time()
 
         # Perform sampling
         sampling_time = 0
         sampling_method.reset()
+        samples_acc = t_tensor([])
         # pts = []
         n_samples = batch_samples
         while len(samples_acc) < max_samples:
@@ -207,6 +209,8 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                         vid_writer.add_frame(fig)
                     plt.pause(0.01)
                 plt.legend(framealpha=0.5, loc="best")
+
+        print(" || runtime: %5.3fs" % (time.time()-t_start), flush=True)
 
         if debug and (ndims == 1 or ndims == 2):
             if videofile is not None:
