@@ -1,11 +1,14 @@
 import yaml
 import numpy as np
-import distributions
-import sampling_methods
+import pandas as pd
 from pprint import pformat
+import matplotlib.pyplot as plt
 import time
 
+import distributions
+import sampling_methods
 from benchmark.evaluation import evaluate_method
+from benchmark.plot_results import make_2d_plot
 
 
 class CBenchmark(object):
@@ -31,6 +34,7 @@ class CBenchmark(object):
         self.output_file = "results.txt"            # Filename to store the text results
         self.generate_plots = False                 # Flag to enable result plot generation
         self.generate_plots_path = "results_plot/"  # Path for the generated result plots. Will generate a .png per combination of (method, target, metric)
+        self.plot_dpi = 1600                        # Default dpi resolution for generating plots.
         self.display = False                        # Flag to display the current state of sampling. Useful for debug and video generation
         self.display_path = "results_figures/"      # Path to store each individual frame of the debug display
 
@@ -86,6 +90,7 @@ class CBenchmark(object):
         self.output_file = bench["output"]["file"]
         self.generate_plots = bench["output"]["make_plots"]
         self.generate_plots_path = bench["output"]["plots_path"]
+        self.plot_dpi = bench["output"]["plots_dpi"]
 
         for target in bench["targets"]:
             # Collect the target specific evaluation parameters
@@ -120,6 +125,13 @@ class CBenchmark(object):
         # TODO: Use the desired metrics
         # TODO: Generate the animation
 
+        cols = "dims output_samples JSD BD ev_mse NESS time method target_d accept_rate proposal_samples proposal_evals target_evals\n"
+
+        with open(self.output_file, 'w') as f:
+            f.write(cols)
+
+        t_start = time.time()
+
         for target_dist, ndims, space_size, max_samples_dim, eval_sampl, batch_size in \
                 zip(self.targets, self.ndims,self.space_size, self.nsamples, self.eval_sampl, self.batch_sizes):
             self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
@@ -142,3 +154,26 @@ class CBenchmark(object):
                                 sampling_eval_samples=eval_sampl,
                                 filename=self.output_file)
                 print("TOOK: %5.3fs" % (time.time()-t_ini))
+
+        print("BENCHMARK TOOK: %5.3fs" % (time.time()-t_start))
+
+        # Make metric-wise plots for each target distribution with one serie for each evaluated method
+        t_start = time.time()
+        if self.generate_plots:
+            for target_d in self.targets:
+                methods = [m.name for m in self.methods]  # for all evaluated methods
+                data = pd.read_table(self.output_file, sep=" ", index_col=False, skipinitialspace=True)
+                for metric in self.metrics:
+                    [dist, dims] = [target_d.name, target_d.dims]
+                    make_2d_plot(data, "output_samples", metric, methods,
+                                 selector=["dims", "target_d"], selector_val=[dims, dist])
+                    plt.gca().set_title("Target distribution: %dD %s" % (dims, dist))
+                    plt.gca().set_ylabel(metric)
+                    plt.gca().set_xlabel("# samples")
+                    # plt.yscale("log",  nonposy='clip')
+                    ymin, ymax = plt.gca().get_ylim()
+                    plt.gca().set_ylim(ymin, ymax * 1.2)
+                    plt.savefig(self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric), bbox_inches='tight', dpi=self.plot_dpi)
+                    plt.close()
+                    print("Generated " + self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric))
+        print("PLOT GENERATION TOOK: %5.3fs" % (time.time()-t_start))
