@@ -80,12 +80,12 @@ def evaluate_proposal(proposal_dist, target_dist, space_min, space_max, sampling
     q_samples_logprob = proposal_dist.log_prob(eval_samples)
 
     # Compute the empirical Jensen-Shannon Divergence
-    js_div_comps = js_divergence_logprob(p_samples_logprob, q_samples_logprob)
+    js_div_comps = js_divergence_logprob(p_samples_logprob.flatten(), q_samples_logprob)
     js_div = np.sum(js_div_comps)
     # print(list(js_div_comps))
 
     # Compute the empirical Bhattacharyya distance
-    bhattacharyya_dist = bhattacharyya_distance(np.exp(p_samples_logprob), np.exp(q_samples_logprob))
+    bhattacharyya_dist = bhattacharyya_distance(np.exp(p_samples_logprob.flatten()), np.exp(q_samples_logprob))
 
     # Compute the empirical expected value mean squared error
     expected_value = (eval_samples * np.exp(q_samples_logprob.reshape(-1, 1))).sum(axis=0)
@@ -210,11 +210,6 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
     res.append(sampling_method.get_NESS())
     res.append(len(samples_acc))
     if debug and (ndims == 1 or ndims == 2):
-        drawsamples = sampling_method.sample(100)
-        if ndims == 1:
-            pts.extend(ax.plot(drawsamples, np.zeros(len(drawsamples)), "b|"))
-        if ndims == 2:
-            pts.append(ax.scatter(drawsamples[:, 0], drawsamples[:, 1], 0, label="samples", c="b", marker="x"))
         if videofile is not None:
             vid_writer.add_frame(fig)
             vid_writer.save()
