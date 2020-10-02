@@ -133,7 +133,7 @@ class CBenchmark(object):
         t_start = time.time()
 
         for target_dist, ndims, space_size, max_samples_dim, eval_sampl, batch_size in \
-                zip(self.targets, self.ndims,self.space_size, self.nsamples, self.eval_sampl, self.batch_sizes):
+                zip(self.targets, self.ndims, self.space_size, self.nsamples, self.eval_sampl, self.batch_sizes):
             self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
 
             for sampling_method in self.methods:
