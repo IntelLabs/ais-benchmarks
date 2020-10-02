@@ -474,7 +474,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
 
     def get_NESS(self):
         samples, weights = self._get_samples()
-        ESS = 1 / np.sum(weights*weights)
+        ESS = (np.sum(weights) * np.sum(weights)) / np.sum(weights*weights)
+        # ESS = 1 / np.sum(weights*weights)
         return ESS / len(samples)
 
     def _get_nsamples(self):
@@ -494,7 +495,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         # return self.T.samples[self.T.leaves_idx], self.T.weights[self.T.leaves_idx]
 
     def _self_normalize(self):
-        self.T.weights[self.T.leaves_idx] = self.T.weights[self.T.leaves_idx] / np.sum(self.T.weights[self.T.leaves_idx])
+        if np.sum(self.T.weights[self.T.leaves_idx]) > 0:
+            self.T.weights[self.T.leaves_idx] = self.T.weights[self.T.leaves_idx] / np.sum(self.T.weights[self.T.leaves_idx])
 
     def _update_model(self):
         weights = self.T.weights[self.T.leaves_idx]
