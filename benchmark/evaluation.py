@@ -34,7 +34,12 @@ def kl_divergence_components_logprob(p_samples_logprob, q_samples_logprob):
 def kl_divergence_components(p_samples_prob, q_samples_prob):
     p_samples_prob_norm = p_samples_prob / np.sum(p_samples_prob)
     q_samples_prob_norm = q_samples_prob / np.sum(q_samples_prob)
+
+    # handle zero probabilities
+    inliers_p = np.logical_and(q_samples_prob_norm > 0, p_samples_prob_norm > 0)
+
     res = p_samples_prob_norm * (np.log(p_samples_prob_norm) - np.log(q_samples_prob_norm))
+    res[np.logical_not(inliers_p)] = 0
     return res
 
 
