@@ -105,6 +105,9 @@ class CSamplingMethod(metaclass=ABCMeta):
     def draw(self, ax):
         pass
 
+    def get_viz_frames(self):
+        return None
+
 
 class CMixtureSamplingMethod(CSamplingMethod):
     def __init__(self, params):
