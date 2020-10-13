@@ -224,3 +224,5 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
     if debug and (ndims == 1 or ndims == 2):
         plt.close()
+
+    return sampling_method.get_viz_frames()
