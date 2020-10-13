@@ -198,7 +198,7 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         if self.debug:
             print(self.__class__.__name__, "== Debug ==> ", "importance_sample(n_samples=%d)" % n_samples)
 
-        for t in range(1, n_samples - len(self.samples) + 1):
+        for t in range(len(self.samples), n_samples):
             # Initialize traversal path and node to the root. Line 3.
             P = [0]
             n_id = 0
