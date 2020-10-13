@@ -1,36 +1,11 @@
 # Define the target densities used for evaluation and label their categories and provide evaluation parameters
 targets:
-    - name: banana2D
-      type: distributions.rare.banana2d.Banana2D
-      params: {}
-      space_size: 15.0
-      batch_size: 1
-      nsamples: 2000
-      nsamples_eval: 2000
-      domain_min: np.array([-15, -15])
-      domain_max: np.array([15, 15])
-      tags: [benchden, low_kurtosis, low_skew]
-
-    - name: gmm
-      type: distributions.CGaussianMixtureModel
-      params: {means: [[0.0, 0.0], [-0.2, 0.4]],
-               sigmas: [[0.01, 0.1], [0.001, 0.01]],  # WARNING!! Notice the double bracket when defining the sigmas
-               weights:[0.5, 0.5],
-               support:[[-1, -1], [1, 1]]}
-      space_size: 1.0
-      batch_size: 2
-      nsamples: 200
-      nsamples_eval: 2000
-      domain_min: np.array([-1,-1])
-      domain_max: np.array([1,1])
-      tags: [high_kurtosis, low_skew, multimodal, close_modes]
-
     - name: gmm
       type: distributions.CGaussianMixtureModel
       params: {means: [[1.5], [-4.2]],
-               sigmas: [[0.1], [0.01]],  # WARNING!! Notice the double bracket when defining the cov
+               sigmas: [[0.2], [0.05]],  # WARNING!! Notice the double bracket when defining the cov
                weights:[0.5, 0.5],
-               support:[[-10, -10], [10, 10]]}
+               support:[[-10], [10]]}
       space_size: 10.0
       batch_size: 2
       nsamples: 1000
@@ -50,24 +25,50 @@ targets:
       domain_max: np.array([1])
       tags: [low_kurtosis, low_skew, unimodal]
 
+    - name: gmm
+      type: distributions.CGaussianMixtureModel
+      params: {means: [[0.0, 0.0], [-0.2, 0.4]],
+               sigmas: [[0.01, 0.1], [0.001, 0.01]],  # WARNING!! Notice the double bracket when defining the sigmas
+               weights:[0.5, 0.5],
+               support:[[-1, -1], [1, 1]]}
+      space_size: 1.0
+      batch_size: 2
+      nsamples: 2000
+      nsamples_eval: 2000
+      domain_min: np.array([-1,-1])
+      domain_max: np.array([1,1])
+      tags: [high_kurtosis, low_skew, multimodal, close_modes]
+
+    - name: banana2D
+      type: distributions.rare.banana2d.Banana2D
+      params: {}
+      space_size: 15.0
+      batch_size: 32
+      nsamples: 2000
+      nsamples_eval: 2000
+      domain_min: np.array([-15, -15])
+      domain_max: np.array([15, 15])
+      tags: [benchden, low_kurtosis, low_skew]
+
 # Number of times each experiment is repeated
-nreps: 10
+nreps: 20
 
 # Random seed used for reproducibility
-rseed: 0
+rseed: 1
 
 # Metrics computed
-metrics: [NESS, JSD, T]
+metrics: [NESS, JSD, time]
 
 display:
     value: true             # Display 1D and 2D density plots on the screen
-    display_path: results/  # If value is true, save the plots as a .png in the provided path
+    display_path: results/   # If value is true, save the plots as a .png in the provided path
 
     animation: {value: true,                    # Compile the sequence of visualized sampling steps into an animation
                 fps: 1,                         # Frames per second used for the animation
                 animation_path: results/anim/}  # If value is true, save the plots as a .png in the provided path
 
 output:
-    file: results.txt
+    file: results/results.txt
     make_plots: true
-    plots_path: plot_results/
+    plots_path: results/
+    plots_dpi: 800
