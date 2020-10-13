@@ -120,9 +120,7 @@ class CBenchmark(object):
         assert len(self.targets) > 0
         assert len(self.targets) == len(self.ndims) == len(self.space_size) == len(self.nsamples)
 
-        # TODO: Use the display plot paths and generate the result plots
         # TODO: Generate latex result tables
-        # TODO: Use the desired metrics
         # TODO: Generate the animation
 
         cols = "dims output_samples JSD BD ev_mse NESS time method target_d accept_rate proposal_samples proposal_evals target_evals\n"
@@ -140,20 +138,46 @@ class CBenchmark(object):
                 print("EVALUATING: %s with %d max samples %d dims on dist: %s " % (sampling_method.name, max_samples_dim, ndims, target_dist.name))
                 sampling_method.reset()
                 t_ini = time.time()
-                evaluate_method(ndims=ndims,
-                                space_size=space_size,
-                                target_dist=target_dist,
-                                sampling_method=sampling_method,
-                                max_samples=max_samples_dim,
-                                max_sampling_time=self.timeout,
-                                batch_size=batch_size,
-                                debug=self.display,
-                                metrics=self.metrics,
-                                rseed=self.rseed,
-                                n_reps=self.n_experiments,
-                                sampling_eval_samples=eval_sampl,
-                                filename=self.output_file)
+                viz_elems = evaluate_method(ndims=ndims,
+                                            space_size=space_size,
+                                            target_dist=target_dist,
+                                            sampling_method=sampling_method,
+                                            max_samples=max_samples_dim,
+                                            max_sampling_time=self.timeout,
+                                            batch_size=batch_size,
+                                            debug=self.display,
+                                            metrics=self.metrics,
+                                            rseed=self.rseed,
+                                            n_reps=self.n_experiments,
+                                            sampling_eval_samples=eval_sampl,
+                                            filename=self.output_file)
                 print("TOOK: %5.3fs" % (time.time()-t_ini))
+
+                if viz_elems is not None:
+                    t_ini = time.time()
+                    import visualization.visuals as viz
+                    from visualization.matplotlib.viz_interface import draw_frames
+                    fig = plt.figure(figsize=(13, 15))
+                    plt.axis('off')
+                    plt.show(block=False)
+
+                    x_axis = viz.CAxis(id=-1,
+                                       start=np.array([target_dist.domain_min, 0, 0]),
+                                       end=np.array([target_dist.domain_max, 0, 0]))
+                    y_axis = viz.CAxis(id=-2, end=np.array([0, 1, 0]))
+                    y_axis.ticks_size = [.1] * len(y_axis.ticks)
+                    x_axis.ticks_size = [.01] * len(x_axis.ticks)
+
+                    target_d_viz = viz.CFunction(id=-3,
+                                                 limits=[target_dist.domain_min, target_dist.domain_max],
+                                                 func=target_dist.prob,
+                                                 resolution=1000)
+
+                    target_d_viz.outline_color = viz.CColor.BLUE
+
+                    print("Drawing %d visual elements" % len(viz_elems))
+                    draw_frames(frames=viz_elems, static_elems=[x_axis, y_axis, target_d_viz])
+                    print("VIZ : %5.3fs" % (time.time()-t_ini))
 
         print("BENCHMARK TOOK: %5.3fs" % (time.time()-t_start))
 
