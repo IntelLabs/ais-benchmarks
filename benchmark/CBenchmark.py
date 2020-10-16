@@ -9,6 +9,7 @@ import distributions
 import sampling_methods
 from benchmark.evaluation import evaluate_method
 from benchmark.plot_results import make_2d_plot
+from utils.misc import time_to_hms
 
 
 class CBenchmark(object):
@@ -157,7 +158,7 @@ class CBenchmark(object):
                                             n_reps=self.n_experiments,
                                             sampling_eval_samples=eval_sampl,
                                             filename=self.output_file)
-                print("TOOK: %5.3fs" % (time.time()-t_ini))
+                print("TOOK: %dh %dm %4.1fs" % time_to_hms(time.time()-t_ini))
 
                 if viz_elems is not None:
                     t_ini = time.time()
@@ -183,9 +184,9 @@ class CBenchmark(object):
 
                     print("Drawing %d visual elements" % len(viz_elems))
                     draw_frames(frames=viz_elems, static_elems=[x_axis, y_axis, target_d_viz])
-                    print("VIZ : %5.3fs" % (time.time()-t_ini))
+                    print("VIZ : %dh %dm %4.1fs" % time_to_hms(time.time()-t_ini))
 
-        print("BENCHMARK TOOK: %5.3fs" % (time.time()-t_start))
+        print("BENCHMARK TOOK: %dh %dm %4.1fs" % time_to_hms(time.time()-t_start))
 
         # Make metric-wise plots for each target distribution with one serie for each evaluated method
         if self.generate_plots:
