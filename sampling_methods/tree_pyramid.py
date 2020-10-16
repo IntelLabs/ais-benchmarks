@@ -408,30 +408,41 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                 re_samples = self.T.sampler.sample(len(self.T.leaves))
                 centers = self.T.centers[self.T.leaves_idx]
                 radii = self.T.radii[self.T.leaves_idx].reshape(len(re_samples), 1)
-                samples = re_samples * radii + centers
+                samples = re_samples * 2 * radii + centers
                 if self.kernel == "haar":
                     # Because in the haar case the importance probability depends on the node radii, we can omit
                     # calling self.prob() (which computes computing q(x)) and do it in a vectorized form as shown below.
-                    importance_probs = 1 / ((2*radii)**self.T.ndims)
+                    proposal_probs = 1 / ((2*radii)**self.T.ndims)
                 elif self.kernel == "normal":
-                    importance_probs = self.T.sampler.prob(re_samples)
+                    proposal_probs = self.T.sampler.prob(re_samples)
                 self.T.samples[self.T.leaves_idx] = samples
                 probs = target_d.prob(samples)
-                self.T.weights[self.T.leaves_idx] = probs.reshape(-1) / importance_probs.reshape(-1)
+                re_weights = probs.reshape(-1) / proposal_probs.reshape(-1)
+
+                # TODO: Only keep resamples with higher weight than existing samples
+                self.T.weights[self.T.leaves_idx] = probs.reshape(-1) / proposal_probs.reshape(-1)
+
                 self._num_pi_evals += len(samples)
                 self._num_q_evals += len(samples)
                 self._num_q_samples += len(samples)
 
                 # Self-normalization of importance weights.
                 self._self_normalize()
+
+                # Update resampled coordinates and weights.
                 for node in self.T.leaves:
                     node.weight = self.T.weights[node.node_idx]
+                    # Replace last node sample with the resampled one
+                    node.weight_hist[-1] = self.T.weights[node.node_idx]
+                    node.coords_hist[-1] = self.T.samples[node.node_idx]
+                    # TODO: Node value can be updated with all the samples in the subspace instead
                     node.value = node.weight * ((2*node.radius) ** len(node.center))
 
+            # self._self_normalize()
             # Force an update of the tree parameterized distributions after the updated weights
             # Update model internally calls self_normalize. So weights are always self-normalized when the model is
             # updated.
-            self._update_model()
+            # self._update_model()
             # print("TP-AIS. Target Ess: %f Current NSamples: %d  Target NSamples: %d" % (self.ess_target, self._get_nsamples(), n_samples))
 
             # # At this point a sampling step is finalized and the generated visualization elements
@@ -441,6 +452,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
 
             elapsed_time = time.time() - t_ini
 
+        self._update_model()
         return self._get_samples()
 
     def draw(self, ax):
@@ -543,7 +555,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
 
         self._self_normalize()
         self.model = CMixtureModel(models, weights)
-        self.viz_elements.append(viz.CProposalDist(0, func=self.model.prob, limits=[self.space_min, self.space_max]))
+        # self.viz_elements.append(viz.CProposalDist(0, func=self.model.prob, limits=[self.space_min, self.space_max]))
 
     def get_viz_frames(self):
         return None
