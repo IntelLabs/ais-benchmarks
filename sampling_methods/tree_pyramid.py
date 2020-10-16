@@ -198,35 +198,29 @@ class CTreePyramid:
                                               leaf_idx=len(self.leaves) + i - 1, node_idx=len(self.nodes) + i,
                                               level=node.level + 1, kernel=self.kernel))
 
-        # The expanding node is not a leaf anymore
-        self.leaves_idx[node.node_idx] = False
+        # Insert all the new nodes and make the leaves
+        self.nodes.extend(new_nodes)
+        self.leaves_idx.extend([True] * len(new_nodes))
 
         # The first new node replaces the expanding leaf node in the leaves list
         new_nodes[0].leaf_idx = node.leaf_idx
         self.leaves[node.leaf_idx] = new_nodes[0]
-        self.nodes.append(new_nodes[0])
+
+        # The remaining new nodes are added as leaves
+        self.leaves.extend(new_nodes[1:])
+
         # Add the node center and radius to the cached list
-        self.centers = np.concatenate((self.centers, t_tensor([new_nodes[0].center])))
-        self.radii = np.concatenate((self.radii, t_tensor([new_nodes[0].radius])))
-        self.samples = np.concatenate((self.samples, np.zeros((1, self.ndims))))
-        self.weights = np.concatenate((self.weights, np.zeros(1)))
-        self.leaves_idx.append(True)
+        self.centers = np.concatenate((self.centers, t_tensor(p_centers)))
+        self.radii = np.concatenate((self.radii, np.repeat(new_radius.reshape(1, -1), len(new_nodes), axis=0)))
 
-        node.children[0] = new_nodes[0]
+        # Expand cached samples, weights and leaf indices
+        self.samples = np.concatenate((self.samples, np.zeros((len(new_nodes), self.ndims))))
+        self.weights = np.concatenate((self.weights, np.zeros(len(new_nodes))))
+
+        # The new nodes are all children of the expanding node which is no longer a leaf
+        self.leaves_idx[node.node_idx] = False
+        node.children = new_nodes
         node.leaf_idx = -1
-
-        # The rest get inserted into the tree
-        for i, new_n in enumerate(new_nodes[1:]):
-            node.children[i+1] = new_n
-            new_n.leaf_idx = len(self.leaves)
-            self.leaves.append(new_n)
-            self.nodes.append(new_n)
-            # Add the node center and radius to the cached list
-            self.centers = np.concatenate((self.centers, t_tensor([new_n.center])))
-            self.radii = np.concatenate((self.radii, t_tensor([new_n.radius])))
-            self.samples = np.concatenate((self.samples, np.zeros((1, self.ndims))))
-            self.weights = np.concatenate((self.weights, np.zeros(1)))
-            self.leaves_idx.append(True)
         ################################################
         ################################################
 
