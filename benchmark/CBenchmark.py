@@ -62,19 +62,9 @@ class CBenchmark(object):
             m.name = method["name"]
             self.methods.append(m)
 
-    def load_benchmark(self, benchmark_file):
-        # Clear previously loaded benchmark configuration
-        self.targets.clear()
-        self.ndims.clear()
-        self.space_size.clear()
-        self.batch_sizes.clear()
-        self.eval_sampl.clear()
-        self.nsamples.clear()
-
-        b_yaml = open(benchmark_file, mode="r")
-        # bench = yaml.load(b_yaml, Loader=yaml.FullLoader)
+    def load_config(self, config_file):
+        b_yaml = open(config_file, mode="r")
         bench = yaml.load(b_yaml, Loader=yaml.SafeLoader)
-
         # Get the metrics to compute
         self.metrics = bench["metrics"]
 
@@ -91,6 +81,18 @@ class CBenchmark(object):
         self.generate_plots = bench["output"]["make_plots"]
         self.generate_plots_path = bench["output"]["plots_path"]
         self.plot_dpi = bench["output"]["plots_dpi"]
+
+    def load_benchmark(self, benchmark_file):
+        # Clear previously loaded benchmark configuration
+        self.targets.clear()
+        self.ndims.clear()
+        self.space_size.clear()
+        self.batch_sizes.clear()
+        self.eval_sampl.clear()
+        self.nsamples.clear()
+
+        b_yaml = open(benchmark_file, mode="r")
+        bench = yaml.load(b_yaml, Loader=yaml.SafeLoader)
 
         for target in bench["targets"]:
             # Collect the target specific evaluation parameters
@@ -113,8 +115,9 @@ class CBenchmark(object):
             self.ndims.append(target_dist.dims)
             self.space_size.append(np.array(target["space_size"]))
 
-    def run(self, benchmark_file, methods_file):
+    def run(self, benchmark_file, methods_file, config_file):
 
+        self.load_config(config_file)
         self.load_benchmark(benchmark_file)
 
         assert len(self.targets) > 0
@@ -124,9 +127,10 @@ class CBenchmark(object):
         # TODO: Generate the animation
 
         cols = "dims output_samples JSD BD ev_mse NESS time method target_d accept_rate proposal_samples proposal_evals target_evals\n"
-
         with open(self.output_file, 'w') as f:
             f.write(cols)
+
+        # Check destination paths
 
         t_start = time.time()
 
@@ -135,7 +139,9 @@ class CBenchmark(object):
             self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
 
             for sampling_method in self.methods:
-                print("EVALUATING: %s with %d max samples %d dims on dist: %s " % (sampling_method.name, max_samples_dim, ndims, target_dist.name))
+                print("EVALUATING: %s || dims: %d || max samples: %d || target_d: %s || batch: %d" % (
+                    sampling_method.name, ndims, max_samples_dim, target_dist.name, batch_size))
+
                 sampling_method.reset()
                 t_ini = time.time()
                 viz_elems = evaluate_method(ndims=ndims,
@@ -182,22 +188,37 @@ class CBenchmark(object):
         print("BENCHMARK TOOK: %5.3fs" % (time.time()-t_start))
 
         # Make metric-wise plots for each target distribution with one serie for each evaluated method
-        t_start = time.time()
         if self.generate_plots:
-            for target_d in self.targets:
-                methods = [m.name for m in self.methods]  # for all evaluated methods
-                data = pd.read_table(self.output_file, sep=" ", index_col=False, skipinitialspace=True)
-                for metric in self.metrics:
-                    [dist, dims] = [target_d.name, target_d.dims]
-                    make_2d_plot(data, "output_samples", metric, methods,
-                                 selector=["dims", "target_d"], selector_val=[dims, dist])
-                    plt.gca().set_title("Target distribution: %dD %s" % (dims, dist))
-                    plt.gca().set_ylabel(metric)
-                    plt.gca().set_xlabel("# samples")
-                    # plt.yscale("log",  nonposy='clip')
-                    ymin, ymax = plt.gca().get_ylim()
-                    plt.gca().set_ylim(ymin, ymax * 1.2)
-                    plt.savefig(self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric), bbox_inches='tight', dpi=self.plot_dpi)
-                    plt.close()
-                    print("Generated " + self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric))
+            self.make_plots()
+
+    def make_plots(self, benchmark_file=None, methods_file=None, config_file=None):
+        if benchmark_file is not None:
+            self.load_benchmark(benchmark_file)
+
+        if config_file is not None:
+            self.load_config(config_file)
+
+        if methods_file is not None:
+            for target_dist, ndims, space_size, max_samples_dim, eval_sampl, batch_size in \
+                    zip(self.targets, self.ndims, self.space_size, self.nsamples, self.eval_sampl, self.batch_sizes):
+                self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
+
+        t_start = time.time()
+        for target_d in self.targets:
+            methods = [m.name for m in self.methods]  # for all evaluated methods
+            data = pd.read_table(self.output_file, sep=" ", index_col=False, skipinitialspace=True)
+            for metric in self.metrics:
+                # TODO: Check that data exists or throw an error otherwise
+                [dist, dims] = [target_d.name, target_d.dims]
+                make_2d_plot(data, "output_samples", metric, methods,
+                             selector=["dims", "target_d"], selector_val=[dims, dist])
+                plt.gca().set_title("Target distribution: %dD %s" % (dims, dist))
+                plt.gca().set_ylabel(metric)
+                plt.gca().set_xlabel("# samples")
+                # plt.yscale("log",  nonposy='clip')
+                ymin, ymax = plt.gca().get_ylim()
+                plt.gca().set_ylim(ymin, ymax * 1.2)
+                plt.savefig(self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric), bbox_inches='tight', dpi=self.plot_dpi)
+                plt.close()
+                print("Generated " + self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric))
         print("PLOT GENERATION TOOK: %5.3fs" % (time.time()-t_start))
