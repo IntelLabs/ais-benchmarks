@@ -501,20 +501,18 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         return ESS / len(samples)
 
     def _get_nsamples(self):
-        nsamples = 0
-        for l in self.T.leaves:
-            nsamples += len(l.coords_hist)
-        return nsamples
+        return len(self._get_samples()[1])
 
     def _get_samples(self):
+        if self.ess_target > 1.0:
+            return self.T.samples[self.T.leaves_idx], self.T.weights[self.T.leaves_idx]
+
         samples = None
         weights = None
         for l in self.T.leaves:
             samples = np.concatenate((samples, l.coords_hist)) if samples is not None else l.coords_hist
             weights = np.concatenate((weights, l.weight_hist)) if weights is not None else l.weight_hist
-
         return samples, weights
-        # return self.T.samples[self.T.leaves_idx], self.T.weights[self.T.leaves_idx]
 
     def _self_normalize(self):
         if np.sum(self.T.weights[self.T.leaves_idx]) > 0:
