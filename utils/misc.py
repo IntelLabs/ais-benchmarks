@@ -22,3 +22,10 @@ def generateEggBoxGMM(space_min, space_max, delta, sigma):
 
     gmm = CGaussianMixtureModel(means, covs)
     return gmm
+
+
+def time_to_hms(total_time):
+    hours = total_time // 3600
+    mins = (total_time - hours * 3600) // 60
+    secs = total_time - hours * 3600 - mins * 60
+    return hours, mins, secs
