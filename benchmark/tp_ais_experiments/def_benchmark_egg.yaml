@@ -14,7 +14,7 @@ targets:
     support: [[-5.],
  [ 5.]]}
       space_size: 5.0
-      batch_size: 250
+      batch_size: 64
       nsamples: 2500
       nsamples_eval: 2000
       domain_min: np.array([-5.])
@@ -58,7 +58,7 @@ targets:
     support: [[-5.,-5.],
  [ 5., 5.]]}
       space_size: 5.0
-      batch_size: 1250
+      batch_size: 128
       nsamples: 12500
       nsamples_eval: 2000
       domain_min: np.array([-5.,-5.])
@@ -204,7 +204,7 @@ targets:
     support: [[-5.,-5.,-5.],
  [ 5., 5., 5.]]}
       space_size: 5.0
-      batch_size: 6250
+      batch_size: 1024
       nsamples: 62500
       nsamples_eval: 2000
       domain_min: np.array([-5.,-5.,-5.])
@@ -769,7 +769,7 @@ targets:
     support: [[-5.,-5.,-5.,-5.],
  [ 5., 5., 5., 5.]]}
       space_size: 5.0
-      batch_size: 31250
+      batch_size: 2048
       nsamples: 312500
       nsamples_eval: 2000
       domain_min: np.array([-5.,-5.,-5.,-5.])
@@ -2998,7 +2998,7 @@ targets:
     support: [[-5.,-5.,-5.,-5.,-5.],
  [ 5., 5., 5., 5., 5.]]}
       space_size: 5.0
-      batch_size: 1000000
+      batch_size: 2048
       nsamples: 1000000
       nsamples_eval: 2000
       domain_min: np.array([-5.,-5.,-5.,-5.,-5.])
