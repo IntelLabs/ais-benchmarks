@@ -192,11 +192,9 @@ class CTreePyramid:
         ################################################
         # Create the new child nodes that are initialized with their fair share of their parent weight, this
         # addresses the problem of all the weights of the leaf nodes being zero.
-        new_nodes = []
-        for i, center in enumerate(p_centers):
-            new_nodes.append(CTreePyramidNode(center=center, radius=new_radius, weight=node.weight / (N+1),
-                                              leaf_idx=len(self.leaves) + i - 1, node_idx=len(self.nodes) + i,
-                                              level=node.level + 1, kernel=self.kernel))
+        new_nodes = [CTreePyramidNode(center=center, radius=new_radius, weight=node.weight / (N + 1),
+                                      leaf_idx=len(self.leaves) + i - 1, node_idx=len(self.nodes) + i,
+                                      level=node.level + 1, kernel=self.kernel) for i, center in enumerate(p_centers)]
 
         # Insert all the new nodes and make the leaves
         self.nodes.extend(new_nodes)
