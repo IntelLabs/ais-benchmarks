@@ -11,6 +11,7 @@ from distributions.nonparametric.CKernelDensity import CKernelDensity
 from utils.plot_utils import plot_grid_sampled_pdfs
 from utils.plot_utils import plot_pdf
 from utils.video_writer import CVideoWriter
+from utils.misc import time_to_hms
 
 
 def log_print(text, file, mode='a+'):
@@ -34,7 +35,12 @@ def kl_divergence_components_logprob(p_samples_logprob, q_samples_logprob):
 def kl_divergence_components(p_samples_prob, q_samples_prob):
     p_samples_prob_norm = p_samples_prob / np.sum(p_samples_prob)
     q_samples_prob_norm = q_samples_prob / np.sum(q_samples_prob)
+
+    # handle zero probabilities
+    inliers_p = np.logical_and(q_samples_prob_norm > 0, p_samples_prob_norm > 0)
+
     res = p_samples_prob_norm * (np.log(p_samples_prob_norm) - np.log(q_samples_prob_norm))
+    res[np.logical_not(inliers_p)] = 0
     return res
 
 
@@ -80,12 +86,12 @@ def evaluate_proposal(proposal_dist, target_dist, space_min, space_max, sampling
     q_samples_logprob = proposal_dist.log_prob(eval_samples)
 
     # Compute the empirical Jensen-Shannon Divergence
-    js_div_comps = js_divergence_logprob(p_samples_logprob, q_samples_logprob)
+    js_div_comps = js_divergence_logprob(p_samples_logprob.flatten(), q_samples_logprob)
     js_div = np.sum(js_div_comps)
     # print(list(js_div_comps))
 
     # Compute the empirical Bhattacharyya distance
-    bhattacharyya_dist = bhattacharyya_distance(np.exp(p_samples_logprob), np.exp(q_samples_logprob))
+    bhattacharyya_dist = bhattacharyya_distance(np.exp(p_samples_logprob.flatten()), np.exp(q_samples_logprob))
 
     # Compute the empirical expected value mean squared error
     expected_value = (eval_samples * np.exp(q_samples_logprob.reshape(-1, 1))).sum(axis=0)
@@ -103,9 +109,12 @@ def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max
     return evaluate_proposal(approximate_pdf, target_dist, space_min, space_max, sampling_eval_samples)
 
 
-def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples, debug=True, filename=None, max_sampling_time=600, videofile=None):
-    batch_samples = int(ndims ** 2) + 1  # Number of samples per batch of samples
-    # batch_samples = 10
+def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples, sampling_eval_samples,
+                    metrics=["NESS", "JSD", "T"], rseed=0, n_reps=10, batch_size=1,
+                    debug=True, filename=None, max_sampling_time=600, videofile=None):
+
+    np.random.seed(rseed)
+    batch_samples = batch_size
     space_min = t_tensor([-space_size] * ndims)
     space_max = t_tensor([space_size] * ndims)
 
@@ -142,78 +151,88 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             plt.ylim(space_min[1], space_max[1])
             # ax.set_zlim(ax.get_zlim())
 
-    # Perform sampling
-    sampling_time = 0
-    sampling_method.reset()
-    # pts = []
-    n_samples = batch_samples
-    while len(samples_acc) < max_samples:
-        t_ini = time.time()
+    for nexp in range(n_reps):
+        # print("Experiment %d/%d || method: %s || dist: %s || dims: %d " % (nexp+1, n_reps, sampling_method.name, target_dist.name, ndims), end="", flush=True)
+        t_start = time.time()
 
-        samples_acc, samples_weights_acc = sampling_method.importance_sample(target_d=target_dist,
-                                                                             n_samples=n_samples,
-                                                                             timeout=max_sampling_time - sampling_time)
+        # Perform sampling
+        sampling_time = 0
+        sampling_method.reset()
+        samples_acc = t_tensor([])
+        # pts = []
+        n_samples = batch_samples
+        while len(samples_acc) < max_samples:
+            h, m, s = time_to_hms(time.time()-t_start)
+            print("Experiment %02d/%02d || method: %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || runtime: %02dh %02dm %4.1fs" % (
+                nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
+                (len(samples_acc)/max_samples)*100, h, m, s), end="\r", flush=True)
 
-        samples_logprob_acc = sampling_method.log_prob(samples_acc)
+            t_ini = time.time()
 
-        n_samples = len(samples_acc) + batch_samples
+            samples_acc, samples_weights_acc = sampling_method.importance_sample(target_d=target_dist,
+                                                                                 n_samples=n_samples,
+                                                                                 timeout=max_sampling_time - sampling_time)
 
-        sampling_time += time.time()-t_ini
+            samples_logprob_acc = sampling_method.log_prob(samples_acc)
 
-        sampling_method._update_model()
+            n_samples = len(samples_acc) + batch_samples
 
-        if filename is not None:
-            # t_ini = time.time()
-            [js_div, bhattacharyya_dist, ev_mse] = \
-                evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
-            # print("Evaluation time: %5.3f nsamples: %d samples/sec: %5.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
+            sampling_time += time.time()-t_ini
 
-            log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d" % (
-                ndims, len(samples_acc), js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
-                sampling_method.name, target_dist.name, sampling_method.get_acceptance_rate(),
-                sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
+            sampling_method._update_model()
 
+            if filename is not None:
+                # t_ini = time.time()
+                [js_div, bhattacharyya_dist, ev_mse] = \
+                    evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
+                # print("Evaluation time: %5.3f nsamples: %d samples/sec: %5.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
+
+                log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d" % (
+                    ndims, len(samples_acc), js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
+                    sampling_method.name, target_dist.name, sampling_method.get_acceptance_rate(),
+                    sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
+
+                if debug:
+                    plt.suptitle("%s | #smpl: %d | JSD: %3.3f | BHT: %3.3f | NESS: %.3f | AcceptRatio:%3.3f" %
+                                 (sampling_method.name, n_samples, js_div, bhattacharyya_dist, sampling_method.get_NESS(),
+                                  sampling_method.get_acceptance_rate()))
+
+            if sampling_time > max_sampling_time:
+                break
+
+            # DEBUG CODE HERE
             if debug:
-                plt.suptitle("%s | #smpl: %d | JSD: %3.3f | BHT: %3.3f | NESS: %.3f | AcceptRatio:%3.3f" %
-                             (sampling_method.name, n_samples, js_div, bhattacharyya_dist, sampling_method.get_NESS(),
-                              sampling_method.get_acceptance_rate()))
+                # Remove previous points
+                for element in pts:
+                    element.remove()
+                pts.clear()
+                if ndims == 1:
+                    pts.extend(sampling_method.draw(ax))
+                    # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
+                    pts.extend(ax.plot(samples_acc, np.ones_like(samples_logprob_acc)*0.1, "r|", label="samples"))
+                    plt.pause(0.01)
+                    if videofile is not None:
+                        vid_writer.add_frame(fig)
+                if ndims == 2:
+                    pts.extend(sampling_method.draw(ax))
+                    pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker=".", alpha=0.4))
+                    if videofile is not None:
+                        vid_writer.add_frame(fig)
+                    plt.pause(0.01)
+                plt.legend(framealpha=0.5, loc="best")
 
-        if sampling_time > max_sampling_time:
-            break
+        h, m, s = time_to_hms(time.time() - t_start)
+        print(
+            "Experiment %02d/%02d || method: %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || runtime: %02dh %02dm %4.1fs" % (
+                nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
+                (len(samples_acc) / max_samples) * 100, h, m, s), end="\n", flush=True)
 
-        # DEBUG CODE HERE
-        if debug:
-            # Remove previous points
-            for element in pts:
-                element.remove()
-            pts.clear()
-            if ndims == 1:
-                pts.extend(sampling_method.draw(ax))
-                # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
-                pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "ro"))
-                plt.pause(0.01)
-                if videofile is not None:
-                    vid_writer.add_frame(fig)
-            if ndims == 2:
-                pts.extend(sampling_method.draw(ax))
-                pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker="o", alpha=0.4))
-                if videofile is not None:
-                    vid_writer.add_frame(fig)
-                plt.pause(0.01)
-            plt.legend(framealpha=0.5, loc="best")
+        if debug and (ndims == 1 or ndims == 2):
+            if videofile is not None:
+                vid_writer.add_frame(fig)
+                vid_writer.save()
 
-    res = evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
-    res = list(res)
-    res.append(sampling_method.get_NESS())
-    res.append(len(samples_acc))
     if debug and (ndims == 1 or ndims == 2):
-        drawsamples = sampling_method.sample(100)
-        if ndims == 1:
-            pts.extend(ax.plot(drawsamples, np.zeros(len(drawsamples)), "b|"))
-        if ndims == 2:
-            pts.append(ax.scatter(drawsamples[:, 0], drawsamples[:, 1], 0, label="samples", c="b", marker="x"))
-        if videofile is not None:
-            vid_writer.add_frame(fig)
-            vid_writer.save()
         plt.close()
-    return res
+
+    return sampling_method.get_viz_frames()

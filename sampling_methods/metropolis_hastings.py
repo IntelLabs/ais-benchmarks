@@ -1,5 +1,8 @@
 import numpy as np
 import time
+import copy
+from matplotlib import pyplot as plt
+
 from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 from sampling_methods.base import CMixtureSamplingMethod
 from sampling_methods.base import t_tensor
@@ -155,25 +158,29 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             style = "rX"
             y = 0
             if type == self.BURN_IN:
-                style = "ro"
+                style = "r."
                 y = -0.1
             elif type == self.REJECT:
-                style = "r."
+                style = "rx"
                 y = -0.15
             elif type == self.DECORRELATION:
                 style = "g."
                 y = -0.2
-            elif type == self.SAMPLE:
-                style = "rx"
-                y = -0.25
+            # elif type == self.SAMPLE:
+            #     style = "gx"
+            #     y = -0.24
 
             res.extend(ax.plot(sample, y, style))
 
+        proposal_d = copy.deepcopy(self.proposal_d)
+        proposal_d.mean += self.trajectory_samples[-1]
+        res.extend(plot_pdf(ax, proposal_d, self.space_min, self.space_max, options="r--", label="MCMC: $q_i(x)$"))
         res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="MCMC: $q(x)$"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "ro", label="MCMC: burn-in"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "r.", label="MCMC: rejected"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "go", label="MCMC: intermediate"))
-        res.extend(ax.plot(self.space_min[0]-1, 0, "gx", label="MCMC: sample"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "r.", label="MCMC: burn-in"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "rx", label="MCMC: rejected"))
+        res.extend(ax.plot(self.space_min[0]-1, 0, "g.", label="MCMC: intermediate"))
+        # res.extend(ax.plot(self.space_min[0]-1, 0, "gx", label="MCMC: sample"))
+        plt.ylim(-0.2, ax.get_ylim()[1])
         return res
 
     def draw2d(self, ax):
@@ -187,6 +194,10 @@ class CMetropolisHastings(CMixtureSamplingMethod):
                 res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker=".", alpha=0.2))
             # elif type == self.SAMPLE:
             #     res.extend(ax.plot([sample[0]], [sample[1]], c="r", marker="o"))
+
+        proposal_d = copy.deepcopy(self.proposal_d)
+        proposal_d.mean += self.trajectory_samples[-1]
+        res.extend(plot_pdf2d(ax, proposal_d, self.space_min, self.space_max, linestyles="dashed", label="MCMC: $q_i(x)$"))
 
         res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="$q(x)$"))
         res.extend(ax.plot(self.space_min[0]-1, self.space_min[1]-1, "bo", c="b", marker="o", label="burn-in"))

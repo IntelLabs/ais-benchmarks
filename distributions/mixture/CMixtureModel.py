@@ -27,7 +27,6 @@ class CMixtureModel:
         self.weights = weights
 
     def log_prob(self, data):
-
         if len(data.shape) == 1:
             data.reshape(-1, 1)
             llikelihood = np.zeros((len(self.models), 1))
@@ -44,16 +43,22 @@ class CMixtureModel:
         return logprob
 
     def prob(self, data):
-        likelihood = np.zeros(len(data)).reshape(-1, 1)
         if len(data.shape) == 1:
-            likelihood = 0
+            data.reshape(-1, 1)
+            likelihood = np.zeros((len(self.models), 1))
+
+        elif len(data.shape) == 2:
+            likelihood = np.zeros((len(self.models), len(data)))
+        else:
+            raise ValueError("Unsupported samples data format: " + str(data.shape))
 
         for i in range(len(self.models)):
-            likelihood_i = np.exp(self.models[i].log_prob(data)) * self.weights[i]
-            likelihood = likelihood + likelihood_i
+            likelihood[i] = np.exp(self.models[i].log_prob(data).flatten()) * self.weights[i]
 
-        zero_mask = likelihood < np.finfo(likelihood.dtype).eps
-        likelihood[zero_mask] = np.finfo(likelihood.dtype).eps
+        likelihood = np.sum(likelihood, axis=0)
+
+        zero_mask = likelihood < np.finfo(likelihood.dtype).min
+        likelihood[zero_mask] = np.finfo(likelihood.dtype).min
 
         return likelihood
 

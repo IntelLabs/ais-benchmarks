@@ -98,7 +98,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         ESS = np.exp(-np.sum(self.weights * np.log(self.weights)))
         return ESS / len(self.samples)
 
-    def resample(self, value, pdf, ellipsoid, timeout=60, ellipsoid_converged_radius=1e-3):
+    def resample(self, value, pdf, ellipsoid, timeout=60, ellipsoid_converged_radius=1e-2):
         new_sample = np.clip(ellipsoid.sample(), self.space_min, self.space_max)
 
         self._num_q_samples += 1

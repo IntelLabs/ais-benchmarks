@@ -97,7 +97,7 @@ class CHiDaiseeTree:
         n = self.nodes[node_id]
         new_rad = np.copy(n.radius)
         # Select a dimension to split
-        sel_dim = np.random.randint(0, self.dims)
+        sel_dim = np.random.randint(low=0, high=self.dims)
         new_rad[sel_dim] /= 2
         c_left = np.copy(n.center)
         c_right = np.copy(n.center)
@@ -134,6 +134,9 @@ class CHiDaiseeTree:
         self.leaves.remove(node_id)
         self.leaves.append(n_left.idx)
         self.leaves.append(n_right.idx)
+
+        # Clear the samples from the parent node
+        n.samples = None
 
     def tree_to_str(self, n, depth=0):
         res = ""
@@ -182,6 +185,8 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         self.reset()
 
     def reset(self):
+        super(CHiDaiseeSampling, self).reset()
+
         if self.debug:
             print(self.__class__.__name__, "== Debug ==> ", "reset")
 
@@ -196,7 +201,7 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         if self.debug:
             print(self.__class__.__name__, "== Debug ==> ", "importance_sample(n_samples=%d)" % n_samples)
 
-        for t in range(1, n_samples - len(self.samples)):
+        for t in range(len(self.samples), n_samples):
             # Initialize traversal path and node to the root. Line 3.
             P = [0]
             n_id = 0
@@ -323,11 +328,11 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
             rect = Rectangle((c[0] - r[0], c[1] - r[1]), 2*r[0], 2*r[1])
 
             # Create patch collection with specified colour/alpha
-            # pc = PatchCollection([rect], facecolor=cm.hot(1-q), alpha=alpha, edgecolor=edgecolor)
-            if T.nodes[l].N > 0:
-                pc = PatchCollection([rect], facecolor=cm.hot(T.nodes[l].ESS / T.nodes[l].N), alpha=alpha, edgecolor=edgecolor)
-            else:
-                pc = PatchCollection([rect], facecolor=cm.hot(0), alpha=alpha, edgecolor=edgecolor)
+            pc = PatchCollection([rect], facecolor=cm.hot(1-q), alpha=alpha, edgecolor=edgecolor)
+            # if T.nodes[l].N > 0:
+            #     pc = PatchCollection([rect], facecolor=cm.hot(T.nodes[l].ESS / T.nodes[l].N), alpha=alpha, edgecolor=edgecolor)
+            # else:
+            #     pc = PatchCollection([rect], facecolor=cm.hot(0), alpha=alpha, edgecolor=edgecolor)
             ax.add_collection(pc)
             res.append(pc)
 
