@@ -11,6 +11,7 @@ from distributions.nonparametric.CKernelDensity import CKernelDensity
 from utils.plot_utils import plot_grid_sampled_pdfs
 from utils.plot_utils import plot_pdf
 from utils.video_writer import CVideoWriter
+from utils.misc import time_to_hms
 
 
 def log_print(text, file, mode='a+'):
@@ -151,7 +152,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             # ax.set_zlim(ax.get_zlim())
 
     for nexp in range(n_reps):
-        print("Experiment %d/%d || method: %s || dist: %s || dims: %d " % (nexp+1, n_reps, sampling_method.name, target_dist.name, ndims), end="", flush=True)
+        # print("Experiment %d/%d || method: %s || dist: %s || dims: %d " % (nexp+1, n_reps, sampling_method.name, target_dist.name, ndims), end="", flush=True)
         t_start = time.time()
 
         # Perform sampling
@@ -161,6 +162,11 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
         # pts = []
         n_samples = batch_samples
         while len(samples_acc) < max_samples:
+            h, m, s = time_to_hms(time.time()-t_start)
+            print("Experiment %02d/%02d || method: %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || runtime: %02dh %02dm %4.1fs" % (
+                nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
+                (len(samples_acc)/max_samples)*100, h, m, s), end="\r", flush=True)
+
             t_ini = time.time()
 
             samples_acc, samples_weights_acc = sampling_method.importance_sample(target_d=target_dist,
@@ -215,7 +221,11 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                     plt.pause(0.01)
                 plt.legend(framealpha=0.5, loc="best")
 
-        print(" || runtime: %5.3fs" % (time.time()-t_start), flush=True)
+        h, m, s = time_to_hms(time.time() - t_start)
+        print(
+            "Experiment %02d/%02d || method: %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || runtime: %02dh %02dm %4.1fs" % (
+                nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
+                (len(samples_acc) / max_samples) * 100, h, m, s), end="\n", flush=True)
 
         if debug and (ndims == 1 or ndims == 2):
             if videofile is not None:
