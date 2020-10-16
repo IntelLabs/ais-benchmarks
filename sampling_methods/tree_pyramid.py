@@ -156,7 +156,8 @@ class CTreePyramid:
         # Compute the leaf ESS and only expand if the criteria is met
         ################################################
         if ess_target is not None:
-            ESS = np.sum(node.weight_hist) * np.sum(node.weight_hist) / np.sum(node.weight_hist * node.weight_hist)
+            ESS = (np.sum(node.weight_hist) * np.sum(node.weight_hist)) / np.sum(node.weight_hist * node.weight_hist)
+            # NESS = ESS / len(node.weight_hist)
             if ESS > ess_target * len(node.weight_hist):
                 # print("NESS: %f. Target NESS: %f. NOT EXPANDING" % (NESS, ess_target))
                 return None
