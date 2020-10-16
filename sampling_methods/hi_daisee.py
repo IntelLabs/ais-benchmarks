@@ -135,6 +135,9 @@ class CHiDaiseeTree:
         self.leaves.append(n_left.idx)
         self.leaves.append(n_right.idx)
 
+        # Clear the samples from the parent node
+        n.samples = None
+
     def tree_to_str(self, n, depth=0):
         res = ""
         # If is a leaf. Print the leaf
