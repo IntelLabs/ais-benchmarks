@@ -158,6 +158,7 @@ class CTreePyramid:
         if ess_target is not None:
             ESS = np.sum(node.weight_hist) * np.sum(node.weight_hist) / np.sum(node.weight_hist * node.weight_hist)
             if ESS > ess_target * len(node.weight_hist):
+                # print("NESS: %f. Target NESS: %f. NOT EXPANDING" % (NESS, ess_target))
                 return None
 
         ################################################
@@ -178,8 +179,10 @@ class CTreePyramid:
         ################################################
         # TODO: Push existing samples down the tree
         ################################################
-        # split node.coords_hist to the children
+        # split node.coords_hist to the children and clean up
         # compute the new weights
+        del node.weight_hist
+        del node.coords_hist
         ################################################
         ################################################
 
@@ -361,7 +364,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         t_ini = time.time()
 
         # When the tree is created the root node is not sampled. Make sure it has one sample.
-        if self.T.root.weight_hist is None:
+        if hasattr(self.T.root, "weight_hist") and self.T.root.weight_hist is None:
             self.T.root.sample(self.T.root.sampler)
             self.T.samples[self.T.root.node_idx] = self.T.root.coords
             self._num_q_samples += 1
@@ -436,6 +439,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             # Update model internally calls self_normalize. So weights are always self-normalized when the model is
             # updated.
             self._update_model()
+            # print("TP-AIS. Target Ess: %f Current NSamples: %d  Target NSamples: %d" % (self.ess_target, self._get_nsamples(), n_samples))
 
             # # At this point a sampling step is finalized and the generated visualization elements
             # # for the sampling step to a visualization frame
