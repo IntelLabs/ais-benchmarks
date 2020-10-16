@@ -209,13 +209,13 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                 if ndims == 1:
                     pts.extend(sampling_method.draw(ax))
                     # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
-                    pts.extend(ax.plot(samples_acc, np.zeros_like(samples_logprob_acc), "ro", label="samples"))
+                    pts.extend(ax.plot(samples_acc, np.ones_like(samples_logprob_acc)*0.1, "r|", label="samples"))
                     plt.pause(0.01)
                     if videofile is not None:
                         vid_writer.add_frame(fig)
                 if ndims == 2:
                     pts.extend(sampling_method.draw(ax))
-                    pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker="o", alpha=0.4))
+                    pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker=".", alpha=0.4))
                     if videofile is not None:
                         vid_writer.add_frame(fig)
                     plt.pause(0.01)
