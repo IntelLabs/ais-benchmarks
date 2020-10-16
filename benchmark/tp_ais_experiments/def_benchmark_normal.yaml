@@ -1,0 +1,80 @@
+# This is a benchmark of 5-modal GMMs from 1 to 7 dimensions with mu = U(-5, 5), sigma= diag( U(0.01, .5) )
+targets:
+    - name: normal
+      type: distributions.CGaussianMixtureModel
+      params: { means: [[2.11483166]],
+    sigmas: [[0.02472518]],
+    weights: [1.],
+    support: [[-8.],
+ [ 8.]]}
+      space_size: 8.0
+      batch_size: 250
+      nsamples: 2500
+      nsamples_eval: 1000
+      domain_min: np.array([-8.])
+      domain_max: np.array([8.])
+    - name: normal
+      type: distributions.CGaussianMixtureModel
+      params: { means: [[-1.47985529,-1.66858574]],
+    sigmas: [[0.23615098,0.25958088]],
+    weights: [1.],
+    support: [[-8.,-8.],
+ [ 8., 8.]]}
+      space_size: 8.0
+      batch_size: 1250
+      nsamples: 12500
+      nsamples_eval: 2000
+      domain_min: np.array([-8.,-8.])
+      domain_max: np.array([8.,8.])
+    - name: normal
+      type: distributions.CGaussianMixtureModel
+      params: { means: [[ 3.01718071,-0.1569243 ,-1.13884829]],
+    sigmas: [[0.10431801,0.14834458,0.17478444]],
+    weights: [1.],
+    support: [[-8.,-8.,-8.],
+ [ 8., 8., 8.]]}
+      space_size: 8.0
+      batch_size: 6250
+      nsamples: 62500
+      nsamples_eval: 3000
+      domain_min: np.array([-8.,-8.,-8.])
+      domain_max: np.array([8.,8.,8.])
+    - name: normal
+      type: distributions.CGaussianMixtureModel
+      params: { means: [[ 0.27968102, 1.75195615, 3.00892124,-2.49395313]],
+    sigmas: [[0.03985567,0.02564364,0.28145178,0.04714717]],
+    weights: [1.],
+    support: [[-8.,-8.,-8.,-8.],
+ [ 8., 8., 8., 8.]]}
+      space_size: 8.0
+      batch_size: 31250
+      nsamples: 312500
+      nsamples_eval: 4000
+      domain_min: np.array([-8.,-8.,-8.,-8.])
+      domain_max: np.array([8.,8.,8.,8.])
+    - name: normal
+      type: distributions.CGaussianMixtureModel
+      params: { means: [[ 0.54992115, 3.08838697, 2.38963784,-0.79612206,-3.907443  ]],
+    sigmas: [[0.15814429,0.18852918,0.28064028,0.26614025,0.26223548]],
+    weights: [1.],
+    support: [[-8.,-8.,-8.,-8.,-8.],
+ [ 8., 8., 8., 8., 8.]]}
+      space_size: 8.0
+      batch_size: 100000
+      nsamples: 1000000
+      nsamples_eval: 5000
+      domain_min: np.array([-8.,-8.,-8.,-8.,-8.])
+      domain_max: np.array([8.,8.,8.,8.,8.])
+    - name: normal
+      type: distributions.CGaussianMixtureModel
+      params: { means: [[-3.36856993,-4.13057068, 1.55900656,-1.92755375,-0.40727785, 4.6915757 ]],
+    sigmas: [[0.07188137,0.10816402,0.10548891,0.10460843,0.19993421,0.2107298 ]],
+    weights: [1.],
+    support: [[-8.,-8.,-8.,-8.,-8.,-8.],
+ [ 8., 8., 8., 8., 8., 8.]]}
+      space_size: 8.0
+      batch_size: 100000
+      nsamples: 1000000
+      nsamples_eval: 6000
+      domain_min: np.array([-8.,-8.,-8.,-8.,-8.,-8.])
+      domain_max: np.array([8.,8.,8.,8.,8.,8.])
