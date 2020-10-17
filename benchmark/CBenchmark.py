@@ -78,7 +78,7 @@ class CBenchmark(object):
         np.random.seed(self.rseed)
 
         # Collect output configuration
-        self.output_file = bench["output"]["file"]
+        # self.output_file = bench["output"]["file"]
         self.generate_plots = bench["output"]["make_plots"]
         self.generate_plots_path = bench["output"]["plots_path"]
         self.plot_dpi = bench["output"]["plots_dpi"]
@@ -116,8 +116,8 @@ class CBenchmark(object):
             self.ndims.append(target_dist.dims)
             self.space_size.append(np.array(target["space_size"]))
 
-    def run(self, benchmark_file, methods_file, config_file):
-
+    def run(self, benchmark_file, methods_file, config_file, out_file):
+        self.output_file = out_file
         self.load_config(config_file)
         self.load_benchmark(benchmark_file)
 
