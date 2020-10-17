@@ -1,0 +1,10 @@
+# Define the methods to be evaluated and its parameter configuration
+methods:
+    - name: TP_AISr_ESS80
+      type: sampling_methods.CTreePyramidSampling
+      params:
+        method: "'simple'"
+        resampling: "'leaf'"
+        kernel: "'haar'"
+        ess_target: 0.8
+        parallel_samples: 512
