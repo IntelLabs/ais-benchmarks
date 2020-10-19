@@ -35,3 +35,12 @@ methods:
         kernel: "'haar'"
         ess_target: 1000.0
         parallel_samples: 512
+    
+    - name: TP_AIS
+      type: sampling_methods.CTreePyramidSampling
+      params:
+        method: "'simple'"
+        resampling: "'none'"
+        kernel: "'haar'"
+        ess_target: 1000.0
+        parallel_samples: 512

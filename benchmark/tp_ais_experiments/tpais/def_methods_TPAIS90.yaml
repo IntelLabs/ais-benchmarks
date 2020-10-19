@@ -1,10 +1,10 @@
 # Define the methods to be evaluated and its parameter configuration
 methods:
-    - name: TP_AISr_ESS90
+    - name: TP_AIS
       type: sampling_methods.CTreePyramidSampling
       params:
         method: "'simple'"
-        resampling: "'leaf'"
+        resampling: "'none'"
         kernel: "'haar'"
-        ess_target: 0.9
+        ess_target: 1000.0
         parallel_samples: 512
