@@ -25,7 +25,7 @@ class CBenchmark(object):
 
         # Info about the evaluation and metrics
         self.nsamples = []       # Number of samples to obtain after concluding evaluation of each method
-        self.timeout = 3600      # Max time allowed for evaluation of each pair (method, target)
+        self.timeout = 18000     # Max time allowed for evaluation of each pair (method, target)
         self.eval_sampl = []     # Number of samples used for computing evaluation metrics
         self.metrics = []        # List of metrics to compute. Must be in the implemented metrics list
         self.n_experiments = 10  # Number of times a method is evaluated on a target
