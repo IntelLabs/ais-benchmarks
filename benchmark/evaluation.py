@@ -163,7 +163,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
         n_samples = batch_samples
         while len(samples_acc) < max_samples:
             h, m, s = time_to_hms(time.time()-t_start)
-            print("Experiment %02d/%02d || method: %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || runtime: %02dh %02dm %4.1fs" % (
+            print("Exp %02d/%02d || %s || dist: %s || dims: %d || #smpls: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs" % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
                 (len(samples_acc)/max_samples)*100, h, m, s), end="\r", flush=True)
 
@@ -223,7 +223,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
         h, m, s = time_to_hms(time.time() - t_start)
         print(
-            "Experiment %02d/%02d || method: %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || runtime: %02dh %02dm %4.1fs" % (
+            "Exp %02d/%02d || %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs" % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
                 (len(samples_acc) / max_samples) * 100, h, m, s), end="\n", flush=True)
 
