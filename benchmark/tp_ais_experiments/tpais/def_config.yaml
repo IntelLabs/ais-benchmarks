@@ -1,5 +1,5 @@
 # Number of times each experiment is repeated
-nreps: 10
+nreps: 5
 
 # Random seed used for reproducibility
 rseed: 0
