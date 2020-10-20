@@ -16,7 +16,7 @@ def load_files_regexp(path, regexp):
         series.append(np.loadtxt(path+file))
 
 
-def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, labels=None, mark_points=2):
+def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, labels=None, mark_points=10):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
@@ -117,18 +117,17 @@ def make_plots(results_file, methods, labels, output_path, dimensions=[1, 2, 3],
     dpi = 1600
     for dist in dists:
         for dims in dimensions:
-            barmin = np.log(2 ** dims + 1)
-            barmax = np.log(1000*dims)
-            bar_points = np.logspace(barmin, barmax, num=8, base=np.e)
-            bar_points = list(bar_points.astype(np.int32))
+            # barmin = np.log(2 ** dims + 1)
+            # bar_points = np.logspace(barmin, barmax, num=8, base=np.e)
+            # bar_points = list(bar_points.astype(np.int32))
 
-            if plot_mode == "bar":
-                make_2d_barplot(data, "output_samples", "time", methods, bar_points=bar_points,
-                                selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-            else:
-                make_2d_plot(data, "output_samples", "time", methods,
-                             selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-                plt.gca().set_xlim(bar_points[0], bar_points[-1])
+            # if plot_mode == "bar":
+            #     make_2d_barplot(data, "output_samples", "time", methods, bar_points=bar_points,
+            #                     selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            # else:
+            make_2d_plot(data, "output_samples", "time", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+                # plt.gca().set_xlim(bar_points[0], bar_points[-1])
 
             plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
             plt.gca().set_ylabel("time(s)")
@@ -141,13 +140,13 @@ def make_plots(results_file, methods, labels, output_path, dimensions=[1, 2, 3],
             # plt.show()
             plt.close()
 
-            if plot_mode == "bar":
-                make_2d_barplot(data, "output_samples", "JSD", methods, bar_points=bar_points,
-                                selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-            else:
-                make_2d_plot(data, "output_samples", "JSD", methods,
-                             selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-                plt.gca().set_xlim(bar_points[0], bar_points[-1])
+            # if plot_mode == "bar":
+            #     make_2d_barplot(data, "output_samples", "JSD", methods, bar_points=bar_points,
+            #                     selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            # else:
+            make_2d_plot(data, "output_samples", "JSD", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+                # plt.gca().set_xlim(bar_points[0], bar_points[-1])
 
             plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
             plt.gca().set_ylabel("Jensen-Shannon Divergence")
@@ -157,13 +156,13 @@ def make_plots(results_file, methods, labels, output_path, dimensions=[1, 2, 3],
             # plt.show()
             plt.close()
 
-            if plot_mode == "bar":
-                make_2d_barplot(data, "output_samples", "NESS", methods, bar_points=bar_points,
-                                selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-            else:
-                make_2d_plot(data, "output_samples", "NESS", methods,
-                             selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-                plt.gca().set_xlim(bar_points[0], bar_points[-1])
+            # if plot_mode == "bar":
+            #     make_2d_barplot(data, "output_samples", "NESS", methods, bar_points=bar_points,
+            #                     selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            # else:
+            make_2d_plot(data, "output_samples", "NESS", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+                # plt.gca().set_xlim(bar_points[0], bar_points[-1])
 
             plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
             plt.gca().set_ylabel("Normalized Effective Sample Size")
@@ -175,13 +174,13 @@ def make_plots(results_file, methods, labels, output_path, dimensions=[1, 2, 3],
             # plt.show()
             plt.close()
 
-            if plot_mode == "bar":
-                make_2d_barplot(data, "output_samples", "ev_mse", methods, bar_points=bar_points,
-                                selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-            else:
-                make_2d_plot(data, "output_samples", "ev_mse", methods,
-                             selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
-                plt.gca().set_xlim(bar_points[0], bar_points[-1])
+            # if plot_mode == "bar":
+            #     make_2d_barplot(data, "output_samples", "ev_mse", methods, bar_points=bar_points,
+            #                     selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+            # else:
+            make_2d_plot(data, "output_samples", "ev_mse", methods,
+                         selector=["dims", "target_d"], selector_val=[dims, dist], labels=labels)
+                # plt.gca().set_xlim(bar_points[0], bar_points[-1])
 
             plt.gca().set_title("Target distribution: %s, Dimensions: %d" % (dist, dims))
             plt.gca().set_ylabel("Expected Value Mean Squared Error")
@@ -203,27 +202,27 @@ if __name__ == "__main__":
     methods = ["TP_AISr_ESS60", "TP_AISr_ESS80", "TP_AISr_ESS95", "TP_AISr"]
     path = "results_ess_ablation" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2, 3], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
 
     # TP-AIS resample ablation
     methods = ["TP_AIS", "TP_AISr"]
     path = "results_resample_ablation" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2, 3], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
 
     # HiDaisee ESS
     methods = ["HiDaisee_60", "HiDaisee_70", "HiDaisee_80", "HiDaisee_90", "HiDaisee_95"]
     path = "hidaisee" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2, 3], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
 
     # TP-AIS vs. HiDaisee
-    methods = ["HiDaisee_90", "TP_AISr_ESS90"]
+    methods = ["HiDaisee_95", "TP_AISr_ESS95"]
     path = "results_vs_hidaisee" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2, 3], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
 
-    methods = ["HiDaisee_90", "TP_AISr_ESS90"]
-    path = "results_vs_hidaisee" + os.sep
-    make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[2], dists=["banana2D"])
+    # methods = ["HiDaisee_90", "TP_AISr_ESS90"]
+    # path = "results_vs_hidaisee" + os.sep
+    # make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
+    #            dimensions=[2], dists=["banana2D"])
