@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import gc
 from matplotlib import pyplot as plt
 
 from scipy.stats import entropy
@@ -159,6 +160,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
         sampling_time = 0
         sampling_method.reset()
         samples_acc = t_tensor([])
+        samples_weights_acc = t_tensor([])
         # pts = []
         n_samples = batch_samples
         while len(samples_acc) < max_samples:
@@ -169,6 +171,8 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
             t_ini = time.time()
 
+            del samples_acc
+            del samples_weights_acc
             samples_acc, samples_weights_acc = sampling_method.importance_sample(target_d=target_dist,
                                                                                  n_samples=n_samples,
                                                                                  timeout=max_sampling_time - sampling_time)
@@ -220,6 +224,9 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                         vid_writer.add_frame(fig)
                     plt.pause(0.01)
                 plt.legend(framealpha=0.5, loc="best")
+
+                # Force garbage collection
+                gc.collect()
 
         h, m, s = time_to_hms(time.time() - t_start)
         print(
