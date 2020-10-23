@@ -2,6 +2,9 @@ import numpy as np
 import time
 import gc
 from matplotlib import pyplot as plt
+import cProfile
+import pstats
+import tracemalloc
 
 from scipy.stats import entropy
 
@@ -114,6 +117,8 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                     metrics=["NESS", "JSD", "T"], rseed=0, n_reps=10, batch_size=1,
                     debug=True, filename=None, max_sampling_time=600, videofile=None):
 
+    # TODO: This is a central function in the framework needs serious cleaning and documentation
+
     np.random.seed(rseed)
     batch_samples = batch_size
     space_min = t_tensor([-space_size] * ndims)
@@ -152,9 +157,15 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             plt.ylim(space_min[1], space_max[1])
             # ax.set_zlim(ax.get_zlim())
 
+    # Start profiling tools
+    profiler = cProfile.Profile()
+    profiler.enable()
+    tracemalloc.start()
+
     for nexp in range(n_reps):
         # print("Experiment %d/%d || method: %s || dist: %s || dims: %d " % (nexp+1, n_reps, sampling_method.name, target_dist.name, ndims), end="", flush=True)
         t_start = time.time()
+        mem_peak = 0
 
         # Perform sampling
         sampling_time = 0
@@ -164,10 +175,14 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
         # pts = []
         n_samples = batch_samples
         while len(samples_acc) < max_samples:
-            h, m, s = time_to_hms(time.time()-t_start)
-            print("Exp %02d/%02d || %s || dist: %s || dims: %d || #smpls: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs" % (
+
+            mem_used = tracemalloc.get_tracemalloc_memory()/(1024.0*1024.0)
+            mem_peak = mem_used if mem_used > mem_peak else mem_peak
+
+            h, m, s = time_to_hms(time.time() - t_start)
+            print("Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB max: %.1fMB" % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
-                (len(samples_acc)/max_samples)*100, h, m, s), end="\r", flush=True)
+                (len(samples_acc)/max_samples)*100, h, m, s, mem_used, mem_peak), end="\r", flush=True)
 
             t_ini = time.time()
 
@@ -177,13 +192,13 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                                                                                  n_samples=n_samples,
                                                                                  timeout=max_sampling_time - sampling_time)
 
-            samples_logprob_acc = sampling_method.log_prob(samples_acc)
+            # samples_logprob_acc = sampling_method.log_prob(samples_acc)
 
             n_samples = len(samples_acc) + batch_samples
 
             sampling_time += time.time()-t_ini
 
-            sampling_method._update_model()
+            # sampling_method._update_model()
 
             if filename is not None:
                 # t_ini = time.time()
@@ -213,7 +228,7 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                 if ndims == 1:
                     pts.extend(sampling_method.draw(ax))
                     # pts.extend(ax.plot(samples_acc, samples_logprob_acc, "r."))
-                    pts.extend(ax.plot(samples_acc, np.ones_like(samples_logprob_acc)*0.1, "r|", label="samples"))
+                    pts.extend(ax.plot(samples_acc, np.ones(len(samples_acc))*0.1, "r|", label="samples"))
                     plt.pause(0.01)
                     if videofile is not None:
                         vid_writer.add_frame(fig)
@@ -226,18 +241,28 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                 plt.legend(framealpha=0.5, loc="best")
 
                 # Force garbage collection
-                gc.collect()
+                # gc.collect()
 
         h, m, s = time_to_hms(time.time() - t_start)
         print(
-            "Exp %02d/%02d || %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs" % (
+            "Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB max: %.1fMB" % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
-                (len(samples_acc) / max_samples) * 100, h, m, s), end="\n", flush=True)
+                (len(samples_acc) / max_samples) * 100, h, m, s, mem_used, mem_peak), end="\n", flush=True)
+        # print(
+        #     "Exp %02d/%02d || %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem" % (
+        #         nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
+        #         (len(samples_acc) / max_samples) * 100, h, m, s), end="\n", flush=True)
 
         if debug and (ndims == 1 or ndims == 2):
             if videofile is not None:
                 vid_writer.add_frame(fig)
                 vid_writer.save()
+
+    tracemalloc.stop()
+    profiler.disable()
+    ps = pstats.Stats(profiler)
+    ps.sort_stats("cumtime")
+    ps.print_stats()
 
     if debug and (ndims == 1 or ndims == 2):
         plt.close()
