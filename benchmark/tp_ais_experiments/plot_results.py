@@ -192,7 +192,6 @@ def make_plots(results_file, methods, labels, output_path, dimensions=[1, 2, 3],
 
             print("Generated " + path + "%d_dims_%s_dist" % (dims, dist))
 
-
     # TODO: Get table at specific sample number values
     # TODO: Curate the data such that there is data points in the selected sample numbers
 
@@ -202,25 +201,25 @@ if __name__ == "__main__":
     methods = ["TP_AISr_ESS60", "TP_AISr_ESS80", "TP_AISr_ESS95", "TP_AISr"]
     path = "results_ess_ablation" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2, 3, 4], dists=["gmm", "normal", "egg"])
 
     # TP-AIS resample ablation
     methods = ["TP_AIS", "TP_AISr"]
     path = "results_resample_ablation" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2, 3, 4], dists=["gmm", "normal", "egg"])
 
     # HiDaisee ESS
     methods = ["HiDaisee_60", "HiDaisee_70", "HiDaisee_80", "HiDaisee_90", "HiDaisee_95"]
     path = "hidaisee" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2, 3, 4], dists=["gmm", "normal", "egg"])
 
     # TP-AIS vs. HiDaisee
     methods = ["HiDaisee_95", "TP_AISr_ESS95"]
     path = "results_vs_hidaisee" + os.sep
     make_plots(results_file="results.txt", methods=methods, labels=methods, output_path=path,
-               dimensions=[1, 2], dists=["gmm", "normal", "egg"])
+               dimensions=[1, 2, 3, 4], dists=["gmm", "normal", "egg"])
 
     # methods = ["HiDaisee_90", "TP_AISr_ESS90"]
     # path = "results_vs_hidaisee" + os.sep
