@@ -130,7 +130,10 @@ class CMixtureSamplingMethod(CSamplingMethod):
         return self.model.prob(s)
 
     def log_prob(self, s):
-        return np.log(self.prob(s))
+        if self.model is None:
+            self._update_model()
+        return self.model.log_prob(s)
+        # return np.log(self.prob(s))
 
     def _update_model(self):
         models = []
