@@ -509,22 +509,36 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             # TODO: Node value can be updated with all the samples in the subspace instead
             node.value = node.weight * ((2 * node.radius) ** len(node.center))
 
-            # self._self_normalize()
-            # Force an update of the tree parameterized distributions after the updated weights
-            # Update model internally calls self_normalize. So weights are always self-normalized when the model is
-            # updated.
-            # self._update_model()
-            # print("TP-AIS. Target Ess: %f Current NSamples: %d  Target NSamples: %d" % (self.ess_target, self._get_nsamples(), n_samples))
+    def log_prob(self, x):
+        if len(x.shape) == 1:
+            x.reshape(-1, 1)
+            llikelihood = np.zeros(1, 1)
 
-            # # At this point a sampling step is finalized and the generated visualization elements
-            # # for the sampling step to a visualization frame
-            # self.viz_frames.append(self.viz_elements)
-            # self.viz_elements = list()
+        elif len(x.shape) == 2:
+            llikelihood = np.zeros((len(x), 1))
+        else:
+            raise ValueError("Unsupported samples data format: " + str(x.shape))
 
-            elapsed_time = time.time() - t_ini
+        # If the kernel used is normal, just use the regular mixture model log_prob computation implemented in the
+        # base class that performs the evaluation on each mixture component and combines each model logprob with
+        # the logsumexp trick to make it more resilient to underflow
+        if self.kernel == "normal":
+            return super().log_prob(x)
 
-        self._update_model()
-        return self._get_samples()
+        # If the kernel is haar we can compute the likelihood faster. Because the space is disjoint and we just have to
+        # find for each sample what leaf it belongs to and assing the leaf constant mass to it.
+        if self.kernel == "haar":
+            lower = self.T.centers - self.T.radii
+            upper = self.T.centers + self.T.radii
+
+            # TODO: This might be able to be vectorized
+            # Get the indices of the leaf each sample belongs to
+            for i, sample in enumerate(x):
+                llikelihood[i] = self.T.weights[
+                    np.logical_and(self.T.leaves_idx,
+                                   np.logical_and(np.all(lower < sample, axis=1),
+                                                  np.all(sample < upper, axis=1)))]
+            return np.log(llikelihood)
 
     def draw(self, ax):
         res = []
