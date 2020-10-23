@@ -180,9 +180,9 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
             mem_peak = mem_used if mem_used > mem_peak else mem_peak
 
             h, m, s = time_to_hms(time.time() - t_start)
-            print("Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB max: %.1fMB" % (
+            print("Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB" % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
-                (len(samples_acc)/max_samples)*100, h, m, s, mem_used, mem_peak), end="\r", flush=True)
+                (len(samples_acc)/max_samples)*100, h, m, s, mem_used), end="\r", flush=True)
 
             t_ini = time.time()
 
@@ -206,10 +206,10 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
                     evaluate_proposal(sampling_method, target_dist, space_min, space_max, sampling_eval_samples)
                 # print("Evaluation time: %5.3f nsamples: %d samples/sec: %5.3f" % (time.time() - t_ini, len(samples_acc), len(samples_acc) / (time.time() - t_ini)))
 
-                log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d" % (
+                log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d %f7.2" % (
                     ndims, len(samples_acc), js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
                     sampling_method.name, target_dist.name, sampling_method.get_acceptance_rate(),
-                    sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals), file=filename)
+                    sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals, mem_used), file=filename)
 
                 if debug:
                     plt.suptitle("%s | #smpl: %d | JSD: %3.3f | BHT: %3.3f | NESS: %.3f | AcceptRatio:%3.3f" %
@@ -245,9 +245,9 @@ def evaluate_method(ndims, space_size, target_dist, sampling_method, max_samples
 
         h, m, s = time_to_hms(time.time() - t_start)
         print(
-            "Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB max: %.1fMB" % (
+            "Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB" % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
-                (len(samples_acc) / max_samples) * 100, h, m, s, mem_used, mem_peak), end="\n", flush=True)
+                (len(samples_acc) / max_samples) * 100, h, m, s, mem_used), end="\n", flush=True)
         # print(
         #     "Exp %02d/%02d || %s || dist: %s || dims: %d || #samples: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem" % (
         #         nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
