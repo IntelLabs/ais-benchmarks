@@ -17,7 +17,6 @@ class CBenchmark(object):
         # Info about the targets
         self.targets = []       # Target distributions to use for benchmark
         self.ndims = []         # Number of dimensions of each target
-        self.space_size = []    # Min max limits of the sampled space
 
         # Info about the methods
         self.methods = []       # Methods to evaluate
@@ -87,7 +86,6 @@ class CBenchmark(object):
         # Clear previously loaded benchmark configuration
         self.targets.clear()
         self.ndims.clear()
-        self.space_size.clear()
         self.batch_sizes.clear()
         self.eval_sampl.clear()
         self.nsamples.clear()
@@ -114,7 +112,6 @@ class CBenchmark(object):
 
             self.targets.append(target_dist)
             self.ndims.append(target_dist.dims)
-            self.space_size.append(np.array(target["space_size"]))
 
     def run(self, benchmark_file, methods_file, config_file, out_file):
         self.output_file = out_file
@@ -122,7 +119,7 @@ class CBenchmark(object):
         self.load_benchmark(benchmark_file)
 
         assert len(self.targets) > 0
-        assert len(self.targets) == len(self.ndims) == len(self.space_size) == len(self.nsamples)
+        assert len(self.targets) == len(self.ndims) == len(self.nsamples)
 
         # TODO: Generate latex result tables
         # TODO: Generate the animation
@@ -134,8 +131,8 @@ class CBenchmark(object):
         # TODO: Check destination paths
 
         t_start = time.time()
-        for target_dist, ndims, space_size, max_samples_dim, eval_sampl, batch_size in \
-                zip(self.targets, self.ndims, self.space_size, self.nsamples, self.eval_sampl, self.batch_sizes):
+        for target_dist, ndims, max_samples_dim, eval_sampl, batch_size in \
+                zip(self.targets, self.ndims, self.nsamples, self.eval_sampl, self.batch_sizes):
             self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
 
             for sampling_method in self.methods:
@@ -145,7 +142,7 @@ class CBenchmark(object):
                 sampling_method.reset()
                 t_ini = time.time()
                 viz_elems = evaluate_method(ndims=ndims,
-                                            space_size=space_size,
+                                            support=[target_dist.domain_min, target_dist.domain_max],
                                             target_dist=target_dist,
                                             sampling_method=sampling_method,
                                             max_samples=max_samples_dim,
@@ -199,8 +196,7 @@ class CBenchmark(object):
             self.load_config(config_file)
 
         if methods_file is not None:
-            for target_dist, ndims, space_size, max_samples_dim, eval_sampl, batch_size in \
-                    zip(self.targets, self.ndims, self.space_size, self.nsamples, self.eval_sampl, self.batch_sizes):
+            for target_dist, ndims in zip(self.targets, self.ndims):
                 self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
 
         t_start = time.time()
