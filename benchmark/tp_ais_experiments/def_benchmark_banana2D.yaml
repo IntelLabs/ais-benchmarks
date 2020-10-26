@@ -3,9 +3,8 @@ targets:
     - name: banana2D
       type: distributions.rare.banana2d.Banana2D
       params: {}
-      space_size: 15.0
       batch_size: 32
-      nsamples: 2000
+      nsamples: 12000
       nsamples_eval: 2000
       domain_min: np.array([-15, -15])
       domain_max: np.array([15, 15])
