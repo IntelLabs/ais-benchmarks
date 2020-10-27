@@ -158,14 +158,18 @@ def evaluate_method(ndims, support, target_dist, sampling_method, max_samples, s
 
     profile : bool
         Flag to enable profiling results. Consider using when debugging or analyzing an algorithm as the usage of the
-        profiler might impact the performance. Default: False.
+        profiler might impact the performance. Will use the provided filename to name the profiling file results.
+        Default: False.
 
     Returns
     -------
+        List of CVisual objects. The list describes the sequence in which the visual objects must be shown, the list
+        can contain multiple CVisual objects with the same id. That should be interpreted as the same object updating
+        its visual representation, therefore it can be used by the visualization to replace the previous displayed
+        object by the new one or use an animation to display the transformation.
 
     Raises
     -------
-    None
     """
 
     # Set the random seed if specified, important for reproducibility
@@ -247,6 +251,7 @@ def evaluate_method(ndims, support, target_dist, sampling_method, max_samples, s
         profiler.disable()
         ps = pstats.Stats(profiler)
         ps.sort_stats("cumtime")
+        ps.dump_stats(filename + ".profile")
         ps.print_stats()
 
     # Return sampling visualization data
