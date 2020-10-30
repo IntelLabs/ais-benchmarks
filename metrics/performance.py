@@ -2,9 +2,35 @@
 Performance metrics will evaluate computation complexity, memory consumption and efficiency (power consumption)
 """
 
-from metrics.base import CMetric
+import time
 import tracemalloc
 import gc
+
+from metrics.base import CMetric
+
+
+class CElapsedTime(CMetric):
+    def __init__(self):
+        super().__init__()
+        self.name = "time"
+        self.type = "performance"
+        self.t_ini = 0
+        self.t_end = 0
+
+    def pre(self, **kwargs):
+        self.t_ini = time.time()
+
+    def post(self, **kwargs):
+        self.t_end = time.time()
+        self.value += self.t_end - self.t_ini
+
+    def compute(self, **kwargs):
+        return self.value
+
+    def reset(self, **kwargs):
+        self.t_ini = 0
+        self.t_end = 0
+        self.value = 0
 
 
 class CMemoryUsage(CMetric):

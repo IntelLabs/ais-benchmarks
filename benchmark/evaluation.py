@@ -6,6 +6,7 @@ import pstats
 from sampling_methods.base import t_tensor
 from metrics.divergences import CKLDivergence
 from metrics.performance import CMemoryUsage
+from metrics.performance import CElapsedTime
 from utils.misc import time_to_hms
 
 
@@ -105,10 +106,9 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
         elif m == "EV_MSE":
             pass
         elif m == "T":
-            pass
+            metrics_eval.append(CElapsedTime())
         elif m == "MEM":
-            mem_metric = CMemoryUsage()
-            metrics_eval.append(mem_metric)
+            metrics_eval.append(CMemoryUsage())
 
     # Repeat the experiment n_reps times
     for nexp in range(n_reps):
