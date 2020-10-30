@@ -4,6 +4,7 @@ Performance metrics will evaluate computation complexity, memory consumption and
 
 from metrics.base import CMetric
 import tracemalloc
+import gc
 
 
 class CMemoryUsage(CMetric):
@@ -26,10 +27,12 @@ class CMemoryUsage(CMetric):
         tracemalloc.stop()
 
     def pre(self, **kwargs):
+        gc.collect()
         self.mem_ini_blk, self.mem_ini_peak_blk = tracemalloc.get_traced_memory()
         self.mem_ini = tracemalloc.get_tracemalloc_memory()
 
     def post(self, **kwargs):
+        gc.collect()
         self.mem_end_blk, self.mem_end_peak_blk = tracemalloc.get_traced_memory()
         self.mem_end = tracemalloc.get_tracemalloc_memory()
         self.mem_cum += self.mem_end - self.mem_ini
@@ -49,4 +52,5 @@ class CMemoryUsage(CMetric):
         self.mem_cum = 0
         self.mem_cum_blk = 0
         self.mem_cum_peak_blk = 0
+        gc.collect()
 
