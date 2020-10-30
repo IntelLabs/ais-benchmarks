@@ -534,10 +534,15 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             # TODO: This might be able to be vectorized
             # Get the indices of the leaf each sample belongs to
             for i, sample in enumerate(x):
-                llikelihood[i] = self.T.weights[
-                    np.logical_and(self.T.leaves_idx,
-                                   np.logical_and(np.all(lower < sample, axis=1),
-                                                  np.all(sample < upper, axis=1)))]
+                inliers = np.logical_and(self.T.leaves_idx,
+                                         np.logical_and(np.all(lower < sample, axis=1),
+                                                        np.all(sample < upper, axis=1)))
+
+                # handle the case where there are no inliers, samples inside the support.
+                if not np.any(inliers):
+                    llikelihood[i] = 0
+                else:
+                    llikelihood[i] = self.T.weights[inliers]
             return np.log(llikelihood)
 
     def draw(self, ax):
