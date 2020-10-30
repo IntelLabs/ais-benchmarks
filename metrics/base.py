@@ -1,7 +1,3 @@
-"""
-TODO: Write proper unit testing for all the metrics implemented.
-"""
-
 
 class CMetric:
     def __init__(self):
