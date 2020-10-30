@@ -124,7 +124,8 @@ class CBenchmark(object):
         # TODO: Generate latex result tables
         # TODO: Generate the animation
 
-        cols = "dims output_samples JSD BD ev_mse NESS time method target_d accept_rate proposal_samples proposal_evals target_evals\n"
+        cols = "dims output_samples " + " ".join([m for m in self.metrics]) + \
+               " NESS method target_d accept_rate proposal_samples proposal_evals target_evals\n"
         with open(self.output_file, 'w') as f:
             f.write(cols)
 
@@ -142,7 +143,6 @@ class CBenchmark(object):
                 sampling_method.reset()
                 t_ini = time.time()
                 viz_elems = evaluate_method(ndims=ndims,
-                                            support=[target_dist.domain_min, target_dist.domain_max],
                                             target_dist=target_dist,
                                             sampling_method=sampling_method,
                                             max_samples=max_samples_dim,

@@ -6,6 +6,7 @@ import tracemalloc
 
 from metrics.divergences import js_divergence_logprob
 from metrics.divergences import bhattacharyya_distance
+from metrics.divergences import CKLDivergence
 
 from sampling_methods.base import t_tensor
 from sampling_methods.base import uniform_sample_distribution
@@ -18,51 +19,24 @@ def log_print(text, file, mode='a+'):
         f.write(text + "\n")
 
 
-def evaluate_proposal(proposal_dist, target_dist, space_min, space_max, sampling_eval_samples=1000):
-    # Generate random samples and obtain its true density from the target distribution
-    eval_samples, p_samples_logprob = uniform_sample_distribution(target_dist, space_min, space_max, nsamples=sampling_eval_samples)
-
-    # Obtain the density at the sampled points from the proposal distribution
-    q_samples_logprob = proposal_dist.log_prob(eval_samples)
-
-    # Compute the empirical Jensen-Shannon Divergence
-    js_div_comps = js_divergence_logprob(p_samples_logprob.flatten(), q_samples_logprob)
-    js_div = np.sum(js_div_comps)
-    # print(list(js_div_comps))
-
-    # Compute the empirical Bhattacharyya distance
-    bhattacharyya_dist = bhattacharyya_distance(np.exp(p_samples_logprob.flatten()), np.exp(q_samples_logprob))
-
-    # Compute the empirical expected value mean squared error
-    expected_value = (eval_samples * np.exp(q_samples_logprob.reshape(-1, 1))).sum(axis=0)
-    gt_expected_value = (eval_samples * np.exp(p_samples_logprob.reshape(-1, 1))).sum(axis=0)
-    ev_mse = ((gt_expected_value - expected_value) * (gt_expected_value - expected_value)).sum()
-
-    return js_div, bhattacharyya_dist, ev_mse / sampling_eval_samples
+def write_results(results, method, target, nsamples, file):
+    with open(file, mode='a+') as f:
+        text = "%02d %04d " % (target.dims, nsamples)
+        text += " ".join(["%7.5f" % val for val in results.values()])
+        text += "%7.4f %s %s %5.3f %d %d %d" % (method.get_NESS(), method.name, target.name,
+                                                method.get_acceptance_rate(), method.num_proposal_samples,
+                                                method.num_proposal_evals, method.num_target_evals)
+        f.write(text + "\n")
 
 
-def evaluate_samples(samples, samples_logprob, target_dist, space_min, space_max, sampling_eval_samples=1000):
-
-    # Approximate the target density with the input samples using Kernel Density and Nearest Neighbor approximations
-    approximate_pdf = CKernelDensity(samples, np.exp(samples_logprob), bw=0.1)
-
-    return evaluate_proposal(approximate_pdf, target_dist, space_min, space_max, sampling_eval_samples)
-
-
-def evaluate_method(ndims, support, target_dist, sampling_method, max_samples, sampling_eval_samples,
-                    metrics=["NESS", "JSD", "T"], rseed=0, n_reps=10, batch_size=16,
+def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_eval_samples,
+                    metrics=("NESS", "JSD", "T"), rseed=0, n_reps=10, batch_size=16,
                     debug=True, filename=None, max_sampling_time=600, profile=False):
     """
     Parameters
     ----------
     ndims : int
         Number of dimensions of the target distribution
-
-    support : array_like
-        Support limits. support[0] contains the lower limits and support[1] the upper limits for the support of the
-        target distribution. The support limits are used to generate the samples for the approximate JSD and other
-        MC approximations for the metrics. If the target has infinite support, a reasonable support containing most
-        of the probability mass needs to be specified.
 
     target_dist : CDistribution
         Target distribution under evaluation. This can be an object derived from CDistribution or any other object that
@@ -127,6 +101,22 @@ def evaluate_method(ndims, support, target_dist, sampling_method, max_samples, s
     # Start memory profiling
     tracemalloc.start()
 
+    # Create metrics instances
+    metrics_eval = list()
+    for m in metrics:
+        if m == "KLD":
+            metrics_eval.append(CKLDivergence())
+        elif m == "JSD":
+            pass
+        elif m == "NESS":
+            pass
+        elif m == "EV_MSE":
+            pass
+        elif m == "T":
+            pass
+        elif m == "MEM":
+            pass
+
     # Repeat the experiment n_reps times
     for nexp in range(n_reps):
 
@@ -165,14 +155,16 @@ def evaluate_method(ndims, support, target_dist, sampling_method, max_samples, s
 
             # Perform sampling evaluation and store results to file
             if filename is not None:
-                # TODO: Compute only desired metrics
-                [js_div, bhattacharyya_dist, ev_mse] = \
-                    evaluate_proposal(sampling_method, target_dist, support[0], support[1], sampling_eval_samples)
+                results = dict()
 
-                log_print("%02d %04d %7.5f %7.5f %8.5f %7.5f %7.4f %s %s %5.3f %d %d %d %f7.2" % (
-                    ndims, len(samples_acc), js_div, bhattacharyya_dist, ev_mse, sampling_method.get_NESS(), sampling_time,
-                    sampling_method.name, target_dist.name, sampling_method.get_acceptance_rate(),
-                    sampling_method.num_proposal_samples, sampling_method.num_proposal_evals, sampling_method.num_target_evals, mem_used), file=filename)
+                # Compute desired metrics
+                for m in metrics_eval:
+                    val = m.compute({"p": target_dist, "q": sampling_method, "nsamples": sampling_eval_samples})
+                    results[m.name] = val
+
+                # Write metric results to file
+                write_results(results=results, method=sampling_method, target=target_dist,
+                              nsamples=len(samples_acc), file=filename)
 
             # Some sampling algorithms may take too long to generate the desired number of samples, the timeout ensures
             # the operation will end if the specified timeout is reached.
