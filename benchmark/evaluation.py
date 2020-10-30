@@ -2,10 +2,10 @@ import numpy as np
 import time
 import cProfile
 import pstats
-import tracemalloc
 
 from sampling_methods.base import t_tensor
 from metrics.divergences import CKLDivergence
+from metrics.performance import CMemoryUsage
 from utils.misc import time_to_hms
 
 
@@ -93,9 +93,6 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
         profiler = cProfile.Profile()
         profiler.enable()
 
-    # Start memory profiling
-    tracemalloc.start()
-
     # Create metrics instances
     metrics_eval = list()
     for m in metrics:
@@ -110,7 +107,8 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
         elif m == "T":
             pass
         elif m == "MEM":
-            pass
+            mem_metric = CMemoryUsage()
+            metrics_eval.append(mem_metric)
 
     # Repeat the experiment n_reps times
     for nexp in range(n_reps):
@@ -121,26 +119,31 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
         sampling_method.reset()
         samples_acc = t_tensor([])
         n_samples = batch_size
+        [m.reset() for m in metrics_eval]
 
         # Perform importance sampling until the desired number of samples is obtained
         while len(samples_acc) < max_samples:
-
-            # Compute current memory usage in MB
-            mem_used = tracemalloc.get_tracemalloc_memory()/(1024.0*1024.0)
 
             # Obtain experiment execution runtime
             h, m, s = time_to_hms(time.time() - t_start)
 
             # Display partial sampling experiment statistics
-            print("Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB" % (
+            text_display = "%02d/%02d | %s | %s | %dD | #s: %.1fk | %5.1f%% | t: %02dh %02dm %4.1fs | " % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
-                (len(samples_acc)/max_samples)*100, h, m, s, mem_used), end="\r", flush=True)
+                (len(samples_acc)/max_samples)*100, h, m, s)
+
+            text_display += " | ".join(["%s: %7.5f" % (m.name, m.value) for m in metrics_eval])
+            print(text_display, end="\r", flush=True)
+
+            # Initialize metrics before running the evaluated code
+            [m.pre() for m in metrics_eval]
 
             # Perform importance sampling operation to generate a batch of samples and compute the time taken
-            t_ini = time.time()
             samples_acc, _ = sampling_method.importance_sample(target_d=target_dist, n_samples=n_samples,
                                                                timeout=max_sampling_time - sampling_time)
-            sampling_time += time.time()-t_ini
+
+            # Compute metrics right after the sampling operation
+            [m.post() for m in metrics_eval]
 
             # Sampling methods generate a desired number of samples and maintain the state. Therefore it is not possible
             # to ask the sampling algos for batch_size samples every time, thus in order to have partial results during
@@ -154,7 +157,7 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
 
                 # Compute desired metrics
                 for m in metrics_eval:
-                    val = m.compute({"p": target_dist, "q": sampling_method, "nsamples": sampling_eval_samples})
+                    val = m.compute(p=target_dist, q=sampling_method, nsamples=sampling_eval_samples)
                     results[m.name] = val
 
                 # Write metric results to file
@@ -170,19 +173,27 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
         h, m, s = time_to_hms(time.time() - t_start)
 
         # Print final experiment statistics
-        print(
-            "Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB" % (
-                nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
-                (len(samples_acc) / max_samples) * 100, h, m, s, mem_used), end="\n", flush=True)
+        text_display = "%02d/%02d | %s | %s | %dD | #s: %.1fk | %5.1f%% | t: %02dh %02dm %4.1fs | " % (
+            nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
+            (len(samples_acc) / max_samples) * 100, h, m, s)
+
+        text_display += " | ".join(["%s: %7.5f" % (m.name, m.value) for m in metrics_eval])
+        print(text_display, end="\n", flush=True)
+        #
+        # print(
+        #     "Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB" % (
+        #         nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
+        #         (len(samples_acc) / max_samples) * 100, h, m, s, mem_used), end="\n", flush=True)
 
     # Stop profiling tools and save results
-    tracemalloc.stop()
     if profile:
         profiler.disable()
         ps = pstats.Stats(profiler)
         ps.sort_stats("cumtime")
         ps.dump_stats(filename + ".profile")
         ps.print_stats()
+
+    # TODO: Print experiment metric stats
 
     # Return sampling visualization data
     return sampling_method.get_viz_frames()
