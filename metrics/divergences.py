@@ -66,17 +66,26 @@ class CDivergence(CMetric):
         self.is_symmetric = False
         self.disjoint_support = True
 
-    def compute(self, params):
-        assert "p" in params.keys() and hasattr(params["p"], "log_prob"), \
-            "p must implement a log_prob method. p is of type %s" % (type(params["p"]))
-        assert "q" in params.keys() and hasattr(params["q"], "log_prob"), \
-            "q must implement a log_prob method. q is of type %s" % (type(params["q"]))
-        assert "nsamples" in params.keys()
+    def pre(self, **kwargs):
+        pass
 
-        samples = np.random.uniform(params["p"].support()[0], params["p"].support()[1],
-                                    size=(params["nsamples"], params["p"].dims))
+    def post(self, **kwargs):
+        pass
 
-        return self.compute_from_samples(params["p"], params["q"], samples)
+    def reset(self, **kwargs):
+        pass
+
+    def compute(self, **kwargs):
+        assert "p" in kwargs.keys() and hasattr(kwargs["p"], "log_prob"), \
+            "p must implement a log_prob method. p is of type %s" % (type(kwargs["p"]))
+        assert "q" in kwargs.keys() and hasattr(kwargs["q"], "log_prob"), \
+            "q must implement a log_prob method. q is of type %s" % (type(kwargs["q"]))
+        assert "nsamples" in kwargs.keys()
+
+        samples = np.random.uniform(kwargs["p"].support()[0], kwargs["p"].support()[1],
+                                    size=(kwargs["nsamples"], kwargs["p"].dims))
+
+        return self.compute_from_samples(kwargs["p"], kwargs["q"], samples)
 
     def compute_from_samples(self, p, q, samples):
         raise NotImplementedError
@@ -102,4 +111,5 @@ class CKLDivergence(CDivergence):
         # Compute discrete KL for each sample
         res = np.exp(p_samples_logprob_norm) * (p_samples_logprob_norm - q_samples_logprob_norm)
         res[res <= 0] = 0
-        return res.sum()
+        self.value = res.mean()
+        return self.value
