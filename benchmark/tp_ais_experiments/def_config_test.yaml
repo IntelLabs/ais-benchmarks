@@ -5,7 +5,7 @@ nreps: 3
 rseed: 1
 
 # Metrics computed
-metrics: [NESS, JSD, time]
+metrics: [KLD]
 
 display:
     value: true             # Display 1D and 2D density plots on the screen
