@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import distributions as d
 from scipy.stats import multivariate_normal
-from tests.test_distribution_template_test import CDistributionsTests
+from tests.distributions.test_distribution_template import CDistributionsTests
 
 
 class CMultivariateNormalTests(CDistributionsTests):

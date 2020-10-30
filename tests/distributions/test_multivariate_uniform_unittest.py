@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import distributions as d
-from tests.test_distribution_template_test import CDistributionsTests
+from tests.distributions.test_distribution_template import CDistributionsTests
 
 
 class CMultivariateUniformTests(CDistributionsTests):
