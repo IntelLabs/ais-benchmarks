@@ -90,6 +90,7 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
         np.random.seed(rseed)
 
     # Start profiling tools
+    profiler = None
     if profile:
         profiler = cProfile.Profile()
         profiler.enable()
@@ -186,7 +187,7 @@ def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_e
         #         (len(samples_acc) / max_samples) * 100, h, m, s, mem_used), end="\n", flush=True)
 
     # Stop profiling tools and save results
-    if profile:
+    if profiler is not None:
         profiler.disable()
         ps = pstats.Stats(profiler)
         ps.sort_stats("cumtime")
