@@ -4,13 +4,8 @@ import cProfile
 import pstats
 import tracemalloc
 
-from metrics.divergences import js_divergence_logprob
-from metrics.divergences import bhattacharyya_distance
-from metrics.divergences import CKLDivergence
-
 from sampling_methods.base import t_tensor
-from sampling_methods.base import uniform_sample_distribution
-from distributions.nonparametric.CKernelDensity import CKernelDensity
+from metrics.divergences import CKLDivergence
 from utils.misc import time_to_hms
 
 
