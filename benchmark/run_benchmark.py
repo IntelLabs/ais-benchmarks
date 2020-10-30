@@ -7,10 +7,10 @@ from utils.misc import time_to_hms
 benchmark = CBenchmark()
 
 # TODO: make this paths relative to this file
-b_file = "tp_ais_experiments/def_benchmark_gmm.yaml"
-m_file = "tp_ais_experiments/def_methods.yaml"
-c_file = "tp_ais_experiments/def_config_test.yaml"
-out_file = "tp_ais_experiments/results.txt"
+b_file = "def_benchmark.yaml"
+m_file = "def_methods.yaml"
+c_file = "def_config.yaml"
+out_file = "results.txt"
 
 if len(sys.argv) == 5:
     b_file = sys.argv[1]
