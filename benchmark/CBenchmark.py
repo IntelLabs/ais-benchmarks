@@ -15,6 +15,9 @@ from metrics.performance import CMemoryUsage
 from metrics.performance import CElapsedTime
 from benchmark.plot_results import make_2d_plot
 from utils.misc import time_to_hms
+from utils.plot_utils import plot_pdf
+from utils.plot_utils import grid_sample_distribution
+from utils.plot_utils import plot_grid_sampled_pdfs
 
 
 class CBenchmark(object):
@@ -160,6 +163,9 @@ class CBenchmark(object):
                                                        sampling_eval_samples=eval_sampl,
                                                        filename=self.output_file)
                 print("TOOK: %dh %dm %4.1fs" % time_to_hms(time.time()-t_ini))
+
+                if self.display:
+                    pass
 
                 if viz_elems is not None:
                     t_ini = time.time()
@@ -321,6 +327,33 @@ class CBenchmark(object):
             elif m == "MEM":
                 metrics_eval.append(CMemoryUsage())
 
+        # TODO: Cleanup the debug viz code
+        # Initialize visualization
+        if debug:
+            pts = []
+            if ndims == 1:
+                fig = plt.figure(figsize=(10, 8))
+                ax = plt.subplot(111)
+                plt.show(block=False)
+                plot_pdf(ax, target_dist, np.array(target_dist.support()[0]), np.array(target_dist.support()[1]), alpha=1.0, options="b-", resolution=0.01,
+                         label="$\pi(x)$")
+
+                plt.xlim(np.array(target_dist.support()[0]), np.array(target_dist.support()[1]))
+                plt.ylim(0, ax.get_ylim()[1])
+
+            elif ndims == 2:
+                fig = plt.figure(figsize=(10, 8))
+                ax = plt.subplot(111)
+                plt.show(block=False)
+
+                grid, log_prob, dims, shape = grid_sample_distribution(target_dist, target_dist.support()[0],
+                                                                       target_dist.support()[1], resolution=0.02)
+                plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob), shape=shape, alpha=1, label="$\pi(x)$", cmap='gray',
+                                       linestyles='dashed')
+
+                plt.xlim(target_dist.support()[0][0], target_dist.support()[1][0])
+                plt.ylim(target_dist.support()[0][1], target_dist.support()[1][1])
+
         # Repeat the experiment n_reps times
         for nexp in range(n_reps):
 
@@ -362,16 +395,32 @@ class CBenchmark(object):
                 # batch size. This lets us measure partial results in increments of batch_size samples.
                 n_samples = len(samples_acc) + batch_size
 
-                # Perform sampling evaluation and store results to file
+                # TODO: Cleanup the debug viz code
+                # Display visualization of sampling procedure
+                if debug:
+                    # Remove previous points
+                    for element in pts:
+                        element.remove()
+                    pts.clear()
+                    if ndims == 1:
+                        pts.extend(sampling_method.draw(ax))
+                        pts.extend(ax.plot(samples_acc, np.ones(len(samples_acc)) * 0.1, "g|", label="samples"))
+                        plt.pause(0.01)
+                    if ndims == 2:
+                        pts.extend(sampling_method.draw(ax))
+                        pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker=".",
+                                              alpha=0.4))
+                        plt.pause(0.01)
+                    plt.legend(framealpha=0.5, loc="best")
+
+                # Compute metrics
+                results = dict()
+                for m in metrics_eval:
+                    val = m.compute(p=target_dist, q=sampling_method, nsamples=sampling_eval_samples)
+                    results[m.name] = val
+
+                # Write metric results to file
                 if filename is not None:
-                    results = dict()
-
-                    # Compute desired metrics
-                    for m in metrics_eval:
-                        val = m.compute(p=target_dist, q=sampling_method, nsamples=sampling_eval_samples)
-                        results[m.name] = val
-
-                    # Write metric results to file
                     CBenchmark.write_results(results=results, method=sampling_method, target=target_dist,
                                              nsamples=len(samples_acc), file=filename)
 

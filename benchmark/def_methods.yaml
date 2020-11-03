@@ -36,7 +36,7 @@ methods:
         method: "'simple'"
         resampling: "'leaf'"
         kernel: "'haar'"
-        ess_target: 0.8
+        ess_target: 0.95
         parallel_samples: 512
 #
 #    - name: mcmc_mh

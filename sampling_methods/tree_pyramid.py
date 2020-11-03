@@ -545,6 +545,42 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                     llikelihood[i] = self.T.weights[inliers]
             return np.log(llikelihood)
 
+    def prob(self, x):
+        if len(x.shape) == 1:
+            x.reshape(-1, 1)
+            likelihood = np.zeros(1, 1)
+
+        elif len(x.shape) == 2:
+            likelihood = np.zeros((len(x), 1))
+        else:
+            raise ValueError("Unsupported samples data format: " + str(x.shape))
+
+        # If the kernel used is normal, just use the regular mixture model log_prob computation implemented in the
+        # base class that performs the evaluation on each mixture component and combines each model logprob with
+        # the logsumexp trick to make it more resilient to underflow
+        if self.kernel == "normal":
+            return super().prob(x)
+
+        # If the kernel is haar we can compute the likelihood faster. Because the space is disjoint and we just have to
+        # find for each sample what leaf it belongs to and assing the leaf constant mass to it.
+        if self.kernel == "haar":
+            lower = self.T.centers - self.T.radii
+            upper = self.T.centers + self.T.radii
+
+            # TODO: This might be able to be vectorized
+            # Get the indices of the leaf each sample belongs to
+            for i, sample in enumerate(x):
+                inliers = np.logical_and(self.T.leaves_idx,
+                                         np.logical_and(np.all(lower < sample, axis=1),
+                                                        np.all(sample < upper, axis=1)))
+
+                # handle the case where there are no inliers, samples inside the support.
+                if not np.any(inliers):
+                    likelihood[i] = 0
+                else:
+                    likelihood[i] = self.T.weights[inliers]
+            return likelihood
+
     def draw(self, ax):
         res = []
         if self.ndims == 1:
