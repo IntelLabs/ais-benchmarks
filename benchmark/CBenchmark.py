@@ -356,10 +356,10 @@ class CBenchmark(object):
                 # Compute metrics right after the sampling operation
                 [m.post() for m in metrics_eval]
 
-                # Sampling methods generate a desired number of samples and maintain the state. Therefore it is not possible
-                # to ask the sampling algos for batch_size samples every time, thus in order to have partial results during
-                # the sampling experiments, the number of samples to generate is always increase by batch size. This lets
-                # us measure partial results in increments of batch_size samples.
+                # Sampling methods generate a desired number of samples and maintain the state. Therefore it is not
+                # possible to ask the sampling algos for batch_size samples every time, thus in order to have partial
+                # results during the sampling experiments, the number of samples to generate is always increase by
+                # batch size. This lets us measure partial results in increments of batch_size samples.
                 n_samples = len(samples_acc) + batch_size
 
                 # Perform sampling evaluation and store results to file
@@ -375,8 +375,8 @@ class CBenchmark(object):
                     CBenchmark.write_results(results=results, method=sampling_method, target=target_dist,
                                              nsamples=len(samples_acc), file=filename)
 
-                # Some sampling algorithms may take too long to generate the desired number of samples, the timeout ensures
-                # the operation will end if the specified timeout is reached.
+                # Some sampling algorithms may take too long to generate the desired number of samples, the
+                # timeout ensures the operation will end if the specified timeout is reached.
                 if sampling_time > max_sampling_time:
                     break
 
@@ -390,11 +390,6 @@ class CBenchmark(object):
 
             text_display += " | ".join(["%s: %7.5f" % (m.name, m.value) for m in metrics_eval])
             print(text_display, end="\n", flush=True)
-            #
-            # print(
-            #     "Exp %02d/%02d || %s || %s || %dD || #s: %.1fk || %5.1f%% || t: %02dh %02dm %4.1fs || mem: %.1fMB" % (
-            #         nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
-            #         (len(samples_acc) / max_samples) * 100, h, m, s, mem_used), end="\n", flush=True)
 
         # Stop profiling tools and save results
         if profiler is not None:
@@ -403,8 +398,6 @@ class CBenchmark(object):
             ps.sort_stats("cumtime")
             ps.dump_stats(filename + ".profile")
             ps.print_stats()
-
-        # TODO: Print experiment metric stats
 
         # Return sampling visualization data
         return sampling_method.get_viz_frames()
