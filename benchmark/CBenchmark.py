@@ -346,13 +346,15 @@ class CBenchmark(object):
                 ax = plt.subplot(111)
                 plt.show(block=False)
 
-                grid, log_prob, dims, shape = grid_sample_distribution(target_dist, target_dist.support()[0],
-                                                                       target_dist.support()[1], resolution=0.02)
+                grid, log_prob, dims, shape = grid_sample_distribution(target_dist,
+                                                                       np.array(target_dist.support()[0]),
+                                                                       np.array(target_dist.support()[1]),
+                                                                       resolution=0.02)
                 plot_grid_sampled_pdfs(ax, dims, np.exp(log_prob), shape=shape, alpha=1, label="$\pi(x)$", cmap='gray',
                                        linestyles='dashed')
 
-                plt.xlim(target_dist.support()[0][0], target_dist.support()[1][0])
-                plt.ylim(target_dist.support()[0][1], target_dist.support()[1][1])
+                plt.xlim(np.array(target_dist.support()[0][0]), np.array(target_dist.support()[1][0]))
+                plt.ylim(np.array(target_dist.support()[0][1]), np.array(target_dist.support()[1][1]))
 
         # Repeat the experiment n_reps times
         for nexp in range(n_reps):
