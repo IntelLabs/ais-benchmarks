@@ -1,22 +1,22 @@
 # Number of times each experiment is repeated
-nreps: 10
+nreps: 3
 
 # Random seed used for reproducibility
 rseed: 0
 
 # Metrics computed
-metrics: [NESS, JSD, time]
+metrics: [KLD, MEM, T]
 
 display:
-    value: false             # Display 1D and 2D density plots on the screen
-    display_path: results/   # If value is true, save the plots as a .png in the provided path
+    value: true             # Display 1D and 2D density plots on the screen for debug
+    display_path: results/   # If value is true, save the debug plots as a .png in the provided path
 
     animation: {value: true,                    # Compile the sequence of visualized sampling steps into an animation
                 fps: 1,                         # Frames per second used for the animation
                 animation_path: results/anim/}  # If value is true, save the plots as a .png in the provided path
 
 output:
-    file: tp_ais_experiments/results/tpais_vs_hidaisee/results_gmm.txt
+    file: results/results.txt
     make_plots: true
-    plots_path: tp_ais_experiments/results/tpais_vs_hidaisee/
+    plots_path: results/
     plots_dpi: 1200

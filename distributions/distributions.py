@@ -22,7 +22,11 @@ class CDistribution(metaclass=ABCMeta):
     family: String with the family of distributions this instance belongs to, e.g. exponential, non-parametric, mixture
     dims: Dimensionality of the random variable.
     support: PDF support. Namely, subspace that contains all the probability density. The definite integral of the PDF
-             over the support subspace is 1.
+             over the support subspace is 1. support[0] contains the lower limits and support[1] the upper limits for
+             the support of the distribution. The support limits are used to generate the samples for the approximate
+             JSD and other MC approximations for the metrics. If the target has infinite support, a reasonable support
+             containing most of the probability mass needs to be specified.
+
     likelihood_f: Likelihood function. p(x|z) where z are the parameters that define the distribution.
     loglikelihood_f: Log Likelihood function log(p(x|z)). Because probabilities can be very small numbers,
                      log likelihoods are used to avoid numerical stability issues. Besides, sometimes the log form

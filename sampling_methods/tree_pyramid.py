@@ -340,7 +340,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
 
         return nodes, freqs
 
-    def importance_sample(self, target_d, n_samples, timeout=60):
+    def importance_sample_mixture(self, target_d, n_samples, timeout=60):
         """
         Obtain n_samples importance samples with their importance weights
         :param target_d: target distribution. Must implement the target_d.prob(samples) method that returns the prob for
@@ -366,94 +366,220 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             self._update_model()
 
         while n_samples > self._get_nsamples() and elapsed_time < timeout:
-            if self.method == "mixture":
-                # Generate new samples from the proposal. The number of samples to generate depends on the nodes
-                # that will be expanded. Each node split generates 2^k samples. Therefore to obtain N samples we
-                # have to split X nodes. N = X*2^k, X = N / 2^k
-                n_samples_to_get = n_samples - self._get_nsamples()
-                nodes_to_expand = np.int(np.ceil(n_samples_to_get / 2**self.ndims))
+            # Generate new samples from the proposal. The number of samples to generate depends on the nodes
+            # that will be expanded. Each node split generates 2^k samples. Therefore to obtain N samples we
+            # have to split X nodes. N = X*2^k, X = N / 2^k
+            n_samples_to_get = n_samples - self._get_nsamples()
+            nodes_to_expand = np.int(np.ceil(n_samples_to_get / 2 ** self.ndims))
 
-                # Obtain N samples
-                samples = self.sample(nodes_to_expand)
+            # Obtain N samples
+            samples = self.sample(nodes_to_expand)
 
-                # Find the unique nodes for the sample
-                nodes, freqs = self.find_unique(np.clip(samples, self.space_min, self.space_max))
+            # Find the unique nodes for the sample
+            nodes, freqs = self.find_unique(np.clip(samples, self.space_min, self.space_max))
 
-                # Expand them
-                new_nodes = self._expand_nodes(nodes, n_samples - self._get_nsamples())
-            else:
-                lambda_hat = sorted(self.T.leaves, reverse=True)            # This is the lambda_hat set (sorted leaves)
-                new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())  # Generate the new nodes to sample
+            # Expand them
+            new_nodes = self._expand_nodes(nodes, n_samples - self._get_nsamples())
 
             for node in new_nodes:
-                if self.method == "simple" or self.method == "dm":
-                    node.sample(node.sampler)
-                elif self.method == "mixture":
-                    node.sample(self.model)
-
+                node.sample(self.model)
                 self.T.samples[node.node_idx] = node.coords
                 self._num_q_samples += 1  # Count the sample operation
 
-                if self.method == "simple":
-                    node.weigh(target_d, node.sampler)
-                elif self.method == "mixture" or self.method == "dm":
-                    node.weigh(target_d, self)
+                node.weigh(target_d, self)
+                self._num_pi_evals += 1  # Count the evaluation operation
+                self._num_q_evals += 1  # Count the evaluation operation
+                self.T.weights[node.node_idx] = node.weight
+
+            # Resample if enabled
+            if self.resampling == "leaf":
+                self.resample(target_d)
+
+            elapsed_time = time.time() - t_ini
+
+        self._update_model()
+        return self._get_samples()
+
+    def importance_sample_simple(self, target_d, n_samples, timeout=60):
+        """
+        Obtain n_samples importance samples with their importance weights
+        :param target_d: target distribution. Must implement the target_d.prob(samples) method that returns the prob for
+        a batch of samples.
+        :param n_samples: total number of samples to obtain, considering the samples already generated from prior calls
+        :param timeout: maximum time allowed to obtain the required number of samples
+        :return: samples and weights
+        """
+
+        assert self.resampling in ["leaf", "none"], "Unknown resampling strategy"
+        assert self.method in ["simple", "dm", "mixture"], "Unknown method strategy"
+
+        elapsed_time = 0
+        t_ini = time.time()
+
+        # When the tree is created the root node is not sampled. Make sure it has one sample.
+        if hasattr(self.T.root, "weight_hist") and self.T.root.weight_hist is None:
+            self.T.root.sample(self.T.root.sampler)
+            self.T.samples[self.T.root.node_idx] = self.T.root.coords
+            self._num_q_samples += 1
+            self.T.root.weigh(target_d, self.T.root.sampler)
+            self.T.weights[self.T.root.node_idx] = self.T.root.weight
+            self._update_model()
+
+        while n_samples > self._get_nsamples() and elapsed_time < timeout:
+            # This is the lambda_hat set (sorted leaves)
+            lambda_hat = sorted(self.T.leaves, reverse=True)
+
+            # Generate the new nodes to sample
+            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())
+
+            for node in new_nodes:
+                node.sample(node.sampler)
+                self.T.samples[node.node_idx] = node.coords
+                self._num_q_samples += 1  # Count the sample operation
+
+                node.weigh(target_d, node.sampler)
                 self._num_pi_evals += 1  # Count the evaluation operation
                 self._num_q_evals += 1  # Count the evaluation operation
                 self.T.weights[node.node_idx] = node.weight
 
             # If leaf resampling is enabled
             if self.resampling == "leaf":
-                # TODO: balance resampling (exploration) with the generation of samples (exploitation)
-                re_samples = self.T.sampler.sample(len(self.T.leaves))
-                centers = self.T.centers[self.T.leaves_idx]
-                radii = self.T.radii[self.T.leaves_idx].reshape(len(re_samples), 1)
-                samples = re_samples * 2 * radii + centers
-                if self.kernel == "haar":
-                    # Because in the haar case the importance probability depends on the node radii, we can omit
-                    # calling self.prob() (which computes computing q(x)) and do it in a vectorized form as shown below.
-                    proposal_probs = 1 / ((2*radii)**self.T.ndims)
-                elif self.kernel == "normal":
-                    proposal_probs = self.T.sampler.prob(re_samples)
-                self.T.samples[self.T.leaves_idx] = samples
-                probs = target_d.prob(samples)
-                re_weights = probs.reshape(-1) / proposal_probs.reshape(-1)
-
-                # TODO: Only keep resamples with higher weight than existing samples
-                self.T.weights[self.T.leaves_idx] = probs.reshape(-1) / proposal_probs.reshape(-1)
-
-                self._num_pi_evals += len(samples)
-                self._num_q_evals += len(samples)
-                self._num_q_samples += len(samples)
-
-                # Self-normalization of importance weights.
-                self._self_normalize()
-
-                # Update resampled coordinates and weights.
-                for node in self.T.leaves:
-                    node.weight = self.T.weights[node.node_idx]
-                    # Replace last node sample with the resampled one
-                    node.weight_hist[-1] = self.T.weights[node.node_idx]
-                    node.coords_hist[-1] = self.T.samples[node.node_idx]
-                    # TODO: Node value can be updated with all the samples in the subspace instead
-                    node.value = node.weight * ((2*node.radius) ** len(node.center))
-
-            # self._self_normalize()
-            # Force an update of the tree parameterized distributions after the updated weights
-            # Update model internally calls self_normalize. So weights are always self-normalized when the model is
-            # updated.
-            # self._update_model()
-            # print("TP-AIS. Target Ess: %f Current NSamples: %d  Target NSamples: %d" % (self.ess_target, self._get_nsamples(), n_samples))
-
-            # # At this point a sampling step is finalized and the generated visualization elements
-            # # for the sampling step to a visualization frame
-            # self.viz_frames.append(self.viz_elements)
-            # self.viz_elements = list()
+                self.resample(target_d)
 
             elapsed_time = time.time() - t_ini
 
         self._update_model()
         return self._get_samples()
+
+    def importance_sample(self, target_d, n_samples, timeout=60):
+        """
+        Obtain n_samples importance samples with their importance weights
+        :param target_d: target distribution. Must implement the target_d.prob(samples) method that returns the prob for
+        a batch of samples.
+        :param n_samples: total number of samples to obtain, considering the samples already generated from prior calls
+        :param timeout: maximum time allowed to obtain the required number of samples
+        :return: samples and weights
+        """
+
+        assert self.resampling in ["leaf", "none"], "Unknown resampling strategy"
+        assert self.method in ["simple", "dm", "mixture"], "Unknown method strategy"
+
+        # The two different weighting schemes have some implications on the algorithm. To keep code cleaner
+        # we have implemented two different methods, although the difference is just in the weighting part.
+        if self.method == "simple":
+            return self.importance_sample_simple(target_d, n_samples, timeout)
+
+        elif self.method == "mixture" or self.method == "dm":
+            return self.importance_sample_mixture(target_d, n_samples, timeout)
+
+        return None
+
+    def resample(self, target_d):
+        # TODO: partially resample
+        re_samples = self.T.sampler.sample(len(self.T.leaves))
+        centers = self.T.centers[self.T.leaves_idx]
+        radii = self.T.radii[self.T.leaves_idx].reshape(len(re_samples), 1)
+        samples = re_samples * 2 * radii + centers
+        if self.kernel == "haar":
+            # Because in the haar case the importance probability depends on the node radii, we can omit
+            # calling self.prob() (which computes computing q(x)) and do it in a vectorized form as shown below.
+            proposal_probs = 1 / ((2 * radii) ** self.T.ndims)
+        elif self.kernel == "normal":
+            proposal_probs = self.T.sampler.prob(re_samples)
+        self.T.samples[self.T.leaves_idx] = samples
+        probs = target_d.prob(samples)
+        # re_weights = probs.reshape(-1) / proposal_probs.reshape(-1)
+
+        # TODO: Only keep resamples with higher weight than existing samples
+        self.T.weights[self.T.leaves_idx] = probs.reshape(-1) / proposal_probs.reshape(-1)
+
+        self._num_pi_evals += len(samples)
+        self._num_q_evals += len(samples)
+        self._num_q_samples += len(samples)
+
+        # Self-normalization of importance weights.
+        self._self_normalize()
+
+        # Update resampled coordinates and weights.
+        for node in self.T.leaves:
+            node.weight = self.T.weights[node.node_idx]
+            # Replace last node sample with the resampled one
+            node.weight_hist[-1] = self.T.weights[node.node_idx]
+            node.coords_hist[-1] = self.T.samples[node.node_idx]
+            # TODO: Node value can be updated with all the samples in the subspace instead
+            node.value = node.weight * ((2 * node.radius) ** len(node.center))
+
+    def log_prob(self, x):
+        if len(x.shape) == 1:
+            x.reshape(-1, 1)
+            llikelihood = np.zeros(1, 1)
+
+        elif len(x.shape) == 2:
+            llikelihood = np.zeros((len(x), 1))
+        else:
+            raise ValueError("Unsupported samples data format: " + str(x.shape))
+
+        # If the kernel used is normal, just use the regular mixture model log_prob computation implemented in the
+        # base class that performs the evaluation on each mixture component and combines each model logprob with
+        # the logsumexp trick to make it more resilient to underflow
+        if self.kernel == "normal":
+            return super().log_prob(x)
+
+        # If the kernel is haar we can compute the likelihood faster. Because the space is disjoint and we just have to
+        # find for each sample what leaf it belongs to and assing the leaf constant mass to it.
+        if self.kernel == "haar":
+            lower = self.T.centers - self.T.radii
+            upper = self.T.centers + self.T.radii
+
+            # TODO: This might be able to be vectorized
+            # Get the indices of the leaf each sample belongs to
+            for i, sample in enumerate(x):
+                inliers = np.logical_and(self.T.leaves_idx,
+                                         np.logical_and(np.all(lower < sample, axis=1),
+                                                        np.all(sample < upper, axis=1)))
+
+                # handle the case where there are no inliers, samples inside the support.
+                if not np.any(inliers):
+                    llikelihood[i] = 0
+                else:
+                    llikelihood[i] = self.T.weights[inliers]
+            return np.log(llikelihood)
+
+    def prob(self, x):
+        if len(x.shape) == 1:
+            x.reshape(-1, 1)
+            likelihood = np.zeros(1, 1)
+
+        elif len(x.shape) == 2:
+            likelihood = np.zeros((len(x), 1))
+        else:
+            raise ValueError("Unsupported samples data format: " + str(x.shape))
+
+        # If the kernel used is normal, just use the regular mixture model log_prob computation implemented in the
+        # base class that performs the evaluation on each mixture component and combines each model logprob with
+        # the logsumexp trick to make it more resilient to underflow
+        if self.kernel == "normal":
+            return super().prob(x)
+
+        # If the kernel is haar we can compute the likelihood faster. Because the space is disjoint and we just have to
+        # find for each sample what leaf it belongs to and assing the leaf constant mass to it.
+        if self.kernel == "haar":
+            lower = self.T.centers - self.T.radii
+            upper = self.T.centers + self.T.radii
+
+            # TODO: This might be able to be vectorized
+            # Get the indices of the leaf each sample belongs to
+            for i, sample in enumerate(x):
+                inliers = np.logical_and(self.T.leaves_idx,
+                                         np.logical_and(np.all(lower < sample, axis=1),
+                                                        np.all(sample < upper, axis=1)))
+
+                # handle the case where there are no inliers, samples inside the support.
+                if not np.any(inliers):
+                    likelihood[i] = 0
+                else:
+                    likelihood[i] = self.T.weights[inliers]
+            return likelihood
 
     def draw(self, ax):
         res = []
@@ -517,11 +643,16 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         if self.ess_target > 1.0:
             return self.T.samples[self.T.leaves_idx], self.T.weights[self.T.leaves_idx]
 
-        samples = None
-        weights = None
+        nsamples = 0
         for l in self.T.leaves:
-            samples = np.concatenate((samples, l.coords_hist)) if samples is not None else l.coords_hist
-            weights = np.concatenate((weights, l.weight_hist)) if weights is not None else l.weight_hist
+            nsamples += len(l.weight_hist)
+
+        samples = np.zeros((nsamples, self.ndims))
+        weights = np.zeros(nsamples)
+        for i, l in enumerate(self.T.leaves):
+            nsamples_subspace = len(l.weight_hist)
+            samples[i:i+nsamples_subspace] = l.coords_hist
+            weights[i:i+nsamples_subspace] = l.weight_hist.flatten()
         return samples, weights
 
     def _self_normalize(self):
@@ -552,7 +683,6 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             #                                limits=[self.space_min, self.space_max],
             #                                weight=weights[i]))
             i += 1
-
         self._self_normalize()
         self.model = CMixtureModel(models, weights)
         # self.viz_elements.append(viz.CProposalDist(0, func=self.model.prob, limits=[self.space_min, self.space_max]))

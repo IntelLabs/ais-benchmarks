@@ -1,18 +1,10 @@
 # Define the methods to be evaluated and its parameter configuration
 methods:
-    - name: HiDaisee_90
-      type: sampling_methods.CHiDaiseeSampling
-      params:
-        target_ess: 0.9
-        n_min: 10
-        tau: .01
-        debug: 0
-
-    - name: TP_AISr_ESS90
+    - name: TP_AISr_ESS95
       type: sampling_methods.CTreePyramidSampling
       params:
         method: "'simple'"
         resampling: "'leaf'"
         kernel: "'haar'"
-        ess_target: 0.9
+        ess_target: 0.95
         parallel_samples: 512

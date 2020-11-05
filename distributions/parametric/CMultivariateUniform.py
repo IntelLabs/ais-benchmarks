@@ -28,6 +28,9 @@ class CMultivariateUniform(CDistribution):
             raise ValueError("Radius dimensionality not valid. It has to be 1 dim (all dimensions will use the same \
                              radius) or N dim, where N is the dimensionality")
 
+        self.prob_val = 1 / self.volume
+        self.logprob_val = np.log(self.prob_val)
+
     def sample(self, n_samples=1):
         minval = self.center - self.radius
         maxval = self.center + self.radius
@@ -35,7 +38,19 @@ class CMultivariateUniform(CDistribution):
         return res
 
     def log_prob(self, samples):
-        return np.log(self.prob(samples))
+        if len(samples.shape) == 1:
+            samples = samples.reshape(1, self.dims)
+        elif len(samples.shape) == 2:
+            samples = samples.reshape(len(samples), self.dims)
+        else:
+            raise ValueError("Shape of samples does not match self.dims = %d" % self.dims)
+
+        min_val = self.center - self.radius
+        max_val = self.center + self.radius
+        inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)  # Select the inliers if all the coordinates are in range
+        res = np.full(len(samples), self.logprob_val)
+        res[np.logical_not(inliers.flatten())] = 0
+        return res.reshape(len(samples), 1)
 
     def prob(self, samples):
         if len(samples.shape) == 1:
@@ -48,7 +63,7 @@ class CMultivariateUniform(CDistribution):
         min_val = self.center - self.radius
         max_val = self.center + self.radius
         inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)  # Select the inliers if all the coordinates are in range
-        res = np.ones(len(samples)) / self.volume
+        res = np.full(len(samples), self.prob_val)
         res[np.logical_not(inliers.flatten())] = 0
         return res.reshape(len(samples), 1)
 

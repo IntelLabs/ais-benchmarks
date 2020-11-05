@@ -1,11 +1,11 @@
 # Number of times each experiment is repeated
-nreps: 2
+nreps: 3
 
 # Random seed used for reproducibility
-rseed: 0
+rseed: 1
 
 # Metrics computed
-metrics: [NESS, JSD, time]
+metrics: [KLD]
 
 display:
     value: true             # Display 1D and 2D density plots on the screen

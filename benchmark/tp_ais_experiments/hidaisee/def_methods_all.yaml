@@ -1,0 +1,41 @@
+# Define the methods to be evaluated and its parameter configuration
+methods:
+    - name: HiDaisee_60
+      type: sampling_methods.CHiDaiseeSampling
+      params:
+        target_ess: 0.8
+        n_min: 10
+        tau: .01
+        debug: 0
+
+    - name: HiDaisee_70
+      type: sampling_methods.CHiDaiseeSampling
+      params:
+        target_ess: 0.7
+        n_min: 10
+        tau: .01
+        debug: 0
+
+    - name: HiDaisee_80
+      type: sampling_methods.CHiDaiseeSampling
+      params:
+        target_ess: 0.8
+        n_min: 10
+        tau: .01
+        debug: 0
+
+    - name: HiDaisee_90
+      type: sampling_methods.CHiDaiseeSampling
+      params:
+        target_ess: 0.9
+        n_min: 10
+        tau: .01
+        debug: 0
+
+    - name: HiDaisee_95
+      type: sampling_methods.CHiDaiseeSampling
+      params:
+        target_ess: 0.95
+        n_min: 10
+        tau: .01
+        debug: 0

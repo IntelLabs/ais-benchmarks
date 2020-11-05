@@ -2,3 +2,5 @@
 *.pyc
 visualization/manim/media
 benchmark/results.txt
+*results_*
+results.txt

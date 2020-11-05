@@ -21,9 +21,6 @@ python benchmark/run_benchmark.py
 TODO
 
 
-## WARNING!!!! The rest of this document is tentative of what the benchmark will be in the future and some features 
-## are not yet implemented.
-
 ### Batching:
 All methods assume the first dimension to be the batch dimension to support vectorized implementations. The results
 are also in batch form even if there is only one component in the batch dimension.
@@ -64,21 +61,24 @@ distributions results are also available for analysis.
 
 ### Evaluation metrics
 As part of the evaluation process, several metrics are computed and stored in the results file.
-- Jensen Shannon Divergence (JSD)
 - Kullback–Leibler divergence (KLD)
+- Sampling runtime (T)
+- Memory usage (MEM)
+
+Metrics todo:
+- Jensen Shannon Divergence (JSD)
 - Bhattacharya distance (BD)
 - **Normalized Effective Sample Size (NESS)**: Samplers often provide correlated samples, this metric computes the effective
  number of independent samples, by dividing it by the total number of samples generated this metric conveys information
  about how much each sample is worth. [ref]
 - Expected value mean squared error (EV-MSE)
-- Sampling runtime (T)
 
 
 ### Benchmark configuration and execution
-The evaluation process uses a benchmark YAML file that defines the different target distributions and metrics that will be 
+The evaluation process uses a benchmark YAML file that defines the different target distributions that will be 
 used to produce the evaluation results. See an example below: 
 
-```
+```yaml
 # Define the target densities used for evaluation and label their categories and provide evaluation parameters
 targets:
     - normal:
@@ -98,24 +98,11 @@ targets:
             batch_size: 2
             nsamples: 1000
             nsamples_eval: 2000
-
-
-metrics: [NESS, JSD, T]
-
-
-display:
-    value: false            # Display 1D and 2D density plots on the screen
-    display_path: results/  # If value is true, save the plots as a .png in the path  
-
-output:
-    file: results.txt
-    make_plots: false
-    plots_path: plot_results/
 ``` 
 
 The benchmark YAML file is complemented by a methods YAML file that is used to define the configuration of the methods 
 to be evaluated using the benchmark file.
-```
+```yaml
 # Define the methods to be evaluated and its parameter configuration
 methods:
     - name: rejection
@@ -134,47 +121,37 @@ methods:
         proposal_sigma: 0.1
 ```
 
-A benchmark can be executed on the desired methods by using the appropriate script: 
-```
-run_sampling_bechmark.py benchmark.yaml methods.yaml
-```
+Finally the configuration YAML file defines the different metrics that will be used, paths to the results and some
+other options for ais-benchmarks to provide other types of results like plots or tables.
+```yaml
+nreps: 3  # Number of times each experiment is repeated
 
-#### TODO: Define a default benchmark
-A more thorough example of benchmark and methods file can be found in the provided default benchmarks specified in 
-*def_benchmark.yaml* and *def_methods.yaml*.
+rseed: 0  # Random seed used for reproducibility
 
-#### Benchmark file generator
-A benchmark file generator is provided to generate a benchmark file that will contain multiple help to provide a set of
-target distributions used to evaluate the sampling methods on a varied 
-- Generative definition of target distributions
-- Set evaluation parameters (batch_size, nsamples, nsamples_eval)
-```
-# Define the methods to be evaluated and its parameter configuration
-gen_target:
-    - gen_normal:
-        type: Normal
-        ndims:
-        num_gens: 10
-        params_min: {loc: 0, scale: 1}
-        params_max: {loc: 0, scale: 1}
-        sampler:
-            type: uniform
-            params
-        tags: [low_kurtosis, low_skew, unimodal]
+metrics: [KLD, MEM, T]  # Metrics computed
 
-    - gen_gmm:
-        type: GMM
-        params: {loc: [0, -0.2], scale: [0.01, 0.001], weight:[0.5, 0.5]}
-        tags: [high_kurtosis, low_skew, multimodal, close_modes]
+display:
+    value: true             # Display 1D and 2D density plots on the screen for debug
+    display_path: results/   # If value is true, save the debug plots as a .png in the provided path
 
-metrics: [NESS, JSD, T]
+    animation: {value: true,                    # Compile the sequence of visualized sampling steps into an animation
+                fps: 1,                         # Frames per second used for the animation
+                animation_path: results/anim/}  # If value is true, save the plots as a .png in the provided path
 
 output:
-    file: results.txt
-    make_plots: false
-    plots_path: plot_results/
+    file: results/results.txt
+    make_plots: true
+    plots_path: results/
+    plots_dpi: 1200
 ```
 
+A benchmark can be executed on the desired methods by using the appropriate script: 
+```
+run_sampling_bechmark.py benchmark.yaml methods.yaml config.yaml
+```
+
+A more thorough example of benchmark and methods file can be found in the provided default benchmarks specified in 
+*def_benchmark.yaml*, *def_methods.yaml* and *def_config.yaml*.
 
 
 ## Framework extension
