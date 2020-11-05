@@ -335,8 +335,8 @@ class CBenchmark(object):
                 fig = plt.figure(figsize=(10, 8))
                 ax = plt.subplot(111)
                 plt.show(block=False)
-                plot_pdf(ax, target_dist, np.array(target_dist.support()[0]), np.array(target_dist.support()[1]), alpha=1.0, options="b-", resolution=0.01,
-                         label="$\pi(x)$")
+                plot_pdf(ax, target_dist, np.array(target_dist.support()[0]), np.array(target_dist.support()[1]),
+                         alpha=1.0, options="b-", resolution=0.01, label="$\pi(x)$")
 
                 plt.xlim(np.array(target_dist.support()[0]), np.array(target_dist.support()[1]))
                 plt.ylim(0, ax.get_ylim()[1])
@@ -358,7 +358,6 @@ class CBenchmark(object):
 
         # Repeat the experiment n_reps times
         for nexp in range(n_reps):
-
             # Initialize sampling variables
             t_start = time.time()
             sampling_time = 0
@@ -449,6 +448,9 @@ class CBenchmark(object):
             ps.sort_stats("cumtime")
             ps.dump_stats(filename + ".profile")
             ps.print_stats()
+
+        if debug:
+            plt.close()
 
         # Return sampling visualization data
         return sampling_method.get_viz_frames()
