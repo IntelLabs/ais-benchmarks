@@ -1,8 +1,5 @@
 import unittest
 import numpy as np
-import sys
-import time
-from guppy import hpy
 
 from metrics.performance import CMemoryUsage
 
@@ -56,4 +53,4 @@ class CMetricsTests(unittest.TestCase):
         print("Difference of %d measurements that should be the same. Mean: %.9f Std:%.9f" % (n_samples, diffs.mean(), diffs.std()))
         self.assertAlmostEqual(diffs.mean(), 0.0, places=3, msg="Time measurement is not deterministic at least to the millisecond scale")
         print("WARNING! Memory measurement not deterministic up to Kilobyte") if np.fabs(diffs.mean()) > 1e-3 else None
-        print("WARNING! Time measurement not deterministic up to Byte") if np.fabs(diffs.mean()) > 1e-6 else None
+        print("WARNING! Memory measurement not deterministic up to Byte") if np.fabs(diffs.mean()) > 1e-6 else None
