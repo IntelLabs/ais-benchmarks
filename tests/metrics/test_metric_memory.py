@@ -24,19 +24,20 @@ class CMetricsTests(unittest.TestCase):
         self.metric.reset()
 
     def test_compute(self):
-        num_mb = 50
-        n_samples = 100
-        vals = np.zeros(n_samples)
-        for i in range(n_samples):
-            self.metric.pre()
-            dummy_var = np.ones(num_mb * 10**6, dtype=np.byte)
-            self.metric.post()
-            del dummy_var
-            vals[i] = self.metric.compute()
-            self.metric.reset()
-        print("\nTesting memory measurement metric. Result: ", vals.mean(), "Std:", vals.std(), "should be:", num_mb)
-        self.assertAlmostEqual(vals.mean(), num_mb, delta=1./1024.,
-                               msg="Memory measurement not accurate up to KB. At least KB accuracy is required for proper memory metric")
+        num_mbs = [1, 10, 50, 100, 500]
+        n_samples = 30
+        for num_mb in num_mbs:
+            vals = np.zeros(n_samples)
+            for i in range(n_samples):
+                self.metric.pre()
+                dummy_var = np.ones(num_mb * 10**6, dtype=np.byte)
+                self.metric.post()
+                del dummy_var
+                vals[i] = self.metric.compute()
+                self.metric.reset()
+            print("\nTesting memory measurement metric. Result: ", vals.mean(), "Std:", vals.std(), "should be:", num_mb)
+            self.assertAlmostEqual(vals.mean(), num_mb, delta=1./1024.,
+                                   msg="Memory measurement not accurate up to KB. At least KB accuracy is required for proper memory metric")
 
     def test_reset(self):
         num_mb = 10
