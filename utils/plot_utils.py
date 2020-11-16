@@ -85,7 +85,7 @@ def plot_tpyramid_area(axis, T, scale=1, label=None):
     for i, n in enumerate(T.leaves):
         x = n.center - n.radius
 
-        heightw = n.weight * scale
+        # heightw = n.weight * scale
 
         # area
         height = n.weight * n.sampler.prob(n.center) * scale
@@ -94,8 +94,8 @@ def plot_tpyramid_area(axis, T, scale=1, label=None):
         rects.append(axis.add_patch(rect))
 
         # weights
-        rect = patches.Rectangle([x, 0], n.radius * 2, heightw, linewidth=0, linestyle="--", alpha=0.8, color="r")
-        rects.append(axis.add_patch(rect))
+        # rect = patches.Rectangle([x, 0], n.radius * 2, heightw, linewidth=0, linestyle="--", alpha=0.8, color="r")
+        # rects.append(axis.add_patch(rect))
 
     rect.set_label(label)
     return rects
