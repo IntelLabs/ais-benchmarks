@@ -101,15 +101,16 @@ class CKLDivergence(CDivergence):
 
     def compute_from_samples(self, p, q, samples):
         # Obtain sample log probabilities
-        p_samples_logprob = p.log_prob(samples)
-        q_samples_logprob = q.log_prob(samples)
+        p_samples_prob = p.prob(samples)
+        q_samples_prob = q.prob(samples)
 
         # Normalize sample probabilities in log space
-        p_samples_logprob_norm = p_samples_logprob - np.max(p_samples_logprob)
-        q_samples_logprob_norm = q_samples_logprob - np.max(q_samples_logprob)
+        # p_samples_logprob_norm = p_samples_logprob - np.max(p_samples_logprob)
+        # q_samples_logprob_norm = q_samples_logprob - np.max(q_samples_logprob)
 
         # Compute discrete KL for each sample
-        res = np.exp(p_samples_logprob_norm) * (p_samples_logprob_norm - q_samples_logprob_norm)
+        # res = np.exp(p_samples_logprob_norm) * (p_samples_logprob_norm - q_samples_logprob_norm)
+        res = p_samples_prob * np.log(p_samples_prob / q_samples_prob)
         res[res <= 0] = 0
         self.value = res.mean()
         return self.value
