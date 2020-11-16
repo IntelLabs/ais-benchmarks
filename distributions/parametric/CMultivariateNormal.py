@@ -3,6 +3,25 @@ from distributions.distributions import CDistribution
 
 
 class CMultivariateNormal(CDistribution):
+    """
+    Multivariate Normal distribution. Also known as multivariate gaussian and abbreviated MVN, MVG. This is a
+    multidimensional generalization of the Normal distribution.
+
+    This is a parametric distribution, meaning that it can be explicitly defined by a set of parameters and has
+    the following properties:
+        - Closed form Probability Density Function
+        - Closed form Cumulative Density Function
+        - Closed form for Kullback-Leibler Divergence
+
+
+    :param params: The distribution class is initialized by a dictionary of parameters which must contain (besides
+    class specific parameters) at least the following parameters:
+    - mean: Array of first moments for each dimension. i.e. array of means
+    - support: PDF support. Namely, subspace containing all the probability density. The definite integral of the
+               PDF over the support subspace is 1.
+               WARNING!!: Infinite support distributions are not supported yet. TODO. Must add support for such feature.
+    """
+
     def __init__(self, params):
         self._check_param(params, "mean")
         self._check_param(params, "sigma")
@@ -69,6 +88,9 @@ class CMultivariateNormal(CDistribution):
 
     def support(self):
         return self.support_vals
+
+    def draw(self, ax, resolution=.01, label=None, color=None):
+        super(self).draw(ax, resolution, label, color)
 
 
 if __name__ == "__main__":
