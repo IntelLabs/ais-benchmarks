@@ -542,7 +542,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                 if not np.any(inliers):
                     llikelihood[i] = 0
                 else:
-                    llikelihood[i] = self.T.weights[inliers]
+                    llikelihood[i] = self.T.weights[inliers] / ((2 * self.T.radii[inliers]) ** self.T.ndims)
             return np.log(llikelihood)
 
     def prob(self, x):
@@ -578,7 +578,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                 if not np.any(inliers):
                     likelihood[i] = 0
                 else:
-                    likelihood[i] = self.T.weights[inliers]
+                    likelihood[i] = self.T.weights[inliers] / ((2 * self.T.radii[inliers]) ** self.T.ndims)
             return likelihood
 
     def draw(self, ax):
