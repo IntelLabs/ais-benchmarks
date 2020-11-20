@@ -5,7 +5,7 @@ nreps: 3
 rseed: 0
 
 # Metrics computed
-metrics: [KLD, MEM, T]
+metrics: [KLD, JSD, MEM, T]
 
 display:
     value: true             # Display 1D and 2D density plots on the screen for debug
