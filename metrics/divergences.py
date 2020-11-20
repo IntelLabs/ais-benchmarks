@@ -161,9 +161,11 @@ class CJSDivergence(CDivergence):
         else:
             return np.inf
 
-        m_samples_prob = 0.5 * (p_samples_prob + q_samples_prob)
+        m_samples_prob = 0.5 * p_samples_prob + 0.5 * q_samples_prob
+        if np.sum(m_samples_prob) > 0:
+            m_samples_prob = m_samples_prob / np.sum(m_samples_prob)
 
-        res = 0.5 * CKLDivergence.compute_from_probs(p_samples_prob, m_samples_prob) + \
-              0.5 * CKLDivergence.compute_from_probs(q_samples_prob, m_samples_prob)
+        res = 0.5 * p_samples_prob * np.log(p_samples_prob / m_samples_prob) + \
+              0.5 * q_samples_prob * np.log(q_samples_prob / m_samples_prob)
 
         return res.sum()
