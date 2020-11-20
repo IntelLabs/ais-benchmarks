@@ -136,7 +136,42 @@ class CMetricsTests(unittest.TestCase):
         self.do_test(p, q, np.inf)
 
     def test_symmetric(self):
-        pass
+        for _ in range(10):
+            ndims = 5
+            mu0 = np.array(np.random.random(ndims))
+            mu1 = np.array(np.random.random(ndims))
+            sigma0 = np.diag(np.full(ndims, .5))
+            sigma1 = np.diag(np.full(ndims, .5))
+            p = CMultivariateNormal({"mean": mu0, "sigma": sigma0})
+            q = CMultivariateNormal({"mean": mu1, "sigma": sigma1})
+
+            res1 = self.metric.compute(p=p, q=q, nsamples=1000000)
+            res2 = self.metric.compute(p=q, q=p, nsamples=1000000)
+            print("Test JSD divergence. JSD(p||q):%.6f. JSD(q||p):%.6f: . Error: %f" %
+                  (res1, res2, np.fabs(res1-res2)))
+            self.assertAlmostEqual(res1, res2, delta=np.log(2)*0.01, msg="JSD failed symmetry test.")
+
+    def test_behavior(self):
+        ntests = 10
+        ndims = 3
+
+        mu0 = np.array(np.random.random(ndims))
+        mu1 = np.copy(mu0)
+        sigma0 = np.diag(np.full(ndims, .5))
+        sigma1 = np.diag(np.full(ndims, .5))
+
+        res = np.zeros(ntests)
+        for i in range(ntests):
+            p = CMultivariateNormal({"mean": mu0, "sigma": sigma0})
+            q = CMultivariateNormal({"mean": mu1, "sigma": sigma1})
+
+            res[i] = self.metric.compute(p=p, q=q, nsamples=1000000)
+
+            mu1 += np.full(ndims, .1)
+
+        print("Test JSD divergence with increasingly disctint means.", np.array_str(res, precision=6))
+        for i in range(ntests-1):
+            self.assertTrue(res[i]<res[i+1], msg="JSD failed the increasingly disctinct test. Each tested distribution is more different than the previous.")
 
     def test_reset(self):
         self.metric.reset()
