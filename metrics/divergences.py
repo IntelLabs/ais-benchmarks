@@ -1,7 +1,6 @@
 import numpy as np
 from metrics.base import CMetric
 
-
 # def bhattacharyya_distance(p_samples_prob, q_samples_prob):
 #     res = - np.log(np.sum(np.sqrt(p_samples_prob * q_samples_prob)))
 #     return res
@@ -100,9 +99,17 @@ class CKLDivergence(CDivergence):
         self.disjoint_support = False
 
     def compute_from_samples(self, p, q, samples):
+        return self.compute_from_logsamples(p, q, samples)
+        # return self.compute_from_exp_samples(p, q, samples)
+
+    def compute_from_exp_samples(self, p, q, samples):
         # Obtain sample log probabilities
         p_samples_prob = p.prob(samples)
         q_samples_prob = q.prob(samples)
+
+        # Normalize sample probabilities
+        p_samples_prob = p_samples_prob / np.sum(p_samples_prob)
+        q_samples_prob = q_samples_prob / np.sum(q_samples_prob)
 
         # Normalize sample probabilities in log space
         # p_samples_logprob_norm = p_samples_logprob - np.max(p_samples_logprob)
@@ -112,5 +119,20 @@ class CKLDivergence(CDivergence):
         # res = np.exp(p_samples_logprob_norm) * (p_samples_logprob_norm - q_samples_logprob_norm)
         res = p_samples_prob * np.log(p_samples_prob / q_samples_prob)
         res[res <= 0] = 0
-        self.value = res.mean()
+        self.value = res.sum()
+        return self.value
+
+    def compute_from_logsamples(self, p, q, samples):
+        # Obtain sample log probabilities
+        p_samples_prob = p.log_prob(samples)
+        q_samples_prob = q.log_prob(samples)
+
+        # Normalize sample probabilities in log space
+        p_samples_prob -= np.logaddexp.reduce(p_samples_prob)
+        q_samples_prob -= np.logaddexp.reduce(q_samples_prob)
+
+        # Compute discrete KL for each sample
+        res = np.exp(p_samples_prob) * (p_samples_prob - q_samples_prob)
+        res[res <= 0] = 0
+        self.value = res.sum()
         return self.value
