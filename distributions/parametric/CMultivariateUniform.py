@@ -49,7 +49,7 @@ class CMultivariateUniform(CDistribution):
         max_val = self.center + self.radius
         inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)  # Select the inliers if all the coordinates are in range
         res = np.full(len(samples), self.logprob_val)
-        res[np.logical_not(inliers.flatten())] = 0
+        res[np.logical_not(inliers.flatten())] = -np.inf
         return res.reshape(len(samples), 1)
 
     def prob(self, samples):
