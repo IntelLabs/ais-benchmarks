@@ -511,11 +511,10 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
 
     def log_prob(self, x):
         if len(x.shape) == 1:
-            x.reshape(-1, 1)
-            llikelihood = np.zeros(1, 1)
-
+            x.reshape(-1, self.ndims)
+            llikelihood = np.zeros((len(x)))
         elif len(x.shape) == 2:
-            llikelihood = np.zeros((len(x), 1))
+            llikelihood = np.zeros((len(x)))
         else:
             raise ValueError("Unsupported samples data format: " + str(x.shape))
 
@@ -547,11 +546,10 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
 
     def prob(self, x):
         if len(x.shape) == 1:
-            x.reshape(-1, 1)
-            likelihood = np.zeros(1, 1)
-
+            x.reshape(-1, self.ndims)
+            likelihood = np.zeros((len(x)))
         elif len(x.shape) == 2:
-            likelihood = np.zeros((len(x), 1))
+            likelihood = np.zeros((len(x)))
         else:
             raise ValueError("Unsupported samples data format: " + str(x.shape))
 
