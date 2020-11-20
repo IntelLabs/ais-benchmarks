@@ -99,8 +99,8 @@ class CKLDivergence(CDivergence):
         self.disjoint_support = False
 
     def compute_from_samples(self, p, q, samples):
-        return self.compute_from_logsamples(p, q, samples)
-        # return self.compute_from_exp_samples(p, q, samples)
+        # return self.compute_from_logsamples(p, q, samples)
+        return self.compute_from_exp_samples(p, q, samples)
 
     def compute_from_exp_samples(self, p, q, samples):
         # Obtain sample log probabilities
@@ -108,8 +108,12 @@ class CKLDivergence(CDivergence):
         q_samples_prob = q.prob(samples)
 
         # Normalize sample probabilities
-        p_samples_prob = p_samples_prob / np.sum(p_samples_prob)
-        q_samples_prob = q_samples_prob / np.sum(q_samples_prob)
+        if np.sum(p_samples_prob) > 0:
+            p_samples_prob = p_samples_prob / np.sum(p_samples_prob)
+        if np.sum(q_samples_prob) > 0:
+            q_samples_prob = q_samples_prob / np.sum(q_samples_prob)
+        else:
+            return np.inf
 
         # Normalize sample probabilities in log space
         # p_samples_logprob_norm = p_samples_logprob - np.max(p_samples_logprob)
@@ -118,7 +122,7 @@ class CKLDivergence(CDivergence):
         # Compute discrete KL for each sample
         # res = np.exp(p_samples_logprob_norm) * (p_samples_logprob_norm - q_samples_logprob_norm)
         res = p_samples_prob * np.log(p_samples_prob / q_samples_prob)
-        res[res <= 0] = 0
+        res[q_samples_prob <= 0] = 0
         self.value = res.sum()
         return self.value
 
@@ -133,6 +137,6 @@ class CKLDivergence(CDivergence):
 
         # Compute discrete KL for each sample
         res = np.exp(p_samples_prob) * (p_samples_prob - q_samples_prob)
-        res[res <= 0] = 0
+        res[q_samples_prob <= 0] = 0
         self.value = res.sum()
         return self.value
