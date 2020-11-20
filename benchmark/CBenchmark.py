@@ -11,6 +11,7 @@ import distributions
 import sampling_methods
 from sampling_methods.base import t_tensor
 from metrics.divergences import CKLDivergence
+from metrics.divergences import CJSDivergence
 from metrics.performance import CMemoryUsage
 from metrics.performance import CElapsedTime
 from benchmark.plot_results import make_2d_plot
@@ -317,7 +318,7 @@ class CBenchmark(object):
             if m == "KLD":
                 metrics_eval.append(CKLDivergence())
             elif m == "JSD":
-                pass
+                metrics_eval.append(CJSDivergence())
             elif m == "NESS":
                 pass
             elif m == "EV_MSE":

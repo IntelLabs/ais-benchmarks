@@ -168,4 +168,5 @@ class CJSDivergence(CDivergence):
         res = 0.5 * p_samples_prob * np.log(p_samples_prob / m_samples_prob) + \
               0.5 * q_samples_prob * np.log(q_samples_prob / m_samples_prob)
 
+        self.value = res.sum()
         return res.sum()

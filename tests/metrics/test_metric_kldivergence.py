@@ -78,9 +78,7 @@ class CMetricsTests(unittest.TestCase):
         sigma1 = np.diag([1])
         p = CMultivariateNormal({"mean": mu0, "sigma": sigma0})
         q = CMultivariateNormal({"mean": mu1, "sigma": sigma1})
-
-        samples = np.random.uniform(p.support()[0], p.support()[1], size=(1000000, p.dims))
-        expected_res = entropy(p.prob(samples), q.prob(samples))
+        expected_res = self.mvn_kld(mu0, mu1, sigma0, sigma1)
         self.do_test(p, q, expected_res)
 
     def test_different(self):
