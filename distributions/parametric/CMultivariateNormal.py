@@ -35,8 +35,8 @@ class CMultivariateNormal(CDistribution):
         # Clip the normal support at 4 sigmas
         if "support" not in params:
             # TODO: Compute the support accounting for the cross terms of the covariance
-            params["support"] = np.array([params["mean"] - np.sqrt(np.diag(params["sigma"])) * 4.0,
-                                          params["mean"] + np.sqrt(np.diag(params["sigma"])) * 4.0])
+            params["support"] = np.array([params["mean"] - np.sqrt(np.diag(params["sigma"])) * 6.0,
+                                          params["mean"] + np.sqrt(np.diag(params["sigma"])) * 6.0])
 
         super(CMultivariateNormal, self).__init__(params)
 
