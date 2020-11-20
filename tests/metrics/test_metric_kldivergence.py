@@ -119,5 +119,27 @@ class CMetricsTests(unittest.TestCase):
     def test_symmetric(self):
         pass
 
+    def test_behavior(self):
+        ntests = 10
+        ndims = 3
+
+        mu0 = np.array(np.random.random(ndims))
+        mu1 = np.copy(mu0)
+        sigma0 = np.diag(np.full(ndims, .5))
+        sigma1 = np.diag(np.full(ndims, .5))
+
+        res = np.zeros(ntests)
+        for i in range(ntests):
+            p = CMultivariateNormal({"mean": mu0, "sigma": sigma0})
+            q = CMultivariateNormal({"mean": mu1, "sigma": sigma1})
+
+            res[i] = self.metric.compute(p=p, q=q, nsamples=1000000)
+
+            mu1 += np.full(ndims, .1)
+
+        print("Test KL divergence with increasingly disctint means.", np.array_str(res, precision=6))
+        for i in range(ntests-1):
+            self.assertTrue(res[i] < res[i+1], msg="KL failed the increasingly disctinct test. Each tested distribution is more different than the previous.")
+
     def test_reset(self):
         self.metric.reset()
