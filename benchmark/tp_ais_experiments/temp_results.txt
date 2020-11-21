@@ -1,0 +1,3 @@
+dims output_samples JSD BD ev_mse NESS time method target_d accept_rate proposal_samples proposal_evals target_evals
+04 2011 46153.48569 -0.44056  0.00012 0.00486  0.7180 TP_AIS gmm 0.938 2145 2144 2144 0.0137337.2
+04 4021 46050.39332 0.55913  0.00013 0.02933  1.5182 TP_AIS gmm 0.938 4289 4288 4288 10.6295627.2
