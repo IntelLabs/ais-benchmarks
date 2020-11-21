@@ -32,7 +32,7 @@ class CRejectionSampling(CMixtureSamplingMethod):
             acceptance_ratio = proposals_prob_p / proposals_prob_q
 
             # Generate acceptance probability values from U[0,1)
-            acceptance_prob = np.random.uniform(0, 1, size=n_samples - len(self.samples)).reshape(-1, 1)
+            acceptance_prob = np.random.uniform(0, 1, size=n_samples - len(self.samples))
 
             # Obtain the indices of the accepted samples
             accept_idx = (acceptance_ratio > acceptance_prob).reshape(-1)
@@ -47,6 +47,7 @@ class CRejectionSampling(CMixtureSamplingMethod):
 
         # Return the accepted samples
         self.weights = np.ones_like(self.weights) * 1 / len(self.weights)
+        self._update_model()
         return self.samples, self.weights
 
     def draw(self, ax):
