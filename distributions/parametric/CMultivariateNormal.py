@@ -90,7 +90,7 @@ class CMultivariateNormal(CDistribution):
         return self.support_vals
 
     def draw(self, ax, resolution=.01, label=None, color=None):
-        super(self).draw(ax, resolution, label, color)
+        super(CMultivariateNormal, self).draw(ax, resolution, label, color)
 
 
 if __name__ == "__main__":
@@ -112,4 +112,4 @@ if __name__ == "__main__":
     plt.subplot(2, 1, 2)
     plt.title('CMultivariateNormal({"mean": %s, "sigma": %s})' % (str(mean), str(cov)))
     dist2.draw(plt.gca())
-    plt.show(True)
+    plt.show(block=True)

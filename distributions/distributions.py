@@ -195,10 +195,16 @@ class CDistribution(metaclass=ABCMeta):
         return self.support_vals
 
     def draw(self, ax, resolution=.01, label=None, color=None):
+        range = self.support()[1] - self.support()[0]
         if self.dims == 1:
-            plot_pdf(ax, self, self.support()[0], self.support()[1], resolution, label=label, color=color)
+            plot_pdf(ax, self,
+                     self.support()[0] - range * .1,
+                     self.support()[1] + range * .1,
+                     resolution, label=label, color=color)
         elif self.dims == 2:
-            plot_pdf2d(ax, self, self.support()[0], self.support()[1])
+            plot_pdf2d(ax, self,
+                       self.support()[0] - range * .1,
+                       self.support()[1] + range * .1)
         else:
             raise NotImplementedError("Drawing of more than 2D PDF is not implemented in the base CDistribution class. \
                                        Try marginalizing dimensions")

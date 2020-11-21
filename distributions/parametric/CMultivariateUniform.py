@@ -50,7 +50,8 @@ class CMultivariateUniform(CDistribution):
         inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)  # Select the inliers if all the coordinates are in range
         res = np.full(len(samples), self.logprob_val)
         res[np.logical_not(inliers.flatten())] = -np.inf
-        return res.reshape(len(samples), 1)
+        # return res.reshape(len(samples), 1)
+        return res
 
     def prob(self, samples):
         if len(samples.shape) == 1:
@@ -65,7 +66,8 @@ class CMultivariateUniform(CDistribution):
         inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)  # Select the inliers if all the coordinates are in range
         res = np.full(len(samples), self.prob_val)
         res[np.logical_not(inliers.flatten())] = 0
-        return res.reshape(len(samples), 1)
+        # return res.reshape(len(samples), 1)
+        return res
 
     def condition(self, dist):
         raise NotImplementedError
@@ -99,4 +101,4 @@ if __name__ == "__main__":
     plt.subplot(2, 1, 2)
     plt.title('CMultivariateUniform({"center": %s, "radius": %s})' % (str(center), str(radius)))
     dist2d.draw(plt.gca())
-    plt.show(True)
+    plt.show(block=True)
