@@ -81,9 +81,11 @@ class CBenchmark(object):
         self.display = bench["display"]["value"]
         self.display_path = bench["display"]["display_path"]
 
+        # Experiment configuration
         self.n_experiments = bench["nreps"]
         self.rseed = bench["rseed"]
-        np.random.seed(self.rseed)
+        if self.rseed is not None:
+            np.random.seed(self.rseed)
 
         # Collect output configuration
         # self.output_file = bench["output"]["file"]
