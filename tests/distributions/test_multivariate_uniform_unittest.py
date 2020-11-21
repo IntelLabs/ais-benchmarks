@@ -53,7 +53,7 @@ class CMultivariateUniformTests(CDistributionsTests):
     center = np.array([0.0, 0.0, 0.0])
     radius = np.array([1.5])
     dist3 = d.CMultivariateUniform({"center": center, "radius": radius})
-    x = np.array([[0, 0, 0], [0, .3, 0], [-2, 0, .3], [-.2, .1, .3]])
+    x = np.array([[0, 0, 0], [0, .2, 0], [-2, 0, .3], [-.2, .1, .3]])
     prob = dist3.prob(x)
     prob_gt = 1 / ((2 * float(radius)) ** dist3.dims)
     prob_gt_batch = np.array([prob_gt, prob_gt, 0, prob_gt])
