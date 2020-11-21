@@ -27,7 +27,7 @@ class CMultivariateUniformTests(CDistributionsTests):
     # Batched test
     x = np.array([[0], [0.2], [-2], [-.2]])
     prob_gt = 1 / (np.prod(2 * radius))
-    prob_gt_batch = np.array([[prob_gt], [prob_gt], [0], [prob_gt]])
+    prob_gt_batch = np.array([prob_gt, prob_gt, 0, prob_gt])
     prob_tests.append((dist1, x, prob_gt_batch))
 
     ############################################
@@ -46,17 +46,17 @@ class CMultivariateUniformTests(CDistributionsTests):
     # Batched test
     x = np.array([[0, 0, 0], [0, .2, 0], [-2, 0, .3], [-.2, .1, .3]])
     prob_gt = 1 / (np.prod(2 * radius))
-    prob_gt_batch = np.array([[prob_gt], [prob_gt], [0], [prob_gt]])
+    prob_gt_batch = np.array([prob_gt, prob_gt, 0, prob_gt])
     prob_tests.append((dist2, x, prob_gt_batch))
 
     # Batched test: All dimensions have same radius
     center = np.array([0.0, 0.0, 0.0])
     radius = np.array([1.5])
     dist3 = d.CMultivariateUniform({"center": center, "radius": radius})
-    x = np.array([[0, 0, 0], [0, .2, 0], [-2, 0, .3], [-.2, .1, .3]])
+    x = np.array([[0, 0, 0], [0, .3, 0], [-2, 0, .3], [-.2, .1, .3]])
     prob = dist3.prob(x)
-    prob_gt = 1 / ((2 * radius) ** dist3.dims)
-    prob_gt_batch = np.array([prob_gt, prob_gt, [0], prob_gt])
+    prob_gt = 1 / ((2 * float(radius)) ** dist3.dims)
+    prob_gt_batch = np.array([prob_gt, prob_gt, 0, prob_gt])
     prob_tests.append((dist3, x, prob_gt_batch))
 
 

@@ -46,7 +46,8 @@ class CDistributionsTests(unittest.TestCase):
             prob = pt[0].prob(pt[1])
             prob_gt = pt[2]
             print("%s. %dD. Prob test. prob(%s) = %s. Ground truth: %s" %
-                  (pt[0].__class__.__name__, pt[0].dims, str(pt[1].flatten()), str(prob.flatten()), str(pt[2].flatten())))
+                  (pt[0].__class__.__name__, pt[0].dims, str(pt[1]), str(prob), str(pt[2])))
+            print("Comparison: ", np.allclose(prob, prob_gt))
             self.assertTrue(np.allclose(prob, prob_gt))
 
             # Test for symmetry
