@@ -58,9 +58,17 @@ class CRejectionSampling(CMixtureSamplingMethod):
             return self.draw2d(ax)
         return []
 
+    def prob(self, s):
+        return self.proposal_dist.prob(s) * self.scaling
+
     def draw1d(self, ax):
         res = []
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01,label="$q(x)$"))
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="--", color="r",
+                            resolution=0.01, label="$q(x)$ * scale"))
+        # res.extend(plot_pdf(ax, self.proposal_dist, self.space_min, self.space_max, alpha=1.0, options="-", color="r",
+        #                     resolution=0.01, label="$q(x)$"))
+        res.extend(plot_pdf(ax, super(CRejectionSampling, self), self.space_min, self.space_max, alpha=1.0, options="-", color="g",
+                            resolution=0.01, label="$KDE$"))
         return res
 
     def draw2d(self, ax):
