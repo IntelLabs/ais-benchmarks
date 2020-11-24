@@ -141,7 +141,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             elapsed_time = time.time() - t_ini
 
         self.weights = np.ones(len(self.samples)) * 1 / len(self.samples)
-
+        self._update_model()
         return self.samples, self.weights
 
     def draw(self, ax):
@@ -174,8 +174,8 @@ class CMetropolisHastings(CMixtureSamplingMethod):
 
         proposal_d = copy.deepcopy(self.proposal_d)
         proposal_d.mean += self.trajectory_samples[-1]
-        res.extend(plot_pdf(ax, proposal_d, self.space_min, self.space_max, options="r--", label="MCMC: $q_i(x)$"))
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01, label="MCMC: $q(x)$"))
+        res.extend(plot_pdf(ax, proposal_d, self.space_min, self.space_max, color="r", options="r--", label="MCMC: $q_i(x)$"))
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, color="r", options="r-", resolution=0.01, label="MCMC: $q(x)$"))
         res.extend(ax.plot(self.space_min[0]-1, 0, "r.", label="MCMC: burn-in"))
         res.extend(ax.plot(self.space_min[0]-1, 0, "rx", label="MCMC: rejected"))
         res.extend(ax.plot(self.space_min[0]-1, 0, "g.", label="MCMC: intermediate"))
