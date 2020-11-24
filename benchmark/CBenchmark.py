@@ -44,8 +44,12 @@ class CBenchmark(object):
         self.generate_plots = False                 # Flag to enable result plot generation
         self.generate_plots_path = "results_plot/"  # Path for the generated result plots. Will generate a .png per combination of (method, target, metric)
         self.plot_dpi = 1600                        # Default dpi resolution for generating plots.
-        self.display = False                        # Flag to display the current state of sampling. Useful for debug and video generation
-        self.display_path = "results_figures/"      # Path to store each individual frame of the debug display
+        self.debug_algo = False                     # Debug flag to pass to the sampling algorithm.
+        self.debug_algo = False                     # Debug flag to pass to the sampling algorithm.
+        self.debug_text = True                      # Flag to display sampling progress on the standard output.
+        self.debug_plot = False                     # Flag to show a plot with the sampling progress. VERY SLOW!
+        self.debug_plot_save = False                # Flag to save each debug plot figure the current state of sampling.
+        self.debug_plot_save_path = "results_figures/"  # Path to store each individual frame of the debug display
 
     def load_methods(self, methods_file, space_min, space_max, dims):
         self.methods.clear()
@@ -77,14 +81,22 @@ class CBenchmark(object):
         # Get the metrics to compute
         self.metrics = bench["metrics"]
 
+        # TODO: look at the config file and adapt the configuration with the benchmarking configuration, change
+        #       the variable names accordingly to their purpose. Refactor the debug mode passed to the algos
+        #       and review that it is used by the algo to display useful debug info, text and plots.
         # Collect display configuration
-        self.display = bench["display"]["value"]
-        self.display_path = bench["display"]["display_path"]
+
+        # Collect debug configuration
+        self.debug_algo = bench["debug"]["algo"]
+        self.debug_text = bench["debug"]["text"]
+        self.debug_plot = bench["debug"]["plot"]["show"]
+        self.debug_plot_save = bench["debug"]["plot"]["save"]
+        self.debug_plot_save_path = bench["debug"]["plot"]["path"]
 
         # Experiment configuration
         self.n_experiments = bench["nreps"]
         self.rseed = bench["rseed"]
-        if self.rseed is not None:
+        if self.rseed >= 0:
             np.random.seed(self.rseed)
 
         # Collect output configuration
@@ -159,16 +171,14 @@ class CBenchmark(object):
                                                        max_samples=max_samples_dim,
                                                        max_sampling_time=self.timeout,
                                                        batch_size=batch_size,
-                                                       debug=self.display,
+                                                       debug=self.debug_plot,
                                                        metrics=self.metrics,
                                                        rseed=self.rseed,
                                                        n_reps=self.n_experiments,
                                                        sampling_eval_samples=eval_sampl,
-                                                       filename=self.output_file)
+                                                       filename=self.output_file,
+                                                       debug_plot_path=self.debug_plot_save_path)
                 print("TOOK: %dh %dm %4.1fs" % time_to_hms(time.time()-t_ini))
-
-                if self.display:
-                    pass
 
                 if viz_elems is not None:
                     t_ini = time.time()
@@ -245,8 +255,8 @@ class CBenchmark(object):
 
     @staticmethod
     def evaluate_method(ndims, target_dist, sampling_method, max_samples, sampling_eval_samples,
-                        metrics=("NESS", "JSD", "T"), rseed=0, n_reps=10, batch_size=16,
-                        debug=True, filename=None, max_sampling_time=600, profile=False):
+                        metrics=("NESS", "JSD", "T"), rseed=-1, n_reps=10, batch_size=16,
+                        debug=True, filename=None, max_sampling_time=600, profile=False, debug_plot_path=None):
         """
         Parameters
         ----------
@@ -270,7 +280,7 @@ class CBenchmark(object):
             List of strings that specify the metrics to be computed. Default: ["NESS", "JSD", "T"]
 
         rseed: int
-            Random seed to be used. If none is specified, the random generator state is not altered. Default: None
+            Random seed to be used. If rseed < 0, the random generator state is not altered. Default: -1
 
         n_reps: int
             Number of times to repeat each experiment. Default: 10.
@@ -280,6 +290,9 @@ class CBenchmark(object):
 
         debug: bool
             Flag to enable console debug messages and other debugging visualizations. Default: False.
+
+        debug_plot_path: str
+            Path to store each frame of the debug visualizations. Default: None.
 
         filename : str
             Path to store the experiment results, use None to disable result saving. Default: None.
@@ -305,7 +318,7 @@ class CBenchmark(object):
         """
 
         # Set the random seed if specified, important for reproducibility
-        if rseed is not None:
+        if rseed >= 0:
             np.random.seed(rseed)
 
         # Start profiling tools
@@ -370,6 +383,7 @@ class CBenchmark(object):
             [m.reset() for m in metrics_eval]
 
             # Perform importance sampling until the desired number of samples is obtained
+            niter = 0
             while len(samples_acc) < max_samples:
 
                 # Obtain experiment execution runtime
@@ -402,6 +416,7 @@ class CBenchmark(object):
                 # TODO: Cleanup the debug viz code
                 # Display visualization of sampling procedure
                 if debug:
+                    plt.title(text_display)
                     # Remove previous points
                     for element in pts:
                         element.remove()
@@ -416,6 +431,10 @@ class CBenchmark(object):
                                               alpha=0.4))
                         plt.pause(0.01)
                     plt.legend(framealpha=0.5, loc="best")
+                    if debug_plot_path is not None:
+                        print("\nSave fig: " + debug_plot_path + "%s_%s_%dD_run%d_it%d.png" % (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter))
+                        plt.savefig(debug_plot_path + "%s_%s_%dD_%d_run%d_it.png" %
+                                    (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter))
 
                 # Compute metrics
                 results = dict()
@@ -432,6 +451,8 @@ class CBenchmark(object):
                 # timeout ensures the operation will end if the specified timeout is reached.
                 if sampling_time > max_sampling_time:
                     break
+
+                niter += 1
 
             # Obtain experiment execution runtime
             h, m, s = time_to_hms(time.time() - t_start)
