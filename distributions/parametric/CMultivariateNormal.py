@@ -75,7 +75,7 @@ class CMultivariateNormal(CDistribution):
 
         diff = self.mean.reshape(1, self.dims, 1) - samples
         term3 = -0.5 * (np.transpose(diff, axes=(0, 2, 1)) @ self.inv_cov @ diff)
-        return (self.term1 + self.term2 + term3).reshape(len(samples), 1)
+        return (self.term1 + self.term2 + term3).reshape(len(samples))
 
     def prob(self, samples):
         return np.exp(self.log_prob(samples))
