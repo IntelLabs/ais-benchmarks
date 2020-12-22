@@ -247,8 +247,8 @@ class CBenchmark(object):
     def write_results(results, method, target, nsamples, file):
         with open(file, mode='a+') as f:
             text = "%02d %04d " % (target.dims, nsamples)
-            text += " ".join(["%7.5f" % val for val in results.values()])
-            text += "%7.4f %s %s %5.3f %d %d %d" % (method.get_NESS(), method.name, target.name,
+            text += " ".join(["%9.5f" % val for val in results.values()])
+            text += "%9.3f %s %s %5.3f %d %d %d" % (method.get_NESS(), method.name, target.name,
                                                     method.get_acceptance_rate(), method.num_proposal_samples,
                                                     method.num_proposal_evals, method.num_target_evals)
             f.write(text + "\n")
