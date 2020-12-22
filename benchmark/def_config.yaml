@@ -10,8 +10,8 @@ metrics: [KLD, JSD, MEM, T]
 # Debug mode config and debug display
 debug: {algo: false,                         # Debug mode argument passed to algorithms: [true, false]
         text: true,                          # Show experiment execution progress on terminal: [true, false]
-        plot: {show: true,                   # Plot sampling algorithm progress and show on screen: [true, false]
-               save: faltruese,                   # Save the sampling algo plot on file: [true, false]
+        plot: {show: false,                   # Plot sampling algorithm progress and show on screen: [true, false]
+               save: false,                   # Save the sampling algo plot on file: [true, false]
                path: results/debug_plots/}}  # Path to save the plot algo progress: [string]
 
 # Animation module configuration
