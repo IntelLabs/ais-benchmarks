@@ -33,7 +33,7 @@ class Banana2D(CDistribution):
         else:
             raise ValueError("Shape of samples does not match self.dims")
 
-        return self.logdensity(samples[:, 0, :], samples[:, 1, :])
+        return self.logdensity(samples[:, 0, :], samples[:, 1, :]).reshape(len(samples))
 
     def logdensity(self, x1, x2):
         return -0.5 * (0.03 * x1 * x1 + (x2 + 0.03 * (x1 * x1 - 100))**2)
@@ -55,6 +55,6 @@ if __name__ == "__main__":
     dist = Banana2D(dict())
 
     plt.figure()
-    plt.title('BenchDenLaplace')
+    plt.title('Banana2D')
     dist.draw(plt.gca())
     plt.show()
