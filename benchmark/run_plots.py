@@ -6,9 +6,9 @@ from benchmark.CBenchmark import CBenchmark
 benchmark = CBenchmark()
 
 # TODO: make this paths relative to this file
-b_file = "tp_ais_experiments/def_benchmark_gmm.yaml"
-m_file = "tp_ais_experiments/def_methods_ess_ablation.yaml"
-c_file = "tp_ais_experiments/def_config_ess_ablation.yaml"
+b_file = "def_benchmark.yaml"
+m_file = "def_methods.yaml"
+c_file = "def_config.yaml"
 
 if len(sys.argv) == 4:
     b_file = sys.argv[1]
