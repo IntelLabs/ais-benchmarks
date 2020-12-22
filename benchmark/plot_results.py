@@ -23,7 +23,7 @@ def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, 
 
     markers = ["x", "d", "+", "*", 4, 5, 6, 7]
 
-    for m_id,m in enumerate(methods):
+    for m_id, m in enumerate(methods):
         m_lbl = labels[m_id] if labels is not None else m
 
         indices = data['method'] == m
