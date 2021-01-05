@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import time
 import cProfile
 import pstats
+import pathlib
+import os
+import sys
 
 import distributions
 import sampling_methods
@@ -135,6 +138,18 @@ class CBenchmark(object):
             self.targets.append(target_dist)
             self.ndims.append(target_dist.dims)
 
+    @staticmethod
+    def _check_make_paths(path):
+        if not pathlib.Path(path).exists():
+            print("WARNING. Debug plot save path does not exist. Creating it...")
+            try:
+                os.makedirs(path)
+            except OSError as ex:
+                print("ERROR: Failed to create directory: %s. %s" %
+                      (path, str(ex)), file=sys.stderr)
+            else:
+                print("Created directory: %s." % path)
+
     def run(self, benchmark_file, methods_file, config_file, out_file):
         self.output_file = out_file
         self.load_config(config_file)
@@ -143,15 +158,15 @@ class CBenchmark(object):
         assert len(self.targets) > 0
         assert len(self.targets) == len(self.ndims) == len(self.nsamples)
 
-        # TODO: Generate latex result tables
-        # TODO: Generate the animation
+        # Check destination paths and create if not existing
+        CBenchmark._check_make_paths(self.debug_plot_save_path)
+        CBenchmark._check_make_paths(self.generate_plots_path)
+        CBenchmark._check_make_paths(pathlib.Path(self.output_file).parent)
 
         cols = "dims output_samples " + " ".join([m for m in self.metrics]) + \
                " NESS method target_d accept_rate proposal_samples proposal_evals target_evals\n"
         with open(self.output_file, 'w') as f:
             f.write(cols)
-
-        # TODO: Check destination paths
 
         t_start = time.time()
         for target_dist, ndims, max_samples_dim, eval_sampl, batch_size in \
@@ -210,6 +225,10 @@ class CBenchmark(object):
         # Make metric-wise plots for each target distribution with one serie for each evaluated method
         if self.generate_plots:
             self.make_plots()
+
+        # TODO: Generate latex result tables
+        # TODO: Generate the animation
+
 
     def make_plots(self, benchmark_file=None, methods_file=None, config_file=None):
         if benchmark_file is not None:

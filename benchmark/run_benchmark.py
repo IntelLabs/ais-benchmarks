@@ -15,7 +15,7 @@ b_file = def_path + "def_benchmark.yaml"
 m_file = def_path + "def_methods.yaml"
 c_file = def_path + "def_config.yaml"
 
-out_file = def_path + "results.txt"
+out_file = def_path + "results/results.txt"
 
 if len(sys.argv) == 5:
     b_file = sys.argv[1]
