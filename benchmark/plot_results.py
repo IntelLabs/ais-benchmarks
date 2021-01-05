@@ -1,3 +1,9 @@
+"""
+THIS FILE IS DEPRECATED AND WILL BE REMOVED IN FOLLOWING VERSIONS
+"""
+
+print("WARNIING!!! :: %s IS DEPRECATED AND WILL BE REMOVED IN FOLLOWING VERSIONS" % __file__)
+
 import os
 import fnmatch
 import numpy as np
@@ -45,7 +51,7 @@ def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, 
     ax.set_xlabel(xaxis)
     ax.set_ylabel(yaxis)
     ymin, ymax = ax.get_ylim()
-    ax.set_ylim(0, ymax*1.1)
+    ax.set_ylim(0, ymax * 1.1)
     ax.legend(mode="expand", loc=9, ncol=3, prop={'size': 12}, numpoints=1)
 
 
