@@ -27,7 +27,7 @@ class CMultivariateNormalTests(CDistributionsTests):
 
     # Batched test
     x = np.array([[0], [0.2], [-2], [-.2]])
-    prob_gt_batch = multivariate_normal.pdf(x, mean=mean, cov=sigma).reshape(len(x), 1)
+    prob_gt_batch = multivariate_normal.pdf(x, mean=mean, cov=sigma)
     prob_tests.append((dist1, x, prob_gt_batch))
 
     ############################################
@@ -45,7 +45,7 @@ class CMultivariateNormalTests(CDistributionsTests):
 
     # Batched test
     x = np.array([[0, 0, 0], [0, .2, 0], [-2, 0, .3], [-.2, .1, .3]])
-    prob_gt = multivariate_normal.pdf(x, mean=mean, cov=sigma).reshape(len(x), 1)
+    prob_gt = multivariate_normal.pdf(x, mean=mean, cov=sigma)
     prob_tests.append((dist2, x, prob_gt))
 
 

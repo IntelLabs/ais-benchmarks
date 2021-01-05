@@ -66,14 +66,8 @@ class CMultivariateNormal(CDistribution):
         return np.random.multivariate_normal(self.mean.flatten(), self.cov, size=n_samples)
 
     def log_prob(self, samples):
-        if len(samples.shape) == 1:
-            samples = samples.reshape(1, self.dims, 1)
-        elif len(samples.shape) == 2:
-            samples = samples.reshape(len(samples), self.dims, 1)
-        else:
-            raise ValueError("Shape of samples does not match self.dims")
-
-        diff = self.mean.reshape(1, self.dims, 1) - samples
+        samples = self._check_shape(samples)
+        diff = (self.mean.reshape(1, self.dims) - samples).reshape(len(samples), self.dims, 1)
         term3 = -0.5 * (np.transpose(diff, axes=(0, 2, 1)) @ self.inv_cov @ diff)
         return (self.term1 + self.term2 + term3).reshape(len(samples))
 
