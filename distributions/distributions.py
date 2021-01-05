@@ -168,8 +168,8 @@ class CDistribution(metaclass=ABCMeta):
         :return: N by M array with N = nsamples and M = dimensions of the random variable represented by
                  this distribution.
         """
-        # TODO: Implement generic rejection sampling
-        # TODO: Implement generic MCMC sampling
+        # TODO: LOW: Implement generic rejection sampling
+        # TODO: LOW: Implement generic MCMC sampling
         raise NotImplementedError
 
     @abstractmethod

@@ -32,9 +32,9 @@ class CMultivariateNormal(CDistribution):
         params["loglikelihood_f"] = self.log_prob
         params["dims"] = len(params["mean"])
 
-        # Clip the normal support at 4 sigmas
+        # Clip the normal support at 6 sigmas
         if "support" not in params:
-            # TODO: Compute the support accounting for the cross terms of the covariance
+            # TODO: LOW: Compute the support accounting for the cross terms of the covariance
             params["support"] = np.array([params["mean"] - np.sqrt(np.diag(params["sigma"])) * 6.0,
                                           params["mean"] + np.sqrt(np.diag(params["sigma"])) * 6.0])
 
