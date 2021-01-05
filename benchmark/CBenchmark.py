@@ -14,7 +14,6 @@ from metrics.divergences import CKLDivergence
 from metrics.divergences import CJSDivergence
 from metrics.performance import CMemoryUsage
 from metrics.performance import CElapsedTime
-from benchmark.plot_results import make_2d_plot
 from utils.misc import time_to_hms
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import grid_sample_distribution
@@ -230,18 +229,51 @@ class CBenchmark(object):
             for metric in self.metrics:
                 # TODO: Check that data exists or throw an error otherwise
                 [dist, dims] = [target_d.name, target_d.dims]
-                make_2d_plot(data, "output_samples", metric, methods,
-                             selector=["dims", "target_d"], selector_val=[dims, dist])
+                CBenchmark.make_2d_plot(data, "output_samples", metric, methods,
+                                        selector=["dims", "target_d"], selector_val=[dims, dist])
                 plt.gca().set_title("Target distribution: %dD %s" % (dims, dist))
                 plt.gca().set_ylabel(metric)
                 plt.gca().set_xlabel("# samples")
                 # plt.yscale("log",  nonposy='clip')
                 ymin, ymax = plt.gca().get_ylim()
                 plt.gca().set_ylim(ymin, ymax * 1.2)
-                plt.savefig(self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric), bbox_inches='tight', dpi=self.plot_dpi)
+                plt.savefig(self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric),
+                            bbox_inches='tight', dpi=self.plot_dpi)
                 plt.close()
                 print("Generated " + self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric))
         print("PLOT GENERATION TOOK: %5.3fs" % (time.time()-t_start))
+
+    @staticmethod
+    def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, labels=None, mark_points=10):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        markers = ["x", "d", "+", "*", 4, 5, 6, 7]
+
+        for m_id, m in enumerate(methods):
+            m_lbl = labels[m_id] if labels is not None else m
+
+            indices = data['method'] == m
+            for sel, val in zip(selector, selector_val):
+                indices = indices & (data[sel] == val)
+
+            x_data = data[indices].groupby(xaxis)[xaxis].mean()
+            y_data = data[indices].groupby(xaxis)[yaxis]
+            if len(y_data) == 0:
+                continue
+            y_err = np.sqrt(y_data.mean().rolling(window=10).std())
+            # y_err = np.sqrt(y_data.std())
+            y_avg = y_data.mean().rolling(window=10).mean()
+            markevery = max(1, int(len(x_data.values) / mark_points))
+            p = ax.plot(x_data.values, y_avg.values, label=m_lbl, marker=markers[m_id], markevery=markevery)
+            color = p[-1].get_color()
+            plt.fill_between(x_data.values, y_avg - y_err, y_avg + y_err, alpha=0.1, edgecolor=color, facecolor=color)
+
+        ax.set_xlabel(xaxis)
+        ax.set_ylabel(yaxis)
+        ymin, ymax = ax.get_ylim()
+        ax.set_ylim(0, ymax * 1.1)
+        ax.legend(mode="expand", loc=9, ncol=3, prop={'size': 12}, numpoints=1)
 
     @staticmethod
     def write_results(results, method, target, nsamples, file):
