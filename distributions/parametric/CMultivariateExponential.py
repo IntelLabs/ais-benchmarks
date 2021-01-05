@@ -29,12 +29,7 @@ class CMultivariateExponential(CDistribution):
         return np.random.exponential(self.mean, n_samples)
 
     def log_prob(self, samples):
-        if len(samples.shape) == 1:
-            samples = samples.reshape(1, self.dims, 1)
-        elif len(samples.shape) == 2:
-            samples = samples.reshape(len(samples), self.dims, 1)
-        else:
-            raise ValueError("Shape of samples does not match self.dims")
+        samples = self._check_shape(samples)
 
         res = np.zeros(len(samples))
         inliers = np.all(samples > 0, axis=1).flatten()

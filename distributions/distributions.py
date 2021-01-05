@@ -107,6 +107,27 @@ class CDistribution(metaclass=ABCMeta):
         if type is not None:
             assert isinstance(params[param], type), "%s: Parameter '%s' is required to have type %s" % (self.__class__.__name__, param, str(type))
 
+    def _check_shape(self, x):
+        """
+        :param x: Points to evaluate the PDF. Checks that x is NxM array that contains N points of M dimensions.
+                  Where M has to match the dimensionality of the PDF represented by this class instance,
+                  i.e. M == self.dims.
+        :return: Reshaped version of x that fulfills the dimension criteria or x itself if all the checks are correct.
+        :raises: ValueError. In the case that the shape x does not fit the criteria and cannot be reshaped.
+        """
+        # Add the batch dimension if the shape of the evaluated samples does not have the desired NxM elements.
+        if len(x.shape) == 1:
+            x = x.reshape(1, self.dims)
+        # Check that the sample dimensions matches the PDF.
+        elif len(x.shape) == 2:
+            if len(x[0]) != self.dims:
+                raise ValueError("""Shape of x does not match self.dims = %d. is Nx%d array that contains N points of %d 
+                                    dimensions. x.shape=%s""" % (self.dims, self.dims, self.dims, str(x.shape)))
+        else:
+            raise ValueError("""Shape of x does not match self.dims = %d. is Nx%d array that contains N points of %d 
+                                dimensions. x.shape=%s""" % (self.dims, self.dims, self.dims, str(x.shape)))
+        return x
+
     def set_likelihood_f(self, likelihood_f):
         """
         Sets the likelihood function. This will be the one used to compute both log_likelihood and likelihood.
