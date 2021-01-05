@@ -1,14 +1,18 @@
 import time
 import sys
+import pathlib
+from os import sep
 from benchmark.CBenchmark import CBenchmark
 
 
 benchmark = CBenchmark()
 
-# TODO: make this paths relative to this file
-b_file = "def_benchmark.yaml"
-m_file = "def_methods.yaml"
-c_file = "def_config.yaml"
+# Make the default paths relative to this file
+def_path = str(pathlib.Path(__file__).parent.absolute()) + sep
+
+b_file = def_path + "def_benchmark.yaml"
+m_file = def_path + "def_methods.yaml"
+c_file = def_path + "def_config.yaml"
 
 if len(sys.argv) == 4:
     b_file = sys.argv[1]
