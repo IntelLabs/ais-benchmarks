@@ -196,8 +196,3 @@ if __name__ == "__main__":
             plt.close()
 
             print("Generated " + path + "%d_dims_%s_dist" % (dims, dist))
-
-
-    # TODO: Get table at specific sample number values
-    # TODO: Curate the data such that there is data points in the selected sample numbers
-
