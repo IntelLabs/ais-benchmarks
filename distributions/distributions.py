@@ -213,7 +213,7 @@ class CDistribution(metaclass=ABCMeta):
         :return: A 2 by N array with the support of the distribution. [lower_bound, upper_bound] Where each component
                  is N dimensional vector with the dimension-wise support boundaries.
         """
-        return self.support_vals
+        return np.array(self.support_vals).reshape(2, self.dims)
 
     def draw(self, ax, resolution=.01, label=None, color=None):
         range = self.support()[1] - self.support()[0]

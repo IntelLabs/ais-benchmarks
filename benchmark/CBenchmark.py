@@ -56,7 +56,6 @@ class CBenchmark(object):
     def load_methods(self, methods_file, space_min, space_max, dims):
         self.methods.clear()
         m_yaml = open(methods_file, mode="r")
-        # methods = yaml.load(m_yaml, Loader=yaml.FullLoader)
         methods = yaml.load(m_yaml, Loader=yaml.SafeLoader)
         for method in methods["methods"]:
 
@@ -132,9 +131,6 @@ class CBenchmark(object):
                 print(e)
                 raise ValueError("Error creating target dist: %s" % dist_code)
             target_dist.name = target["name"]
-            target_dist.domain_min = eval(target["domain_min"])
-            target_dist.domain_max = eval(target["domain_max"])
-
             self.targets.append(target_dist)
             self.ndims.append(target_dist.dims)
 
@@ -171,7 +167,9 @@ class CBenchmark(object):
         t_start = time.time()
         for target_dist, ndims, max_samples_dim, eval_sampl, batch_size in \
                 zip(self.targets, self.ndims, self.nsamples, self.eval_sampl, self.batch_sizes):
-            self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
+            self.load_methods(methods_file,
+                              target_dist.support()[0],
+                              target_dist.support()[1], ndims)
 
             for sampling_method in self.methods:
                 print("EVALUATING: %s || dims: %d || max samples: %d || target_d: %s || batch: %d" % (
