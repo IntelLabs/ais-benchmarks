@@ -1,15 +1,15 @@
 # Define the target densities used for evaluation and label their categories and provide evaluation parameters
 targets:
-#    - name: gmm
-#      type: distributions.CGaussianMixtureModel
-#      params: {means: [[1.5], [-4.2]],
-#               sigmas: [[0.2], [0.05]],  # WARNING!! Notice the double bracket when defining the cov
-#               weights:[0.5, 0.5],
-#               support:[[-10], [10]]}
-#      batch_size: 2
-#      nsamples: 1000
-#      nsamples_eval: 2000
-#      tags: [high_kurtosis, low_skew, multimodal, separate_modes, disjoint_support]
+    - name: gmm
+      type: distributions.CGaussianMixtureModel
+      params: {means: [[1.5], [-4.2]],
+               sigmas: [[0.2], [0.05]],  # WARNING!! Notice the double bracket when defining the cov
+               weights:[0.5, 0.5],
+               support:[[-10], [10]]}
+      batch_size: 2
+      nsamples: 1000
+      nsamples_eval: 2000
+      tags: [high_kurtosis, low_skew, multimodal, separate_modes, disjoint_support]
 
     - name: normal
       type: distributions.CMultivariateNormal
@@ -19,17 +19,17 @@ targets:
       nsamples_eval: 2000
       tags: [low_kurtosis, low_skew, unimodal]
 
-#    - name: gmm
-#      type: distributions.CGaussianMixtureModel
-#      params: {means: [[0.0, 0.0], [-0.2, 0.4]],
-#               sigmas: [[0.01, 0.1], [0.001, 0.01]],  # WARNING!! Notice the double bracket when defining the sigmas
-#               weights:[0.5, 0.5],
-#               support:[[-1, -1], [1, 1]]}
-#      batch_size: 2
-#      nsamples: 2000
-#      nsamples_eval: 2000
-#      tags: [high_kurtosis, low_skew, multimodal, close_modes]
-#
+    - name: gmm
+      type: distributions.CGaussianMixtureModel
+      params: {means: [[0.0, 0.0], [-0.2, 0.4]],
+               sigmas: [[0.01, 0.1], [0.001, 0.01]],  # WARNING!! Notice the double bracket when defining the sigmas
+               weights:[0.5, 0.5],
+               support:[[-1, -1], [1, 1]]}
+      batch_size: 2
+      nsamples: 2000
+      nsamples_eval: 2000
+      tags: [high_kurtosis, low_skew, multimodal, close_modes]
+
     - name: banana2D
       type: distributions.rare.banana2d.Banana2D
       params: {}
