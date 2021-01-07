@@ -5,6 +5,7 @@ from scipy.stats import entropy
 from metrics.divergences import CKLDivergence
 from distributions.parametric.CMultivariateNormal import CMultivariateNormal
 from distributions.parametric.CMultivariateUniform import CMultivariateUniform
+from distributions.mixture.CGaussianMixtureModel import CGaussianMixtureModel
 
 
 class CMetricsTests(unittest.TestCase):
@@ -46,10 +47,32 @@ class CMetricsTests(unittest.TestCase):
                       len(mu0) + np.log(np.linalg.det(sigma1) / np.linalg.det(sigma0)))
 
     def test_equal(self):
-        # Test distributions are the same
         p = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([1])})
         q = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([1])})
         self.do_test(p, q, 0)
+
+    def test_equal2(self):
+        print("Test KL divergence with two exact GMM.")
+        p = CGaussianMixtureModel({"means": [[1.5], [-4.2]], "sigmas": [[0.2], [0.05]],
+                                   "weights": [0.5, 0.5], "support": [[-10], [10]]})
+
+        q = CGaussianMixtureModel({"means": [[1.5], [-4.2]], "sigmas": [[0.2], [0.05]],
+                                   "weights": [0.5, 0.5], "support": [[-10], [10]]})
+
+        res = self.metric.compute(p=p, q=q, nsamples=100000)
+        self.assertAlmostEqual(res, 0, delta=0.001, msg="Divergence between two exact GMM models must be equal")
+
+    def test_different_gmm(self):
+        print("Test KL divergence with two distinct GMM.")
+        p = CGaussianMixtureModel({"means": [[1.5], [-4.2]], "sigmas": [[0.2], [0.05]],
+                                   "weights": [0.5, 0.5], "support": [[-10], [10]]})
+
+        q = CGaussianMixtureModel({"means": [[1.0], [-4.0]], "sigmas": [[0.2], [0.05]],
+                                   "weights": [0.5, 0.5], "support": [[-10], [10]]})
+
+        res = self.metric.compute(p=p, q=q, nsamples=100000)
+        self.assertGreater(res, 0, msg="Divergence between two different GMM models must be > 0")
+        print("Test KL divergence with two distinct GMM. KLD: %.3f" % res)
 
     def test_similar(self):
         mu0 = np.array([0])
