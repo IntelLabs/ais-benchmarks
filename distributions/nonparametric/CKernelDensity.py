@@ -53,9 +53,6 @@ class CKernelDensity(CDistribution):
     def integral(self, a, b, nsamples=None):
         raise NotImplementedError
 
-    def support(self):
-        return self.support_vals
-
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
