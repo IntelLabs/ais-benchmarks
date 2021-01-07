@@ -99,13 +99,6 @@ class CKLDivergence(CDivergence):
         self.disjoint_support = False
 
     def compute_from_samples(self, p, q, samples):
-        # Obtain sample probabilities
-        # p_samples_prob = p.prob(samples)
-        # q_samples_prob = q.prob(samples)
-        # self.value = np.sum(self.compute_from_probs(p_samples_prob, q_samples_prob))
-
-        # This is a version that performs the computations in log space, this is desirable when probabilities
-        # are very small numbers that can lead to underflow
         # Obtain sample log probabilities
         p_samples_logprob = p.log_prob(samples)
         q_samples_logprob = q.log_prob(samples)
@@ -129,14 +122,14 @@ class CKLDivergence(CDivergence):
         return res
 
     @staticmethod
-    def compute_from_log_probs(p_samples_prob, q_samples_prob):
+    def compute_from_log_probs(p_samples_logprob, q_samples_logprob):
         # Normalize sample probabilities in log space
-        p_samples_prob -= np.logaddexp.reduce(p_samples_prob)
-        q_samples_prob -= np.logaddexp.reduce(q_samples_prob)
+        p_samples_logprob -= np.logaddexp.reduce(p_samples_logprob)
+        q_samples_logprob -= np.logaddexp.reduce(q_samples_logprob)
 
         # Compute discrete KL for each sample
-        res = np.exp(p_samples_prob) * (p_samples_prob - q_samples_prob)
-        res[np.isnan(q_samples_prob)] = np.inf
+        res = np.exp(p_samples_logprob) * (p_samples_logprob - q_samples_logprob)
+        res[np.isnan(q_samples_logprob)] = np.inf
         return res
 
 
