@@ -80,9 +80,6 @@ class CMultivariateNormal(CDistribution):
     def marginal(self, dim):
         raise NotImplementedError
 
-    def support(self):
-        return self.support_vals
-
     def draw(self, ax, resolution=.01, label=None, color=None):
         super(CMultivariateNormal, self).draw(ax, resolution, label, color)
 

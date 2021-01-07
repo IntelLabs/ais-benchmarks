@@ -50,9 +50,6 @@ class CMultivariateExponential(CDistribution):
     def marginal(self, dim):
         raise NotImplementedError
 
-    def support(self):
-        return self.support_vals
-
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt

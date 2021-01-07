@@ -37,7 +37,7 @@ class CMixtureModel:
             raise ValueError("Unsupported samples data format: " + str(data.shape))
 
         for i in range(len(self.models)):
-            llikelihood[i] = self.models[i].log_prob(data).reshape(-1)
+            llikelihood[i] = self.models[i].log_prob(data)
 
         logprob = logsumexp(llikelihood, b=self.weights.reshape(-1, 1), axis=0)
         return logprob
