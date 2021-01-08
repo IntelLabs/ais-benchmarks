@@ -23,6 +23,7 @@ class CSamplingMethod(metaclass=ABCMeta):
         self.samples = t_tensor([])
         self.weights = t_tensor([])
         self.variogram = t_tensor([])
+        self._debug = False
 
     def reset(self):
         self._num_pi_evals = 0
@@ -84,6 +85,14 @@ class CSamplingMethod(metaclass=ABCMeta):
     @property
     def num_proposal_evals(self):
         return self._num_q_evals
+
+    @property
+    def debug(self):
+        return self._debug
+
+    @debug.setter
+    def debug(self, val):
+        self._debug = val
 
     @abstractmethod
     def sample(self, n_samples):

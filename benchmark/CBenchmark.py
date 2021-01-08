@@ -178,6 +178,7 @@ class CBenchmark(object):
                 print("EVALUATING: %s || dims: %d || max samples: %d || target_d: %s || batch: %d" % (
                     sampling_method.name, ndims, max_samples_dim, target_dist.name, batch_size))
 
+                sampling_method.debug = self.debug_algo
                 sampling_method.reset()
                 t_ini = time.time()
                 viz_elems = CBenchmark.evaluate_method(ndims=ndims,
