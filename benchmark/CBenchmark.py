@@ -47,7 +47,6 @@ class CBenchmark(object):
         self.generate_plots_path = "results_plot/"  # Path for the generated result plots. Will generate a .png per combination of (method, target, metric)
         self.plot_dpi = 1600                        # Default dpi resolution for generating plots.
         self.debug_algo = False                     # Debug flag to pass to the sampling algorithm.
-        self.debug_algo = False                     # Debug flag to pass to the sampling algorithm.
         self.debug_text = True                      # Flag to display sampling progress on the standard output.
         self.debug_plot = False                     # Flag to show a plot with the sampling progress. VERY SLOW!
         self.debug_plot_save = False                # Flag to save each debug plot figure the current state of sampling.
@@ -158,6 +157,10 @@ class CBenchmark(object):
         CBenchmark._check_make_paths(self.debug_plot_save_path)
         CBenchmark._check_make_paths(self.generate_plots_path)
         CBenchmark._check_make_paths(pathlib.Path(self.output_file).parent)
+
+        # Enable / disable debug plot save path
+        self.debug_plot_save_path = None if not self.debug_plot_save else self.debug_plot_save_path
+
 
         cols = "dims output_samples " + " ".join([m for m in self.metrics]) + \
                " NESS method target_d accept_rate proposal_samples proposal_evals target_evals\n"
@@ -341,7 +344,8 @@ class CBenchmark(object):
             Flag to enable console debug messages and other debugging visualizations. Default: False.
 
         debug_plot_path: str
-            Path to store each frame of the debug visualizations. Default: None.
+            Path to store each frame of the debug visualizations. Use None to prevent saving the debug plot.
+            Default: None.
 
         filename : str
             Path to store the experiment results, use None to disable result saving. Default: None.
