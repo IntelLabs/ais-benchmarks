@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ###
 ## THIS SCRIPT SPAWNS 16 EVALUATION PROCESSES
 ## It is recommended to run in a tmux session
