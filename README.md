@@ -14,6 +14,7 @@ info below.
 sudo apt install python python-pip python-tk
 git clone https://github.com/jfelip/ais-benchmarks.git
 cd ais-benchmarks
+pip install cython scikit-build
 pip install -r requirements.txt
 python benchmark/run_benchmark.py
 ```
