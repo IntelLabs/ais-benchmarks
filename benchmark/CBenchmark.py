@@ -17,6 +17,7 @@ from metrics.divergences import CKLDivergence
 from metrics.divergences import CJSDivergence
 from metrics.performance import CMemoryUsage
 from metrics.performance import CElapsedTime
+from metrics.statistics import CExpectedValueMSE
 from utils.misc import time_to_hms
 from utils.plot_utils import plot_pdf
 from utils.plot_utils import grid_sample_distribution
@@ -82,7 +83,7 @@ class CBenchmark(object):
         self.metrics = bench["metrics"]
 
         # TODO: look at the config file and adapt the configuration with the benchmarking configuration, change
-        #       the variable names accordingly to their purpose. Refactor the debug mode passed to the algos
+        #       variable names accordingly to their purpose. Refactor the debug mode passed to the algos
         #       and review that it is used by the algo to display useful debug info, text and plots.
         # Collect display configuration
 
@@ -390,8 +391,8 @@ class CBenchmark(object):
                 metrics_eval.append(CJSDivergence())
             elif m == "NESS":
                 pass
-            elif m == "EV_MSE":
-                pass
+            elif m == "EVMSE":
+                metrics_eval.append(CExpectedValueMSE())
             elif m == "T":
                 metrics_eval.append(CElapsedTime())
             elif m == "MEM":
