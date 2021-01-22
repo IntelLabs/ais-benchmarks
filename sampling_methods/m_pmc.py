@@ -52,7 +52,7 @@ class CMixturePMC(CMixtureISSamplingMethod):
     def adapt(self, samples, weights, posteriors):
         # Update all N proposals and proposal weights with the M-PMC update rule
         for d in range(self.N):
-            # Update mixture weights (alpha_d) eq. 14.1
+            # Update mixture weights (alpha_d) eq. 14.1 (Rao-Blackwellised version)
             self.wproposals[d] = np.sum(weights * posteriors[d])
 
             # Update proposal parameters (gaussian proposal)
@@ -66,9 +66,9 @@ class CMixturePMC(CMixtureISSamplingMethod):
                 cov += weights[i] * posteriors[d][i] * cov_val
             cov /= self.wproposals[d]
 
-            # Failsafe for collapsing or exploding covariances
-            if np.any(np.isnan(cov)) or np.any(cov > 1):
-                cov = np.diag(np.ones(self.ndims) * 0.01)
+            # TODO: Remove this failsafe for collapsing or exploding covariances
+            if np.any(np.isnan(cov)) or np.any(cov > 10):
+                cov = np.diag(np.ones(self.ndims)*10)
 
             self.proposals[d].set_moments(mu, cov)
 
@@ -90,9 +90,9 @@ class CMixturePMC(CMixtureISSamplingMethod):
 
             # For each sample
             for i in range(self.K):
-                pi_x = target_d.prob(new_samples[i])
-                q_x = self.prob(new_samples[i])
-                new_weights[i] = pi_x / q_x if q_x > 0 else 0
+                pi_x = target_d.log_prob(new_samples[i])
+                q_x = self.log_prob(new_samples[i])
+                new_weights[i] = np.exp(pi_x - q_x)
 
                 self._num_pi_evals += 1
                 self._num_q_evals += 1
@@ -100,8 +100,8 @@ class CMixturePMC(CMixtureISSamplingMethod):
                 # Compute mixture posteriors (eq. 7)
                 for d in range(self.N):
                     alpha_d = self.wproposals[d]
-                    q_d = self.proposals[d].prob(new_samples[i])
-                    rho[d][i] = (alpha_d * q_d) / q_x
+                    q_d = self.proposals[d].log_prob(new_samples[i])
+                    rho[d][i] = np.exp(np.log(alpha_d) + q_d - q_x)
                     self._num_q_evals += 1
 
             new_weights = new_weights / new_weights.sum()
