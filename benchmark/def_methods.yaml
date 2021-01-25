@@ -1,35 +1,28 @@
 # Define the methods to be evaluated and its parameter configuration
 methods:
-#    - name: multi_nested
-#      type: sampling_methods.CMultiNestedSampling
-#      params:
-#        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
-#        N: 2          # Number of proposal distributions
-#        kde_bw: 0.01
-#
-#    - name: rejection
-#      type: sampling_methods.CRejectionSampling
-#      params:
-#        scaling: 1
-#        proposal: "'distributions.CMultivariateUniform({\"center\": np.zeros(self.ndims), \"radius\":(self.space_max-self.space_min) / 2})'"
-#        kde_bw: 0.01
-#
-#    - name: m_pmc
-#      type: sampling_methods.CMixturePMC
-#      params:
-#        K: 20         # Number of samples per proposal distribution
-#        N: 10          # Number of proposal distributions
-#        J: 1000       # Limit number of samples
-#        sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
-#
-#    - name: HiDaisee_80
-#      type: sampling_methods.CHiDaiseeSampling
-#      params:
-#        target_ess: 0.8
-#        n_min: 10
-#        tau: .01
-#        debug: 0
-#
+    - name: m_pmc
+      type: sampling_methods.CMixturePMC
+      params:
+        K: 50         # Number of samples per proposal distribution
+        N: 10          # Number of proposal distributions
+        J: 1000       # Limit number of samples
+        sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
+
+    - name: rejection
+      type: sampling_methods.CRejectionSampling
+      params:
+        scaling: 1
+        proposal: "'distributions.CMultivariateUniform({\"center\": np.zeros(self.ndims), \"radius\":(self.space_max-self.space_min) / 2})'"
+        kde_bw: 0.01
+
+    - name: HiDaisee_80
+      type: sampling_methods.CHiDaiseeSampling
+      params:
+        target_ess: 0.8
+        n_min: 10
+        tau: .01
+        debug: 0
+
     - name: TP_AISr_ESS80
       type: sampling_methods.CTreePyramidSampling
       params:
@@ -38,37 +31,44 @@ methods:
         kernel: "'haar'"
         ess_target: 0.95
         parallel_samples: 512
-#
-#    - name: mcmc_mh
-#      type: sampling_methods.CMetropolisHastings
-#      params:
-#        n_burnin: 10
-#        n_steps: 1
-#        kde_bw: 0.02
-#        proposal_sigma: 0.05 # Scaling parameter of the spherical gaussian MC proposal distribution
-#
-#    - name: lais
-#      type: sampling_methods.CLayeredAIS
-#      params:
-#        K: 3          # Number of samples per proposal distribution
-#        N: 5          # Number of proposal distributions
-#        J: 1000       # Limit number of samples
-#        L: 10         # Number of MCMC moves during the proposal adaptation
-#        sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
-#        mh_sigma: 0.005  # Scaling parameter of the mcmc proposal distributions moment update
-#
-#    - name: dm_ais
-#      type: sampling_methods.CDeterministicMixtureAIS
-#      params:
-#        K: 10         # Number of samples per proposal distribution
-#        N: 2          # Number of proposal distributions
-#        J: 1000       # Limit number of samples
-#        sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
-#
-#    - name: nested
-#      type: sampling_methods.CNestedSampling
-#      params:
-#        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
-#        N: 2          # Number of proposal distributions
-#        kde_bw: 0.01
-#
+
+    - name: mcmc_mh
+      type: sampling_methods.CMetropolisHastings
+      params:
+        n_burnin: 10
+        n_steps: 1
+        kde_bw: 0.02
+        proposal_sigma: 0.05 # Scaling parameter of the spherical gaussian MC proposal distribution
+
+    - name: lais
+      type: sampling_methods.CLayeredAIS
+      params:
+        K: 3          # Number of samples per proposal distribution
+        N: 5          # Number of proposal distributions
+        J: 1000       # Limit number of samples
+        L: 10         # Number of MCMC moves during the proposal adaptation
+        sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
+        mh_sigma: 0.005  # Scaling parameter of the mcmc proposal distributions moment update
+
+    - name: dm_ais
+      type: sampling_methods.CDeterministicMixtureAIS
+      params:
+        K: 10         # Number of samples per proposal distribution
+        N: 2          # Number of proposal distributions
+        J: 1000       # Limit number of samples
+        sigma: 0.01   # Scaling parameter of the spherical gaussian proposal distributions
+
+    - name: multi_nested
+      type: sampling_methods.CMultiNestedSampling
+      params:
+        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
+        N: 2          # Number of proposal distributions
+        kde_bw: 0.01
+
+    - name: nested
+      type: sampling_methods.CNestedSampling
+      params:
+        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
+        N: 2          # Number of proposal distributions
+        kde_bw: 0.01
+
