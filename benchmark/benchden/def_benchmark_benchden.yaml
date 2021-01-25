@@ -43,26 +43,3 @@ targets:
       domain_min: np.array([-10.0])
       domain_max: np.array([10.0])
       tags: [benchden, low_kurtosis, low_skew]
-
-
-# Number of times each experiment is repeated
-nreps: 10
-
-# Random seed used for reproducibility
-rseed: 0
-
-# Metrics computed
-metrics: [NESS, JSD, T]
-
-display:
-    value: true             # Display 1D and 2D density plots on the screen
-    display_path: results/  # If value is true, save the plots as a .png in the provided path
-
-    animation: {value: true,                    # Compile the sequence of visualized sampling steps into an animation
-                fps: 1,                         # Frames per second used for the animation
-                animation_path: results/anim/}  # If value is true, save the plots as a .png in the provided path
-
-output:
-    file: results.txt
-    make_plots: true
-    plots_path: plot_results/
