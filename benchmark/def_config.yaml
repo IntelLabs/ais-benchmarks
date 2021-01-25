@@ -1,11 +1,11 @@
 # Number of times each experiment is repeated
-nreps: 3
+nreps: 10
 
 # Random seed used for reproducibility. Set to -1 to avoid setting the random seed.
-rseed: -1
+rseed: 0
 
 # Metrics computed
-metrics: [KLD, JSD, MEM, T]
+metrics: [KLD, JSD, MEM, T, EVMSE]
 
 # Debug mode config and debug display
 debug: {algo: false,                         # Debug mode argument passed to algorithms: [true, false]
