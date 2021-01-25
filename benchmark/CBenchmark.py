@@ -450,7 +450,8 @@ class CBenchmark(object):
                     (len(samples_acc)/max_samples)*100, h, m, s)
 
                 text_display += " | ".join(["%s: %7.5f" % (m.name, m.value) for m in metrics_eval])
-                print(text_display, end="\r", flush=True)
+                # print(text_display, end="\r", flush=True)
+                print(text_display)
 
                 # Initialize metrics before running the evaluated code
                 [m.pre() for m in metrics_eval]
