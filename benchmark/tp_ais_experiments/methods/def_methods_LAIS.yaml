@@ -1,0 +1,11 @@
+# Define the methods to be evaluated and its parameter configuration
+methods:
+    - name: lais
+      type: sampling_methods.CLayeredAIS
+      params:
+        K: 3          # Number of samples per proposal distribution
+        N: 5          # Number of proposal distributions
+        J: 1000       # Limit number of samples
+        L: 10         # Number of MCMC moves during the proposal adaptation
+        sigma: 0.05   # Scaling parameter of the spherical gaussian proposal distributions
+        mh_sigma: 0.01  # Scaling parameter of the mcmc proposal distributions moment update
