@@ -3,13 +3,9 @@ targets:
     - name: normal
       type: distributions.CGaussianMixtureModel
       params: { means: [[ 0.54992115, 3.08838697, 2.38963784,-0.79612206,-3.907443  ]],
-    sigmas: [[0.15814429,0.18852918,0.28064028,0.26614025,0.26223548]],
-    weights: [1.],
-    support: [[-8.,-8.,-8.,-8.,-8.],
- [ 8., 8., 8., 8., 8.]]}
-      space_size: 8.0
+                sigmas: [[0.15814429,0.18852918,0.28064028,0.26614025,0.26223548]],
+                weights: [1.],
+                support: [[-1., 1.,-1.,-4.,-7.], [ 2., 5., 6., 4., 0.]]}
       batch_size: 2048
       nsamples: 1000000
       nsamples_eval: 5000
-      domain_min: np.array([-8.,-8.,-8.,-8.,-8.])
-      domain_max: np.array([8.,8.,8.,8.,8.])
