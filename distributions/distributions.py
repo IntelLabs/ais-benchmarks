@@ -275,6 +275,19 @@ class CDistribution(metaclass=ABCMeta):
             time.sleep(1e-6)
         raise TimeoutError("CDistribution: wait_for_ready timed out.")
 
+    def to_dict(self, name=None, batch_size=32, nsamples=1000, nsamples_eval=2000):
+        dist_yaml = dict()
+        dist_yaml["name"] = name if name is not None else self.type
+        dist_yaml["type"] = "distributions." + self.__class__.__name__
+        dist_yaml["batch_size"] = batch_size
+        dist_yaml["nsamples"] = nsamples
+        dist_yaml["nsamples_eval"] = nsamples_eval
+        dist_yaml["params"] = dict()
+        dist_yaml["params"]["family"] = self.family
+        dist_yaml["params"]["dims"] = self.dims
+        dist_yaml["params"]["support"] = [v.tolist() for v in self.support_vals]
+        return dist_yaml
+
 
 class CKernel:
     def __init__(self, loc, bw, func):

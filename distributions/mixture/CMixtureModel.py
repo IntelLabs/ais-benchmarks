@@ -65,8 +65,11 @@ class CMixtureModel:
     def sample(self, n_samples=1):
         res = np.array([])
         for _ in range(n_samples):
-            idx = np.argmax(np.random.multinomial(1, self.weights))  # Select the sampling proposal
+            # Select the sampling proposal
+            idx = np.argmax(np.random.multinomial(1, self.weights))
             q = self.models[idx]
-            x = q.sample(1)  # Sample from the sampling proposal
+
+            # Sample from the sampling proposal
+            x = q.sample(1)
             res = np.concatenate((res, x)) if res.size else x
         return res
