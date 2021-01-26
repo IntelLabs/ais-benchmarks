@@ -41,11 +41,21 @@ def generateRandomGMM(space_min, space_max, num_gaussians, sigma_min=(0.04, 0.04
     covs = []
 
     for _ in range(num_gaussians):
-        mu = np.random.uniform(space_min, space_max)
         sigma = np.random.uniform(sigma_min, sigma_max)
+        mu = np.random.uniform(space_min + 5*sigma, space_max - 5*sigma)
         means.append(mu)
         covs.append(sigma)
-    gmm = CGaussianMixtureModel(means, covs)
+
+    weights = np.random.rand(num_gaussians)
+    weights /= np.sum(weights)
+
+    # Adjust the support to the randomly generated distribution.
+    lims_low = np.array([mean - 5 * cov for mean,cov in zip(means, covs)])
+    lims_high = np.array([mean + 5 * cov for mean,cov in zip(means, covs)])
+    support_min = np.min(np.array(lims_low), axis=0)
+    support_max = np.max(np.array(lims_high), axis=0)
+
+    gmm = CGaussianMixtureModel({"means": means, "sigmas": covs, "weights": weights, "support": [support_min, support_max]})
     return gmm
 
 
@@ -53,7 +63,9 @@ def generateEggBoxGMM(space_min, space_max, delta, sigma):
     [means, dim, shape] = make_grid(space_min, space_max, delta)
     covs = np.array(np.ones_like(means) * sigma)
 
-    gmm = CGaussianMixtureModel(means, covs)
+    gmm = CGaussianMixtureModel({"means": means, "sigmas": covs,
+                                 "weights": np.ones(len(means)) / len(means),
+                                 "support": [space_min - 5 * sigma, space_max + 5 * sigma]})
     return gmm
 
 
