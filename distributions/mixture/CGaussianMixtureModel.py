@@ -54,6 +54,12 @@ class CGaussianMixtureModel(CDistribution):
     def integral(self, a, b, nsamples=None):
         raise NotImplementedError
 
+    def to_dict(self, name=None, batch_size=32, nsamples=1000, nsamples_eval=2000):
+        res = super(CGaussianMixtureModel, self).to_dict(name, batch_size, nsamples, nsamples_eval)
+        res["params"]["means"] = [v.tolist()for v in self.means]
+        res["params"]["sigmas"] = [v.tolist() for v in self.sigmas]
+        res["params"]["weights"] = self.weights.tolist()
+        return res
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
