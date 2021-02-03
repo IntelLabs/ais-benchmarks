@@ -108,20 +108,20 @@ class CKLDivergence(CDivergence):
 
     @staticmethod
     def compute_from_probs(p_samples_prob, q_samples_prob):
-        # Normalize sample probabilities
-        if np.sum(p_samples_prob) > 0:
-            p_samples_prob = p_samples_prob / np.sum(p_samples_prob)
-        if np.sum(q_samples_prob) > 0:
-            q_samples_prob = q_samples_prob / np.sum(q_samples_prob)
-        else:
-            return np.inf
-
         # Filter zero prob values on any of the sides
         inliers = np.logical_and(p_samples_prob > 0, q_samples_prob > 0)
         num_inliers = len(p_samples_prob[inliers])
         inlier_ratio = num_inliers / len(p_samples_prob)
         if  inlier_ratio < .1:
             print("WARNING. JSD compute. Less than 10% inliers")
+
+        # Normalize sample probabilities
+        if np.sum(p_samples_prob[inliers]) > 0:
+            p_samples_prob[inliers] = p_samples_prob[inliers] / np.sum(p_samples_prob[inliers])
+        if np.sum(q_samples_prob[inliers]) > 0:
+            q_samples_prob[inliers] = q_samples_prob[inliers] / np.sum(q_samples_prob[inliers])
+        else:
+            return np.inf
 
         # Compute discrete KL for each sample
         res = p_samples_prob[inliers] * np.log(p_samples_prob[inliers] / q_samples_prob[inliers])
@@ -162,20 +162,20 @@ class CJSDivergence(CDivergence):
         p_samples_prob = p.prob(samples)
         q_samples_prob = q.prob(samples)
 
-        # Normalize sample probabilities
-        if np.sum(p_samples_prob) > 0:
-            p_samples_prob = p_samples_prob / np.sum(p_samples_prob)
-        if np.sum(q_samples_prob) > 0:
-            q_samples_prob = q_samples_prob / np.sum(q_samples_prob)
-        else:
-            return np.inf
-
         # Filter zero prob values on any of the sides
         inliers = np.logical_and(p_samples_prob > 0, q_samples_prob > 0)
         num_inliers = len(p_samples_prob[inliers])
-        inlier_ratio = num_inliers / len(p_samples_prob)
+        inlier_ratio = num_inliers / float(len(p_samples_prob))
         if  inlier_ratio < .1:
-            print("WARNING. JSD compute. Less than 10% inliers")
+            print("WARNING. JSD compute. Only %6.3f%% inliers" % (inlier_ratio*100))
+
+        # Normalize sample probabilities
+        if np.sum(p_samples_prob[inliers]) > 0:
+            p_samples_prob[inliers] = p_samples_prob[inliers] / np.sum(p_samples_prob[inliers])
+        if np.sum(q_samples_prob[inliers]) > 0:
+            q_samples_prob[inliers] = q_samples_prob[inliers] / np.sum(q_samples_prob[inliers])
+        else:
+            return np.inf
 
         m_samples_prob = 0.5 * p_samples_prob[inliers] + 0.5 * q_samples_prob[inliers]
         if np.sum(m_samples_prob) > 0:
