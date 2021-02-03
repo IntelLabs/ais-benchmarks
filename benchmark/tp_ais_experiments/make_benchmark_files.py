@@ -2,13 +2,16 @@ from utils.misc import generateEggBoxGMM
 from utils.misc import generateRandomGMM
 import yaml
 
+
 def make_normal(mu_min, mu_max, sigma_min, sigma_max):
     return make_gmm(mu_min, mu_max, sigma_min, sigma_max, n_modes=1)
+
 
 def make_egg(mu_min, mu_max, sigma, n_modes):
     delta = (mu_max - mu_min) / n_modes
     dist = generateEggBoxGMM(mu_min, mu_max, delta, sigma)
     return dist
+
 
 def make_gmm(mu_min, mu_max, sigma_min, sigma_max, n_modes):
     support_min = mu_min - 5 * sigma_max
@@ -17,7 +20,7 @@ def make_gmm(mu_min, mu_max, sigma_min, sigma_max, n_modes):
     return dist
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import numpy as np
 
     name = "normal"
