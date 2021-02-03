@@ -488,11 +488,12 @@ class CBenchmark(object):
                         pts.append(ax.scatter(samples_acc[:, 0], samples_acc[:, 1], label="samples", c="r", marker=".",
                                               alpha=0.4))
                         plt.pause(0.01)
-                    plt.legend(framealpha=0.5, loc="best")
-                    if debug_plot_path is not None:
-                        print("\nSave fig: " + debug_plot_path + "%s_%s_%dD_run%d_it%d.png" % (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter))
-                        plt.savefig(debug_plot_path + "%s_%s_%dD_%d_run%d_it.png" %
-                                    (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter), bbox_inches='tight')
+                    if ndims <= 2:
+                        plt.legend(framealpha=0.5, loc="best")
+                        if debug_plot_path is not None:
+                            print("\nSave fig: " + debug_plot_path + "%s_%s_%dD_run%d_it%d.png" % (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter))
+                            plt.savefig(debug_plot_path + "%s_%s_%dD_%d_run%d_it.png" %
+                                        (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter), bbox_inches='tight')
 
                 # Compute metrics
                 results = dict()
