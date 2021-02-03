@@ -15,6 +15,8 @@ import pathlib
 import matplotlib.pyplot as plt
 import yaml
 from benchmark.CBenchmark import CBenchmark
+from cycler import cycler
+plt.rcParams['axes.prop_cycle'] = cycler(color='bgrcmyk')
 
 
 def export_legend(legend, filename="legend.png"):
