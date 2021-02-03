@@ -2,7 +2,7 @@
 targets:
     - name: banana2D
       type: distributions.rare.banana2d.Banana2D
-      params: {}
+      params: {dims: 2}
       batch_size: 32
       nsamples: 12000
       nsamples_eval: 2000
