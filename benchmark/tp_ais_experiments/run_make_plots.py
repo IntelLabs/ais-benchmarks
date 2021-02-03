@@ -33,7 +33,8 @@ c_file = def_path + "def_config.yaml"
 
 # Get metrics to process
 with open(c_file, 'r') as f:
-    metrics = yaml.load(f)["metrics"]
+    metrics = yaml.load(f, Loader=yaml.SafeLoader)["metrics"]
+print("Using %d metrics: " % len(metrics), metrics)
 
 # Read results file
 data = pd.read_table(r_file, sep=" ", index_col=False, skipinitialspace=True)
@@ -41,8 +42,8 @@ data = pd.read_table(r_file, sep=" ", index_col=False, skipinitialspace=True)
 # Obtain methods within the results file
 method_names = data["method"].unique()
 print("Found %d methods: " % len(method_names), method_names)
-method_names = ["lais", "mcmc_mh", "dm_pmc", "m_pmc", "TP_AISr_ESS90", "HiDaisee_90", "multi_nested"]
-method_labels = ["lais", "mcmc_mh", "dm_pmc", "m_pmc", "TP_AISr_ESS90", "HiDaisee_90", "multi_nested"]
+method_names = ["TP_AISr_ESS95", "m_pmc", "mcmc_mh", "dm_pmc",  "lais",   "multi_nested", "HiDaisee_90"]
+method_labels = ["TP-AIS (ours)", "M-PMC[3]", "MCMC-MH[1]", "DM-PMC[4]", "LAIS[2]", "multi-nest[5]", "HiDaisee[6]"]
 
 # Obtain target dists within the results file
 targets = data[["target_d", "dims"]].drop_duplicates()
@@ -51,6 +52,12 @@ print("with dimensions : ", targets["dims"].to_list())
 
 legend_ready = False
 
+metric_labels = {"MEM": "Memory (MB)",
+                 "T": "Time (s)",
+                 "KLD": "Kullback-Leibler Divergence",
+                 "JSD": "Jensen-Shannon Divergence",
+                 "EVMSE": "Expected Value Mean Squared Error"}
+
 for metric in metrics:
     for dims, dist in zip(targets["dims"].to_list(), targets["target_d"].to_list()):
         # Check if data is valid
@@ -58,18 +65,21 @@ for metric in metrics:
         indices_d = data["dims"] == dims
         vals = data[(indices_t & indices_d)]
 
-        # Get data limits
+        # Get data limits filtering inf values
         ymin = vals[metric].min()
         ymax = vals[metric].replace([np.inf, -np.inf], np.nan).max()
 
-        CBenchmark.make_2d_plot(data, "output_samples", metric, method_names,
+        CBenchmark.make_2d_plot(data, "output_samples", metric, method_names, labels=method_labels,
                                 selector=["dims", "target_d"], selector_val=[dims, dist])
         # plt.legend(mode="none", loc=(1.01, 0), ncol=len(method_names), prop={'size': 10}, numpoints=1)
         plt.gca().set_title("Target distribution: %dD %s" % (dims, dist))
-        plt.gca().set_ylabel(metric)
+        plt.gca().set_ylabel(metric_labels[metric])
         plt.gca().set_xlabel("# samples")
-        plt.yscale("log",  nonposy='clip')
-        # ymin, ymax = plt.gca().get_ylim()
+        if metric != "MEM":
+            plt.yscale("log",  nonposy='clip')
+        else:
+            plt.yscale("linear")
+        _, ymax = plt.gca().get_ylim()
         plt.gca().set_ylim(max(ymin, 1e-6), ymax)
         plt.savefig(plots_subdir + "%dD_%s_%s.pdf" % (dims, dist, metric), bbox_inches='tight', dpi=700)
 
