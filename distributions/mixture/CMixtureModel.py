@@ -14,10 +14,11 @@ class CMixtureModel:
         assert len(self.models) == len(weights), "len(models)=%d , len(weights)=%d" % (len(self.models), len(weights))
 
         # Address NaN or negative
-        indices = np.logical_or(np.isnan(weights), weights <= 0)
-        if np.any(indices):
-            print("CMixtureModel. WARNING! There are NaN, negative or zero weights. Setting their weights to zero", file=sys.stderr)
-            weights[indices] = 0
+        nan_indices = np.logical_or(np.isnan(weights), weights <= 0)
+        if np.any(nan_indices):
+            print("CMixtureModel. WARNING! There are NaN, negative or zero weights. Those models won't be used",
+                  file=sys.stderr)
+            weights[nan_indices] = 0
 
         # Make sure weights are normalized
         if weights.sum() <= 0:
