@@ -582,7 +582,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
     def draw(self, ax):
         res = []
         if self.ndims == 1:
-            res = plot_tpyramid_area(ax, self.T, label="TP-AIS $w(x) = \pi(x)/q(x)$")
+            # res = plot_tpyramid_area(ax, self.T, label="TP-AIS $w(x) = \pi(x)/q(x)$")
             res.extend(plot_pdf(ax, self, self.space_min, self.space_max, resolution=0.01, color="r",
                                 options="-g", alpha=1.0, label="TP-AIS $q(x)$"))
 
