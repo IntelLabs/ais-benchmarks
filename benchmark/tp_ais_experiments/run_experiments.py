@@ -44,7 +44,9 @@ print("Added %d jobs with %d methods and %d benchmarks" % (len(jobs_cmd), len(me
 active_jobs = [None] * n_jobs
 active_jobs_flag = [False] * n_jobs
 stream_readers = [False] * n_jobs
-while len(jobs_cmd) > 0:
+init = True
+while any(active_jobs_flag) or init:
+    init = False
     for num in range(n_jobs):
         if not active_jobs_flag[num]:
             job_cmd = jobs_cmd.pop()
