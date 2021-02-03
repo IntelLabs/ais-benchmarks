@@ -20,8 +20,8 @@ from utils.misc import CNonBlockingStreamReader
 def_path = str(pathlib.Path(__file__).parent.absolute()) + os.sep
 
 
-n_jobs = 4
-interpreter = "python3.7"
+n_jobs = 90
+interpreter = "python3.6"
 run_bench = def_path + ".." + os.sep + "run_benchmark.py"
 benchmarks_subdir = def_path + "benchmarks" + os.sep
 methods_subdir = def_path + "methods" + os.sep
@@ -44,14 +44,16 @@ print("Added %d jobs with %d methods and %d benchmarks" % (len(jobs_cmd), len(me
 active_jobs = [None] * n_jobs
 active_jobs_flag = [False] * n_jobs
 stream_readers = [False] * n_jobs
-while len(jobs_cmd) > 0:
+init = True
+while any(active_jobs_flag) > 0 or init:
     for num in range(n_jobs):
         if not active_jobs_flag[num]:
-            job_cmd = jobs_cmd.pop()
-            print("JOB #%d START: %s" % (num, job_cmd))
-            active_jobs[num] = subprocess.Popen(job_cmd.split(" "), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-            active_jobs_flag[num] = True
-            stream_readers[num] = CNonBlockingStreamReader(active_jobs[num].stdout)
+            if len(jobs_cmd)>0:
+                job_cmd = jobs_cmd.pop()
+                print("JOB #%d START: %s" % (num, job_cmd))
+                active_jobs[num] = subprocess.Popen(job_cmd.split(" "), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                active_jobs_flag[num] = True
+                stream_readers[num] = CNonBlockingStreamReader(active_jobs[num].stdout)
 
     for num, job in enumerate(active_jobs):
         if active_jobs_flag[num] and job.poll() is not None:
