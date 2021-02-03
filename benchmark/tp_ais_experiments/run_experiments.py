@@ -45,7 +45,8 @@ active_jobs = [None] * n_jobs
 active_jobs_flag = [False] * n_jobs
 stream_readers = [False] * n_jobs
 init = True
-while any(active_jobs_flag) > 0 or init:
+while any(active_jobs_flag) or init:
+    init = False
     for num in range(n_jobs):
         if not active_jobs_flag[num]:
             if len(jobs_cmd)>0:
