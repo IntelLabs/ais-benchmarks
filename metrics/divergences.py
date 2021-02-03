@@ -118,6 +118,10 @@ class CKLDivergence(CDivergence):
 
         # Filter zero prob values on any of the sides
         inliers = np.logical_and(p_samples_prob > 0, q_samples_prob > 0)
+        num_inliers = len(p_samples_prob[inliers])
+        inlier_ratio = num_inliers / len(p_samples_prob)
+        if  inlier_ratio < .1:
+            print("WARNING. JSD compute. Less than 10% inliers")
 
         # Compute discrete KL for each sample
         res = p_samples_prob[inliers] * np.log(p_samples_prob[inliers] / q_samples_prob[inliers])
@@ -128,6 +132,11 @@ class CKLDivergence(CDivergence):
     def compute_from_log_probs(p_samples_logprob, q_samples_logprob):
         # Filter zero prob values on any of the sides
         inliers = np.logical_and(p_samples_logprob > -np.inf, q_samples_logprob > -np.inf)
+        num_inliers = len(p_samples_logprob[inliers])
+        inlier_ratio = num_inliers / len(p_samples_logprob)
+
+        if  inlier_ratio < .1:
+            print("WARNING. KLDD compute. Less than 10% inliers")
 
         # Normalize sample probabilities in log space
         p_samples_logprob[inliers] -= np.logaddexp.reduce(p_samples_logprob[inliers])
@@ -146,6 +155,7 @@ class CJSDivergence(CDivergence):
         self.type = "divergence"
         self.is_symmetric = True
         self.disjoint_support = False
+        self.log2 = np.log(2)
 
     def compute_from_samples(self, p, q, samples):
         # Obtain sample probabilities
@@ -162,7 +172,10 @@ class CJSDivergence(CDivergence):
 
         # Filter zero prob values on any of the sides
         inliers = np.logical_and(p_samples_prob > 0, q_samples_prob > 0)
-
+        num_inliers = len(p_samples_prob[inliers])
+        inlier_ratio = num_inliers / len(p_samples_prob)
+        if  inlier_ratio < .1:
+            print("WARNING. JSD compute. Less than 10% inliers")
 
         m_samples_prob = 0.5 * p_samples_prob[inliers] + 0.5 * q_samples_prob[inliers]
         if np.sum(m_samples_prob) > 0:
@@ -171,5 +184,5 @@ class CJSDivergence(CDivergence):
         res = 0.5 * p_samples_prob[inliers] * np.log(p_samples_prob[inliers] / m_samples_prob) + \
               0.5 * q_samples_prob[inliers] * np.log(q_samples_prob[inliers] / m_samples_prob)
 
-        self.value = res.sum()
-        return res.sum()
+        self.value = res.sum() / self.log2
+        return res.sum() / self.log2
