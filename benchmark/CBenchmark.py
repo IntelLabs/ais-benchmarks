@@ -287,7 +287,7 @@ class CBenchmark(object):
             # y_err = np.sqrt(y_data.std())
             y_avg = y_data.mean().rolling(window=10).mean()
             markevery = max(1, int(len(x_data.values) / mark_points))
-            p = ax.plot(x_data.values, y_avg.values, label=m_lbl, marker=markers[m_id], markevery=markevery)
+            p = ax.plot(x_data.values, y_avg.values, label=m_lbl, marker=markers[m_id % len(markers)], markevery=markevery)
             color = p[-1].get_color()
             plt.fill_between(x_data.values, y_avg - y_err, y_avg + y_err, alpha=0.1, edgecolor=color, facecolor=color)
 
@@ -295,7 +295,8 @@ class CBenchmark(object):
         ax.set_ylabel(yaxis)
         ymin, ymax = ax.get_ylim()
         ax.set_ylim(0, ymax * 1.1)
-        ax.legend(mode="expand", loc=9, ncol=3, prop={'size': 12}, numpoints=1)
+        # ax.legend(mode="expand", loc=(1,0), ncol=1, prop={'size': 10}, numpoints=1)
+        # ax.legend(mode="none", loc=(1,0), ncol=1, prop={'size': 10}, numpoints=1)
 
     @staticmethod
     def write_results(results, method, target, nsamples, file):
@@ -442,12 +443,12 @@ class CBenchmark(object):
             while len(samples_acc) < max_samples:
 
                 # Obtain experiment execution runtime
-                h, m, s = time_to_hms(time.time() - t_start)
+                hr, mn, sec = time_to_hms(time.time() - t_start)
 
                 # Display partial sampling experiment statistics
                 text_display = "%02d/%02d | %s | %s | %dD | #s: %.1fk | %5.1f%% | t: %02dh %02dm %4.1fs | " % (
                     nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
-                    (len(samples_acc)/max_samples)*100, h, m, s)
+                    (len(samples_acc)/max_samples)*100, hr, mn, sec)
 
                 text_display += " | ".join(["%s: %7.5f" % (m.name, m.value) for m in metrics_eval])
                 # print(text_display, end="\r", flush=True)
@@ -472,14 +473,15 @@ class CBenchmark(object):
                 # TODO: Cleanup the debug viz code
                 # Display visualization of sampling procedure
                 if debug:
-                    plt.title(text_display)
+                    # plt.title(text_display)
+                    plt.title(sampling_method.name)
                     # Remove previous points
                     for element in pts:
                         element.remove()
                     pts.clear()
                     if ndims == 1:
                         pts.extend(sampling_method.draw(ax))
-                        pts.extend(ax.plot(samples_acc, np.ones(len(samples_acc)) * 0.1, "g|", label="samples"))
+                        # pts.extend(ax.plot(samples_acc, np.ones(len(samples_acc)) * 0.1, "g|", label="samples"))
                         plt.pause(0.01)
                     if ndims == 2:
                         pts.extend(sampling_method.draw(ax))
@@ -490,7 +492,7 @@ class CBenchmark(object):
                     if debug_plot_path is not None:
                         print("\nSave fig: " + debug_plot_path + "%s_%s_%dD_run%d_it%d.png" % (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter))
                         plt.savefig(debug_plot_path + "%s_%s_%dD_%d_run%d_it.png" %
-                                    (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter))
+                                    (sampling_method.name, target_dist.name, target_dist.dims, nexp, niter), bbox_inches='tight')
 
                 # Compute metrics
                 results = dict()

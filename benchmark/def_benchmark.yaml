@@ -2,9 +2,9 @@
 targets:
     - name: gmm
       type: distributions.CGaussianMixtureModel
-      params: {means: [[1.5], [-4.2]],
-               sigmas: [[0.2], [0.05]],  # WARNING!! Notice the double bracket when defining the cov
-               weights:[0.5, 0.5],
+      params: {means: [[1.5], [-4.2], [0.01], [7.5]],
+               sigmas: [[0.4], [0.05], [0.003], [0.003]],  # WARNING!! Notice the double bracket when defining the cov
+               weights:[0.4, 0.4, 0.1, 0.1],
                support:[[-10], [10]]}
       batch_size: 2
       nsamples: 1000
