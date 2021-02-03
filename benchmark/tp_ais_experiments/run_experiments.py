@@ -43,7 +43,9 @@ for m_file in method_files:
 print("Added %d jobs with %d methods and %d benchmarks" % (len(jobs_cmd), len(method_files), len(benchmark_files)))
 active_jobs = [None] * n_jobs
 active_jobs_flag = [False] * n_jobs
+active_jobs_cmd = [""] * n_jobs
 stream_readers = [False] * n_jobs
+finished_jobs = list()
 init = True
 while any(active_jobs_flag) or init:
     init = False
@@ -55,16 +57,22 @@ while any(active_jobs_flag) or init:
                 active_jobs[num] = subprocess.Popen(job_cmd.split(" "), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
                 active_jobs_flag[num] = True
                 stream_readers[num] = CNonBlockingStreamReader(active_jobs[num].stdout)
+                active_jobs_cmd[num] = job_cmd
 
     for num, job in enumerate(active_jobs):
         if active_jobs_flag[num] and job.poll() is not None:
             print("JOB #%d FINISHED: %d | %s" % (num, job.poll(), str(job)))
             active_jobs_flag[num] = False
+            finished_jobs.append(active_jobs_cmd[num])
 
         if active_jobs_flag[num]:
             out = stream_readers[num].read_last_and_clear()
             if out != "":
                 print("JOB #%d: %s" % (num, out))
 
-    print("Running %d jobs. Queued: %d" % (len(active_jobs), len(jobs_cmd)))
+    print("Running %d jobs. Queued: %d. Done: %d" % (len(active_jobs), len(jobs_cmd), len(finished_jobs)))
     time.sleep(1)
+
+print("JOB RUNNING COMPLETE. List:")
+for cmd in finished_jobs:
+    print(" - ", cmd)
