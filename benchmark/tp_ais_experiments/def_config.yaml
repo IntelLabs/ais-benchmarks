@@ -5,7 +5,7 @@ nreps: 10
 rseed: 0
 
 # Metrics computed
-metrics: [KLD, JSD, MEM, T, EVMSE]
+metrics: [JSD, MEM, T]
 
 # Debug mode config and debug display
 debug: {algo: false,                         # Debug mode argument passed to algorithms: [true, false]
