@@ -5,6 +5,6 @@ methods:
       params:
         n_burnin: 10
         n_steps: 1
-        kde_bw: 0.02
-        proposal_sigma: 0.05 # Scaling parameter of the spherical gaussian MC proposal distribution
+        kde_bw: 0.03
+        proposal_sigma: 1.0 # Scaling parameter of the spherical gaussian MC proposal distribution
 
