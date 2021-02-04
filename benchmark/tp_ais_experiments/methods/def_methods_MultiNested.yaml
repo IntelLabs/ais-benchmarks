@@ -1,8 +1,0 @@
-# Define the methods to be evaluated and its parameter configuration
-methods:
-    - name: multi_nested
-      type: sampling_methods.CMultiNestedSampling
-      params:
-        proposal: "'distributions.CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
-        N: 5          # Number of proposal distributions
-        kde_bw: 0.01
