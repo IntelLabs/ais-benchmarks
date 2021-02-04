@@ -17,11 +17,12 @@ import pathlib
 import subprocess
 import time
 from utils.misc import CNonBlockingStreamReader
+from utils.misc import time_to_hms
 def_path = str(pathlib.Path(__file__).parent.absolute()) + os.sep
 
 
-n_jobs = 90
-interpreter = "python3.6"
+n_jobs = 6
+interpreter = "python3.7"
 run_bench = def_path + ".." + os.sep + "run_benchmark.py"
 benchmarks_subdir = def_path + "benchmarks" + os.sep
 methods_subdir = def_path + "methods" + os.sep
@@ -47,13 +48,15 @@ active_jobs_cmd = [""] * n_jobs
 stream_readers = [False] * n_jobs
 finished_jobs = list()
 init = True
+
+t_ini = time.time()
 while any(active_jobs_flag) or init:
     init = False
     for num in range(n_jobs):
         if not active_jobs_flag[num]:
             if len(jobs_cmd)>0:
                 job_cmd = jobs_cmd.pop()
-                print("JOB #%d START: %s" % (num, job_cmd))
+                print("JOB #%03d START: %s" % (num, job_cmd))
                 active_jobs[num] = subprocess.Popen(job_cmd.split(" "), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
                 active_jobs_flag[num] = True
                 stream_readers[num] = CNonBlockingStreamReader(active_jobs[num].stdout)
@@ -61,18 +64,32 @@ while any(active_jobs_flag) or init:
 
     for num, job in enumerate(active_jobs):
         if active_jobs_flag[num] and job.poll() is not None:
-            print("JOB #%d FINISHED: %d | %s" % (num, job.poll(), str(job)))
+            print("JOB #%03d FINISHED: %d | %s" % (num, job.poll(), str(job)))
             active_jobs_flag[num] = False
             finished_jobs.append(active_jobs_cmd[num])
 
         if active_jobs_flag[num]:
             out = stream_readers[num].read_last_and_clear()
             if out != "":
-                print("JOB #%d: %s" % (num, out))
+                print("JOB #%03d: %s" % (num, out))
 
-    print("Running %d jobs. Queued: %d. Done: %d" % (len(active_jobs), len(jobs_cmd), len(finished_jobs)))
+    # Obtain experiment execution runtime
+    hr, mn, sec = time_to_hms(time.time() - t_ini)
+
+    # Count running jobs
+    njobs_running = 0
+    for job_running in active_jobs_flag:
+        if job_running:
+            njobs_running += 1
+
+    print("Running %d jobs. Queued: %d. Done: %d. Elapsed: %02d:%02d:%5.3f" %
+          (njobs_running, len(jobs_cmd), len(finished_jobs), hr, mn, sec))
+
     time.sleep(1)
 
 print("JOB RUNNING COMPLETE. List:")
 for cmd in finished_jobs:
     print(" - ", cmd)
+
+hr, mn, sec = time_to_hms(time.time() - t_ini)
+print("TOOK: %d:%d:%5.3f." % (hr, mn, sec))
