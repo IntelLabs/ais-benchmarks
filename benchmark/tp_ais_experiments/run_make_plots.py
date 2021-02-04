@@ -75,7 +75,7 @@ for metric in metrics:
         plt.gca().set_title("Target distribution: %dD %s" % (dims, dist))
         plt.gca().set_ylabel(metric_labels[metric])
         plt.gca().set_xlabel("# samples")
-        if metric != "MEM":
+        if metric != "MEM" and metric != "JSD":
             plt.yscale("log",  nonposy='clip')
         else:
             plt.yscale("linear")
