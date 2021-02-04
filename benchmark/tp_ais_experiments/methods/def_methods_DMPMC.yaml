@@ -6,4 +6,4 @@ methods:
         K: 10         # Number of samples per proposal distribution
         N: 5          # Number of proposal distributions
         J: 1000       # Limit number of samples
-        sigma: 0.05   # Scaling parameter of the spherical gaussian proposal distributions
+        sigma: 0.1   # Scaling parameter of the spherical gaussian proposal distributions

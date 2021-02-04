@@ -5,5 +5,5 @@ methods:
       params:
         scaling: 1
         proposal: "'distributions.CMultivariateUniform({\"center\": np.zeros(self.ndims), \"radius\":(self.space_max-self.space_min) / 2})'"
-        kde_bw: 0.01
+        kde_bw: 0.1
 
