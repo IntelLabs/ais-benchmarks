@@ -446,7 +446,7 @@ class CBenchmark(object):
                 hr, mn, sec = time_to_hms(time.time() - t_start)
 
                 # Display partial sampling experiment statistics
-                text_display = "%02d/%02d | %10s | %6s | %dD | #s: %.1fk | %5.1f%% | t: %02dh %02dm %4.1fs | " % (
+                text_display = "%02d/%02d | %12s | %6s | %dD | #s: %.1fk | %5.1f%% | t: %02dh %02dm %4.1fs | " % (
                     nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc)/1000.0,
                     (len(samples_acc)/max_samples)*100, hr, mn, sec)
 
@@ -517,9 +517,9 @@ class CBenchmark(object):
             h, m, s = time_to_hms(time.time() - t_start)
 
             # Print final experiment statistics
-            text_display = "%02d/%02d | %s | %s | %dD | #s: %.1fk | %5.1f%% | t: %02dh %02dm %4.1fs | " % (
+            text_display = "%02d/%02d | %12s | %6s | %dD | #s: %.1fk | %5.1f%% | t: %02dh %02dm %4.1fs | " % (
                 nexp + 1, n_reps, sampling_method.name, target_dist.name, ndims, len(samples_acc) / 1000.0,
-                (len(samples_acc) / max_samples) * 100, h, m, s)
+                (len(samples_acc) / max_samples) * 100, hr, mn, sec)
 
             text_display += " | ".join(["%s: %7.5f" % (m.name, m.value) for m in metrics_eval])
             print(text_display, end="\n", flush=True)
