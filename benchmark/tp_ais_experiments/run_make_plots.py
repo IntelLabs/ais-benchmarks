@@ -12,12 +12,13 @@ import os
 import pandas as pd
 import numpy as np
 import pathlib
+import matplotlib
 import matplotlib.pyplot as plt
 import yaml
 from benchmark.CBenchmark import CBenchmark
-from cycler import cycler
-plt.rcParams['axes.prop_cycle'] = cycler(color='bgrcmyk')
-
+#from cycler import cycler
+#plt.rcParams['axes.prop_cycle'] = cycler(color='bgrcmyk')
+matplotlib.style.use('default')
 
 def export_legend(legend, filename="legend.png"):
     fig = legend.figure
@@ -43,7 +44,7 @@ data = pd.read_table(r_file, sep=" ", index_col=False, skipinitialspace=True)
 method_names = data["method"].unique()
 print("Found %d methods: " % len(method_names), method_names)
 method_names = ["TP_AISr_ESS95", "m_pmc", "mcmc_mh", "dm_pmc",  "lais",   "multi_nested", "HiDaisee_90"]
-method_labels = ["TP-AIS (ours)", "M-PMC[3]", "MCMC-MH[1]", "DM-PMC[4]", "LAIS[2]", "multi-nest[5]", "HiDaisee[6]"]
+method_labels = ["TP-AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[1]", "LAIS[3]", "multi-nest[27]", "HiDaisee[4]"]
 
 # Obtain target dists within the results file
 targets = data[["target_d", "dims"]].drop_duplicates()
@@ -69,6 +70,14 @@ for metric in metrics:
         ymin = vals[metric].min()
         ymax = vals[metric].replace([np.inf, -np.inf], np.nan).max()
 
+        # TODO: Paper hack. Remove MCMC from memory plots
+        if metric == "MEM":
+            method_names = ["TP_AISr_ESS95", "m_pmc", "m_pmc", "dm_pmc", "lais", "HiDaisee_90"]
+            method_labels = ["TP-AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[1]", "LAIS[3]", "HiDaisee[4]"]
+        else:
+            method_names = ["TP_AISr_ESS95", "m_pmc", "mcmc_mh", "dm_pmc", "lais", "HiDaisee_90"]
+            method_labels = ["TP-AIS (ours)", "M-PMC[2]", "MCMC-MH[8]", "DM-PMC[1]", "LAIS[3]", "HiDaisee[4]"]
+
         CBenchmark.make_2d_plot(data, "output_samples", metric, method_names, labels=method_labels,
                                 selector=["dims", "target_d"], selector_val=[dims, dist])
         # plt.legend(mode="none", loc=(1.01, 0), ncol=len(method_names), prop={'size': 10}, numpoints=1)
@@ -80,6 +89,9 @@ for metric in metrics:
         else:
             plt.yscale("linear")
         _, ymax = plt.gca().get_ylim()
+
+        # TODO: Paper hack. Tune x and y limits to the results available
+        plt.gca().set_xlim(0, min(max(2000*dims, 10**dims), 100000))
         plt.gca().set_ylim(max(ymin, 1e-6), ymax)
         plt.savefig(plots_subdir + "%dD_%s_%s.pdf" % (dims, dist, metric), bbox_inches='tight', dpi=700)
 
