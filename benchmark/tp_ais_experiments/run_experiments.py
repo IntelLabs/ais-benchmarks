@@ -22,7 +22,7 @@ def_path = str(pathlib.Path(__file__).parent.absolute()) + os.sep
 
 
 n_cpus = os.cpu_count()
-n_jobs = 6
+n_jobs = 2
 interpreter = "python3.7"
 run_bench = def_path + ".." + os.sep + "run_benchmark.py"
 benchmarks_subdir = def_path + "benchmarks" + os.sep
@@ -65,7 +65,7 @@ while any(active_jobs_flag) or init:
                 stream_readers[num] = CNonBlockingStreamReader(active_jobs[num].stdout)
                 active_jobs_cmd[num] = job_cmd
                 # Set each process to its own CPU
-                os.sched_setaffinity(active_jobs[num], {num})
+                os.sched_setaffinity(active_jobs[num].pid, {num})
 
     for num, job in enumerate(active_jobs):
         if active_jobs_flag[num] and job.poll() is not None:
