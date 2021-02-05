@@ -21,6 +21,7 @@ from utils.misc import time_to_hms
 def_path = str(pathlib.Path(__file__).parent.absolute()) + os.sep
 
 
+n_cpus = os.cpu_count()
 n_jobs = 6
 interpreter = "python3.7"
 run_bench = def_path + ".." + os.sep + "run_benchmark.py"
@@ -41,6 +42,8 @@ for m_file in method_files:
         jobs_cmd.append(cmd)
         print(cmd)
 
+print("CPUs available: ", os.cpu_count())
+n_jobs = min(n_jobs, n_cpus)
 print("Added %d jobs with %d methods and %d benchmarks" % (len(jobs_cmd), len(method_files), len(benchmark_files)))
 active_jobs = [None] * n_jobs
 active_jobs_flag = [False] * n_jobs
@@ -61,6 +64,8 @@ while any(active_jobs_flag) or init:
                 active_jobs_flag[num] = True
                 stream_readers[num] = CNonBlockingStreamReader(active_jobs[num].stdout)
                 active_jobs_cmd[num] = job_cmd
+                # Set each process to its own CPU
+                os.sched_setaffinity(active_jobs[num], {num})
 
     for num, job in enumerate(active_jobs):
         if active_jobs_flag[num] and job.poll() is not None:
