@@ -2,10 +2,10 @@
 nreps: 10
 
 # Random seed used for reproducibility. Set to -1 to avoid setting the random seed.
-rseed: 0
+rseed: -1
 
 # Metrics computed
-metrics: [JSD, MEM, T]
+metrics: [KLD, JSD, EVMSE, T, MEM]
 
 # Debug mode config and debug display
 debug: {algo: false,                         # Debug mode argument passed to algorithms: [true, false]
