@@ -30,6 +30,8 @@ def make_plot(name, dist):
     elif d == 2:
         plot_pdf2d(plt.gca(), dist, space_min=dist.support_vals[0], space_max=dist.support_vals[1], resolution=0.01,
                    alpha=1)
+    else:
+        return
     plt.savefig("benchmarks/def_benchmark_%s%dD.pdf" % (name, dist.dims), bbox_inches='tight', dpi=700)
     plt.close()
 
@@ -38,7 +40,7 @@ if __name__ == "__main__":
     import numpy as np
 
     name = "normal"
-    for d in range(1, 3):
+    for d in range(1, 7):
         dist = make_normal(mu_min=np.array([-5]*d), mu_max=np.array([5.]*d),
                            sigma_min=np.array([.01]*d), sigma_max=np.array([1]*d))
         with open("benchmarks/def_benchmark_%s%dD.yaml" % (name, dist.dims), "w+") as f:
@@ -48,7 +50,7 @@ if __name__ == "__main__":
         make_plot(name, dist)
 
     name = "gmm"
-    for d in range(1, 3):
+    for d in range(1, 7):
         dist = make_gmm(mu_min=np.array([-5] * d), mu_max=np.array([5.] * d),
                         sigma_min=np.array([.01] * d), sigma_max=np.array([1] * d),
                         n_modes=5)
@@ -59,7 +61,7 @@ if __name__ == "__main__":
         make_plot(name, dist)
 
     name = "egg"
-    for d in range(1, 3):
+    for d in range(1, 7):
         dist = make_egg(mu_min=np.array([-5] * d), mu_max=np.array([5.] * d),
                         sigma=np.array([.1] * d), n_modes=5)
         with open("benchmarks/def_benchmark_%s%dD.yaml" % (name, dist.dims), "w+") as f:
