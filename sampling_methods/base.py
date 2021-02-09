@@ -122,6 +122,7 @@ class CMixtureSamplingMethod(CSamplingMethod):
     def __init__(self, params):
         super(CMixtureSamplingMethod, self).__init__(params)
         self.model = None
+        self.n_samples_kde = params["n_samples_kde"]
 
     def reset(self):
         super(CMixtureSamplingMethod, self).reset()
@@ -146,7 +147,9 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
     def _update_model(self):
         models = []
-        for x in self.samples:
+        indices = np.random.random_integers(0, len(self.samples) - 1, self.n_samples_kde)
+        for idx in indices:
+            x = self.samples[idx]
             cov = np.ones(len(self.space_max)) * self.bw
             if x.shape:
                 model = CMultivariateNormal({"mean": x, "sigma": np.diag(cov),
@@ -156,7 +159,7 @@ class CMixtureSamplingMethod(CSamplingMethod):
                                              "dims": self.ndims,
                                              "support": np.array([np.array([x]) - cov * 6, np.array([x]) + cov * 6])})
             models.append(model)
-        self.model = CMixtureModel(models, np.exp(self.weights))
+        self.model = CMixtureModel(models, np.full(shape=(self.n_samples_kde), fill_value=1/self.n_samples_kde))
 
     def draw(self, ax):
         if len(self.space_max) == 1:
@@ -205,10 +208,25 @@ class CMixtureSamplingMethod(CSamplingMethod):
 
 class CMixtureISSamplingMethod(CMixtureSamplingMethod):
     def __init__(self, params):
+        params["n_samples_kde"] = None
         super(CMixtureISSamplingMethod, self).__init__(params)
 
     def get_NESS(self):
         return self.get_approx_NESS()
+
+    def _update_model(self):
+        models = []
+        for x in self.samples:
+            cov = np.ones(len(self.space_max)) * self.bw
+            if x.shape:
+                model = CMultivariateNormal({"mean": x, "sigma": np.diag(cov),
+                                             "dims": self.ndims, "support": np.array([x - cov * 6, x + cov * 6])})
+            else:
+                model = CMultivariateNormal({"mean": np.array([x]), "sigma": np.diag(cov),
+                                             "dims": self.ndims,
+                                             "support": np.array([np.array([x]) - cov * 6, np.array([x]) + cov * 6])})
+            models.append(model)
+        self.model = CMixtureModel(models, self.weights)
 
 
 def make_grid(space_min, space_max, resolution):
