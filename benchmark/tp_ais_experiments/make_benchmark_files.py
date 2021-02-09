@@ -21,7 +21,8 @@ def make_gmm(mu_min, mu_max, sigma_min, sigma_max, n_modes):
     support_max = mu_max + 5 * sigma_max
     return generateRandomGMM(support_min, support_max, n_modes, sigma_min, sigma_max)
 
-def make_plot(name, dist):
+
+def make_plot(filename, dist):
     # Plot only 1D and 2D dists
     fig = plt.figure()
     if d == 1:
@@ -32,7 +33,7 @@ def make_plot(name, dist):
                    alpha=1)
     else:
         return
-    plt.savefig("benchmarks/def_benchmark_%s%dD.pdf" % (name, dist.dims), bbox_inches='tight', dpi=700)
+    plt.savefig(filename, bbox_inches='tight', dpi=700)
     plt.close()
 
 
@@ -47,7 +48,7 @@ if __name__ == "__main__":
             yaml.dump({"targets": [dist.to_dict(name=name, batch_size=2 ** dist.dims,
                                                 nsamples=min(max(2000 * dist.dims, 10 ** dist.dims), 2e5),
                                                 nsamples_eval=20000)]}, f)
-        make_plot(name, dist)
+        make_plot("benchmarks/def_benchmark_%s%dD.pdf" % (name, dist.dims), dist)
 
     name = "gmm"
     for d in range(1, 7):
@@ -58,7 +59,7 @@ if __name__ == "__main__":
             yaml.dump({"targets": [dist.to_dict(name=name, batch_size=2 ** dist.dims,
                                                 nsamples=min(max(2000 * dist.dims, 10 ** dist.dims), 2e5),
                                                 nsamples_eval=20000)]}, f)
-        make_plot(name, dist)
+        make_plot("benchmarks/def_benchmark_%s%dD.pdf" % (name, dist.dims), dist)
 
     name = "egg"
     for d in range(1, 7):
@@ -68,4 +69,24 @@ if __name__ == "__main__":
             yaml.dump({"targets": [dist.to_dict(name=name, batch_size=2 ** dist.dims,
                                                 nsamples=min(max(2000 * dist.dims, 10 ** dist.dims), 2e5),
                                                 nsamples_eval=20000)]}, f)
-        make_plot(name, dist)
+        make_plot("benchmarks/def_benchmark_%s%dD.pdf" % (name, dist.dims), dist)
+
+    # Make some figures with random distributions
+    for d in range(1, 3):
+        for i in range(0, 3):
+            dist = make_normal(mu_min=np.array([-5]*d), mu_max=np.array([5.]*d),
+                               sigma_min=np.array([.01]*d), sigma_max=np.array([1]*d))
+            filename = "plots/dist_normal%dD_%d.pdf" % (dist.dims, i)
+            make_plot(filename, dist)
+
+            dist = make_gmm(mu_min=np.array([-5] * d), mu_max=np.array([5.] * d),
+                            sigma_min=np.array([.01] * d), sigma_max=np.array([1] * d),
+                            n_modes=5)
+            filename = "plots/dist_gmm%dD_%d.pdf" % (dist.dims, i)
+            make_plot(filename, dist)
+
+        dist = make_egg(mu_min=np.array([-5] * d), mu_max=np.array([5.] * d),
+                        sigma=np.array([.1] * d), n_modes=5)
+        filename = "plots/dist_egg%dD.pdf" % dist.dims
+        make_plot(filename, dist)
+
