@@ -47,7 +47,6 @@ class CBenchmark(object):
         self.generate_plots = False                 # Flag to enable result plot generation
         self.generate_plots_path = "results_plot/"  # Path for the generated result plots. Will generate a .png per combination of (method, target, metric)
         self.plot_dpi = 1600                        # Default dpi resolution for generating plots.
-        self.debug_algo = False                     # Debug flag to pass to the sampling algorithm.
         self.debug_text = True                      # Flag to display sampling progress on the standard output.
         self.debug_plot = False                     # Flag to show a plot with the sampling progress. VERY SLOW!
         self.debug_plot_save = False                # Flag to save each debug plot figure the current state of sampling.
@@ -74,6 +73,7 @@ class CBenchmark(object):
             method_code = "%s(params={%s})" % (method["type"], params_str)
             m = eval(method_code)
             m.name = method["name"]
+            m.debug = method["debug"]
             self.methods.append(m)
 
     def load_config(self, config_file):
@@ -88,7 +88,6 @@ class CBenchmark(object):
         # Collect display configuration
 
         # Collect debug configuration
-        self.debug_algo = bench["debug"]["algo"]
         self.debug_text = bench["debug"]["text"]
         self.debug_plot = bench["debug"]["plot"]["show"]
         self.debug_plot_save = bench["debug"]["plot"]["save"]
@@ -179,7 +178,6 @@ class CBenchmark(object):
                 print("EVALUATING: %s || dims: %d || max samples: %d || target_d: %s || batch: %d" % (
                     sampling_method.name, ndims, max_samples_dim, target_dist.name, batch_size))
 
-                sampling_method.debug = self.debug_algo
                 sampling_method.reset()
                 t_ini = time.time()
                 viz_elems = CBenchmark.evaluate_method(ndims=ndims,
@@ -231,7 +229,6 @@ class CBenchmark(object):
 
         # TODO: Generate latex result tables
         # TODO: Generate the animation
-
 
     def make_plots(self, benchmark_file=None, methods_file=None, config_file=None):
         if benchmark_file is not None:
@@ -481,7 +478,8 @@ class CBenchmark(object):
                     pts.clear()
                     if ndims == 1:
                         pts.extend(sampling_method.draw(ax))
-                        # pts.extend(ax.plot(samples_acc, np.ones(len(samples_acc)) * 0.1, "g|", label="samples"))
+                        # Display samples
+                        pts.extend(ax.plot(samples_acc, np.ones(len(samples_acc)) * 0.05, "r|", label="samples"))
                         plt.pause(0.01)
                     if ndims == 2:
                         pts.extend(sampling_method.draw(ax))
