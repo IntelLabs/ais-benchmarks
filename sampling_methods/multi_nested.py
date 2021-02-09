@@ -74,12 +74,16 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
             - space_min: Space lower boundary
             - space_max: Space upper boundary
             - dims: Number of dimensions
+            - N: number of initial sampled points
+            - converged_radius: Radius of the sampling ellipsoid to consider the algo has converged
         """
         super(self.__class__, self).__init__(params)
         self.range = self.space_max - self.space_min
         self.proposal_dist = eval(params["proposal"])
         self.N = params["N"]
         self.bw = np.array([params["kde_bw"]])
+        self.converged_radius = params["converged_radius"]
+        self.inflate_factor = params["inflate_factor"]
 
         self.ellipsoids = []
 
@@ -107,7 +111,8 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         self._num_pi_evals += 1
         elapsed_time = 0
         t_ini = time.time()
-        # print("Ellipsoid volume: %f. Converged: " % ellipsoid.volume, not ellipsoid.volume > ellipsoid_converged_radius**self.ndims)
+        if self.debug:
+            print("DEBUG: Ellipsoid volume: %f. Converged: " % ellipsoid.volume, not ellipsoid.volume > ellipsoid_converged_radius**self.ndims)
         while value > new_value and elapsed_time < timeout and ellipsoid.volume > ellipsoid_converged_radius**self.ndims:
             new_sample = ellipsoid.sample()
             self._num_q_samples += 1
@@ -122,7 +127,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
     def ellipsoid_distance(e1, e2):
         return np.sqrt(np.sum((e1.loc - e2.loc) * (e1.loc - e2.loc)))
 
-    def recursive_clustering(self, points, ellipsoids=None, cluster_volume_ratio=0.8, cluster_min_distance=0.2, inflate_factor=2.0, debug=False):
+    def recursive_clustering(self, points, ellipsoids=None, cluster_volume_ratio=0.8, cluster_min_distance=0.2, inflate_factor=2.0):
         # Compute live points ellipsoid for the first iteration
         if ellipsoids is None:
             ellipsoids = [CEllipsoid.fit(points, inflate_factor)]
@@ -142,8 +147,8 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         for i in range(estimator.n_clusters):
             c_npoints = np.count_nonzero(estimator.labels_ == i)
             if c_npoints < len(self.space_min) + 1:
-                if debug:
-                    print("Rejected subdivision. Number of points: %d" % c_npoints)
+                if self.debug:
+                    print("DEBUG: Rejected subdivision. Number of points: %d" % c_npoints)
                 return points, ellipsoids
 
         # Condition 1: Volume of cluster ellipsoids must be below unclustered ellipsoid
@@ -156,13 +161,13 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
                 c_ellipsoid[-1].indices = estimator.labels_ == i
                 c_volume = c_volume + c_ellipsoid[-1].volume
             else:
-                if debug:
-                    print("Rejected subdivision. Reason: unable to fit ellipsoid.")
+                if self.debug:
+                    print("DEBUG: Rejected subdivision. Reason: unable to fit ellipsoid.")
                 return points, ellipsoids
 
         if c_volume/ellipsoid_volume > cluster_volume_ratio:
-            if debug:
-                print("Rejected subdivision. Reason: volume ratio %f" % (c_volume/ellipsoid_volume))
+            if self.debug:
+                print("DEBUG: Rejected subdivision. Reason: volume ratio %f" % (c_volume/ellipsoid_volume))
             return points, ellipsoids
 
         # Condition 2: Clusters must be separated w/ little overlap
@@ -173,14 +178,15 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
                 distance = distance + self.ellipsoid_distance(c_ellipsoid[i], c_ellipsoid[j])
                 num_distances = num_distances + 1
         if distance / num_distances < cluster_min_distance:
-            if debug:
-                print("Rejected subdivision. Reason: distance %f" % (distance / num_distances))
+            if self.debug:
+                print("DEBUG: Rejected subdivision. Reason: distance %f" % (distance / num_distances))
             return points, ellipsoids
 
         # Recursively subdivide into more clusters
-        if debug:
-            print("Accepted subdivision into %d clusters" % len(c_ellipsoid))
-        return self.recursive_clustering(points, c_ellipsoid, cluster_volume_ratio, cluster_min_distance)
+        if self.debug:
+            print("DEBUG: Accepted subdivision into %d clusters" % len(c_ellipsoid))
+        return self.recursive_clustering(points, c_ellipsoid, cluster_volume_ratio, cluster_min_distance,
+                                         inflate_factor)
 
     def importance_sample(self, target_d, n_samples, timeout=60):
         points = self.live_points
@@ -188,7 +194,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         self._num_pi_evals += len(points)
 
         # Perform recursive clustering on the sample points
-        clusters, c_ellipsoids = self.recursive_clustering(points)
+        clusters, c_ellipsoids = self.recursive_clustering(points, inflate_factor=self.inflate_factor)
 
         # Perform nested sampling on each cluster
         n_samples_ell = int((n_samples-len(self.samples)) / len(c_ellipsoids))
@@ -208,7 +214,7 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
                 self.L = np.concatenate((self.L, np.array([Lmin]))) if self.L.size else np.array([Lmin])
 
                 # Replace the point with lowest likelihood with a new sample from the proposal distribution
-                points[min_idx], values[min_idx] = self.resample(Lmin, target_d, c_ellipsoid, timeout)
+                points[min_idx], values[min_idx] = self.resample(Lmin, target_d, c_ellipsoid, timeout, self.converged_radius)
 
         # Update Z (evidence)
         X = np.array([np.exp(-i / self.N) for i in range(len(self.samples))])
@@ -236,7 +242,8 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
         for point in self.live_points:
             res.extend(ax.plot(point, 0.1, "go"))
         res.extend(ax.plot(point, 0.1, "go", label="live points"))
-        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, options="r-", resolution=0.01,label="$q(x)$"))
+        res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, color="r", options="-",
+                            resolution=0.01, label="$q(x)$"))
         return res
 
     def draw2d(self, ax):
@@ -245,7 +252,8 @@ class CMultiNestedSampling(CMixtureSamplingMethod):
             res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker="o", alpha=0.2))
         res.extend(ax.plot([sample[0]], [sample[1]], c="g", marker="o", alpha=0.2, label="live points"))
 
-        res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis, label="$q(x)$"))
+        res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, colormap=cm.viridis,
+                              label="$q(x)$"))
         return res
 
     # def draw2d(self, ax):
