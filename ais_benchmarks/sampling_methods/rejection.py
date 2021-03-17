@@ -1,10 +1,10 @@
 import numpy as np
 import time
-import distributions
+import ais_benchmarks.distributions
 
-from sampling_methods.base import CMixtureSamplingMethod
-from utils.plot_utils import plot_pdf
-from utils.plot_utils import plot_pdf2d
+from ais_benchmarks.sampling_methods.base import CMixtureSamplingMethod
+from ais_benchmarks.utils.plot_utils import plot_pdf
+from ais_benchmarks.utils.plot_utils import plot_pdf2d
 
 
 class CRejectionSampling(CMixtureSamplingMethod):

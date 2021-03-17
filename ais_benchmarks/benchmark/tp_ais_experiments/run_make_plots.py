@@ -15,7 +15,7 @@ import pathlib
 import matplotlib
 import matplotlib.pyplot as plt
 import yaml
-from benchmark.CBenchmark import CBenchmark
+from ais_benchmarks.benchmark.CBenchmark import CBenchmark
 matplotlib.style.use('default')
 
 

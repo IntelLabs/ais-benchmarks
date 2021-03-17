@@ -3,11 +3,11 @@ import time
 import copy
 from matplotlib import pyplot as plt
 
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from sampling_methods.base import CMixtureSamplingMethod
-from sampling_methods.base import t_tensor
-from utils.plot_utils import plot_pdf
-from utils.plot_utils import plot_pdf2d
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.sampling_methods.base import CMixtureSamplingMethod
+from ais_benchmarks.sampling_methods.base import t_tensor
+from ais_benchmarks.utils.plot_utils import plot_pdf
+from ais_benchmarks.utils.plot_utils import plot_pdf2d
 
 
 class CMetropolisHastings(CMixtureSamplingMethod):

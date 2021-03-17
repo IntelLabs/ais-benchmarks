@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
 
-from metrics.performance import CMemoryUsage
+from ais_benchmarks.metrics.performance import CMemoryUsage
+
 
 class CMetricsTests(unittest.TestCase):
     """

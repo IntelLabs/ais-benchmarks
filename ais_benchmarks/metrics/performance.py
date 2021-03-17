@@ -7,7 +7,7 @@ import gc
 import numpy as np
 from guppy import hpy
 
-from metrics.base import CMetric
+from ais_benchmarks.metrics.base import CMetric
 
 
 class CElapsedTime(CMetric):

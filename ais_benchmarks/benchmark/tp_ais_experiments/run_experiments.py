@@ -16,8 +16,8 @@ import os
 import pathlib
 import subprocess
 import time
-from utils.misc import CNonBlockingStreamReader
-from utils.misc import time_to_hms
+from ais_benchmarks.utils.misc import CNonBlockingStreamReader
+from ais_benchmarks.utils.misc import time_to_hms
 def_path = str(pathlib.Path(__file__).parent.absolute()) + os.sep
 
 

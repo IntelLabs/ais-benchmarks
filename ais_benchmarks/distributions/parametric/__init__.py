@@ -1,0 +1,5 @@
+from ais_benchmarks.distributions.parametric.CMultivariateNormal import CMultivariateNormal
+from ais_benchmarks.distributions.parametric.CMultivariateUniform import CMultivariateUniform
+from ais_benchmarks.distributions.parametric.CMultivariateDelta import CMultivariateDelta
+from ais_benchmarks.distributions.parametric.CMultivariateExponential import CMultivariateExponential
+

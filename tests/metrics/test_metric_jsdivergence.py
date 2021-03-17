@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 
-from metrics.divergences import CJSDivergence
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from distributions.parametric.CMultivariateUniform import CMultivariateUniform
+from ais_benchmarks.metrics.divergences import CJSDivergence
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.distributions import CMultivariateUniform
 
 
 class CMetricsTests(unittest.TestCase):

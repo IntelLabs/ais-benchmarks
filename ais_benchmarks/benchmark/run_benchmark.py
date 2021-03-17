@@ -2,8 +2,8 @@ import time
 import sys
 import pathlib
 from os import sep
-from benchmark.CBenchmark import CBenchmark
-from utils.misc import time_to_hms
+from ais_benchmarks.benchmark import CBenchmark
+from ais_benchmarks.utils.misc import time_to_hms
 
 
 benchmark = CBenchmark()

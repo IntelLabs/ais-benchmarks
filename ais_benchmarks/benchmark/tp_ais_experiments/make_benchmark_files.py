@@ -1,10 +1,10 @@
-from utils.misc import generateEggBoxGMM
-from utils.misc import generateRandomGMM
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.plot_utils import plot_pdf2d
-from utils.plot_utils import plot_pdf
+from ais_benchmarks.utils.misc import generateEggBoxGMM
+from ais_benchmarks.utils.misc import generateRandomGMM
+from ais_benchmarks.utils.plot_utils import plot_pdf2d
+from ais_benchmarks.utils.plot_utils import plot_pdf
 
 
 def make_normal(mu_min, mu_max, sigma_min, sigma_max):

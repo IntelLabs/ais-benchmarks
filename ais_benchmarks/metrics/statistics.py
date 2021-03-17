@@ -4,7 +4,7 @@ as marginals, confidence intervals, probability of events or expected value. By 
 by using the approximated samples and the ground truth values, the quality of sampling algorithms can be assessed.
 """
 import numpy as np
-from metrics.base import CMetric
+from ais_benchmarks.metrics.base import CMetric
 
 
 class CExpectedValueMSE(CMetric):

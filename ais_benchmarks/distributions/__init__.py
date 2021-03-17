@@ -1,14 +1,10 @@
-from distributions.derived.CABCDistribution import ABCDistribution
-from distributions.derived.CGenericNoisyFunction import GenericNoisyFunction
-from distributions.mixture.CMixtureModel import CMixtureModel
-from distributions.mixture.CGaussianMixtureModel import CGaussianMixtureModel
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from distributions.parametric.CMultivariateUniform import CMultivariateUniform
-from distributions.parametric.CMultivariateDelta import CMultivariateDelta
-from distributions.nonparametric.CNearestNeighbor import CNearestNeighbor
-from distributions.nonparametric.CKernelDensity import CKernelDensity
-import distributions.benchden
-import distributions.rare
+from ais_benchmarks.distributions.distributions import *
+from ais_benchmarks.distributions.parametric import *
+from ais_benchmarks.distributions.mixture import *
+from ais_benchmarks.distributions.nonparametric import *
+from ais_benchmarks.distributions.benchden import *
+from ais_benchmarks.distributions.rare import *
+from ais_benchmarks.distributions.derived import *
 
 """
 TODO LIST

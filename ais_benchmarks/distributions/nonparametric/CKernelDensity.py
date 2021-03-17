@@ -1,7 +1,7 @@
 import numpy as np
-from distributions.distributions import CDistribution
-from distributions.distributions import CKernel
-from distributions.mixture.CMixtureModel import CMixtureModel
+from ais_benchmarks.distributions import CDistribution
+from ais_benchmarks.distributions import CKernel
+from ais_benchmarks.distributions import CMixtureModel
 
 
 class CKernelDensity(CDistribution):

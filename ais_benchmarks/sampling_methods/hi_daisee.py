@@ -28,9 +28,9 @@ import time
 import numpy as np
 from numpy import array as t_tensor
 
-from sampling_methods.base import CMixtureISSamplingMethod
-from distributions.mixture.CMixtureModel import CMixtureModel
-from distributions.parametric.CMultivariateUniform import CMultivariateUniform
+from ais_benchmarks.sampling_methods.base import CMixtureISSamplingMethod
+from ais_benchmarks.distributions import CMixtureModel
+from ais_benchmarks.distributions import CMultivariateUniform
 
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection

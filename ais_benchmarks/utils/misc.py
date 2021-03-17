@@ -2,8 +2,9 @@ import numpy as np
 from threading import Thread
 from queue import Queue, Empty
 
-from sampling_methods.base import make_grid
-from distributions.mixture.CGaussianMixtureModel import CGaussianMixtureModel
+from ais_benchmarks.sampling_methods.base import make_grid
+from ais_benchmarks.distributions import CGaussianMixtureModel
+
 
 class CNonBlockingStreamReader:
     def __init__(self, stream):
