@@ -1,9 +1,0 @@
-# Define the methods to be evaluated and its parameter configuration
-methods:
-    - name: rejection
-      type: sampling_methods.CRejectionSampling
-      params:
-        scaling: 1
-        proposal: "'distributions.CMultivariateUniform({\"center\": np.zeros(self.ndims), \"radius\":(self.space_max-self.space_min) / 2})'"
-        kde_bw: 0.1
-
