@@ -10,18 +10,18 @@ import pathlib
 import os
 import sys
 
-import distributions
-import sampling_methods
-from sampling_methods.base import t_tensor
-from metrics.divergences import CKLDivergence
-from metrics.divergences import CJSDivergence
-from metrics.performance import CMemoryUsage
-from metrics.performance import CElapsedTime
-from metrics.statistics import CExpectedValueMSE
-from utils.misc import time_to_hms
-from utils.plot_utils import plot_pdf
-from utils.plot_utils import grid_sample_distribution
-from utils.plot_utils import plot_grid_sampled_pdfs
+import ais_benchmarks.distributions
+import ais_benchmarks.sampling_methods
+from ais_benchmarks.sampling_methods.base import t_tensor
+from ais_benchmarks.metrics.divergences import CKLDivergence
+from ais_benchmarks.metrics.divergences import CJSDivergence
+from ais_benchmarks.metrics.performance import CMemoryUsage
+from ais_benchmarks.metrics.performance import CElapsedTime
+from ais_benchmarks.metrics.statistics import CExpectedValueMSE
+from ais_benchmarks.utils.misc import time_to_hms
+from ais_benchmarks.utils.plot_utils import plot_pdf
+from ais_benchmarks.utils.plot_utils import grid_sample_distribution
+from ais_benchmarks.utils.plot_utils import plot_grid_sampled_pdfs
 
 
 class CBenchmark(object):

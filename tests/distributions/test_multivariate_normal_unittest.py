@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-import distributions as d
+import ais_benchmarks.distributions as d
 from scipy.stats import multivariate_normal
 from tests.distributions.test_distribution_template import CDistributionsTests
 

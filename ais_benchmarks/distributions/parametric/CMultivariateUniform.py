@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.distributions import CDistribution
+from ais_benchmarks.distributions.distributions import CDistribution
 
 
 class CMultivariateUniform(CDistribution):

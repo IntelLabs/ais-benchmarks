@@ -1,11 +1,11 @@
 import numpy as np
 from numpy import array as t_tensor
 from abc import ABCMeta, abstractmethod
-from utils.plot_utils import plot_pdf
-from utils.plot_utils import plot_pdf2d
+from ais_benchmarks.utils.plot_utils import plot_pdf
+from ais_benchmarks.utils.plot_utils import plot_pdf2d
 import matplotlib.cm as cm
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from distributions.mixture.CMixtureModel import CMixtureModel
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.distributions import CMixtureModel
 
 
 class CSamplingMethod(metaclass=ABCMeta):

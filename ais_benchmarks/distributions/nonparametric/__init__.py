@@ -1,0 +1,2 @@
+from ais_benchmarks.distributions.nonparametric.CNearestNeighbor import CNearestNeighbor
+from ais_benchmarks.distributions.nonparametric.CKernelDensity import CKernelDensity

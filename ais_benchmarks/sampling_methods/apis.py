@@ -2,9 +2,9 @@ import numpy as np
 import time
 
 from numpy import array as t_tensor
-from sampling_methods.base import CMixtureSamplingMethod
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from distributions.mixture.CMixtureModel import CMixtureModel
+from ais_benchmarks.sampling_methods.base import CMixtureSamplingMethod
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.distributions import CMixtureModel
 
 
 # TODO: Implement this method properly from the paper

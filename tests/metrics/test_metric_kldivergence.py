@@ -2,10 +2,10 @@ import unittest
 import numpy as np
 from scipy.stats import entropy
 
-from metrics.divergences import CKLDivergence
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from distributions.parametric.CMultivariateUniform import CMultivariateUniform
-from distributions.mixture.CGaussianMixtureModel import CGaussianMixtureModel
+from ais_benchmarks.metrics.divergences import CKLDivergence
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.distributions import CMultivariateUniform
+from ais_benchmarks.distributions import CGaussianMixtureModel
 
 
 class CMetricsTests(unittest.TestCase):

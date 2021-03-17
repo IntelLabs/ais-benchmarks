@@ -2,7 +2,7 @@ import time
 import sys
 import pathlib
 from os import sep
-from benchmark.CBenchmark import CBenchmark
+from ais_benchmarks.benchmark import CBenchmark
 
 
 benchmark = CBenchmark()

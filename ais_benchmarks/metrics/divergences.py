@@ -1,5 +1,5 @@
 import numpy as np
-from metrics.base import CMetric
+from ais_benchmarks.metrics.base import CMetric
 
 # def bhattacharyya_distance(p_samples_prob, q_samples_prob):
 #     res = - np.log(np.sum(np.sqrt(p_samples_prob * q_samples_prob)))

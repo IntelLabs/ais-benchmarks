@@ -1,6 +1,7 @@
+import numpy as np
 from manimlib.imports import *
-from distributions.mixture.CGaussianMixtureModel import CGaussianMixtureModel
-from sampling_methods.tree_pyramid import CTreePyramidSampling
+from ais_benchmarks.distributions import CGaussianMixtureModel
+from ais_benchmarks.sampling_methods.tree_pyramid import CTreePyramidSampling
 import matplotlib.pyplot as plt
 
 

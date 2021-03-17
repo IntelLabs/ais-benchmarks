@@ -1,7 +1,8 @@
+import numpy as np
 from manimlib.imports import *
-from distributions.mixture.CGaussianMixtureModel import CGaussianMixtureModel
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from sampling_methods.metropolis_hastings import CMetropolisHastings
+from ais_benchmarks.distributions import CGaussianMixtureModel
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.sampling_methods.metropolis_hastings import CMetropolisHastings
 
 
 class CManimDistribution(GraphScene):

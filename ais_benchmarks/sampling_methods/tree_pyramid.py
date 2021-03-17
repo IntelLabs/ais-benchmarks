@@ -4,19 +4,19 @@ from numpy import array as t_tensor
 import itertools
 import matplotlib.patches as patches
 
-from sampling_methods.base import CMixtureISSamplingMethod
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
-from distributions.parametric.CMultivariateUniform import CMultivariateUniform
-from utils.plot_utils import plot_tpyramid_area
-from utils.plot_utils import plot_pdf
-from utils.plot_utils import plot_pdf2d
-from distributions.mixture.CMixtureModel import CMixtureModel
+from ais_benchmarks.sampling_methods.base import CMixtureISSamplingMethod
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.distributions import CMultivariateUniform
+from ais_benchmarks.utils.plot_utils import plot_tpyramid_area
+from ais_benchmarks.utils.plot_utils import plot_pdf
+from ais_benchmarks.utils.plot_utils import plot_pdf2d
+from ais_benchmarks.distributions import CMixtureModel
 
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
 from matplotlib import cm
 
-import visualization.visuals as viz
+import ais_benchmarks.visualization.visuals as viz
 
 
 class CTreePyramidNode:

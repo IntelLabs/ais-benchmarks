@@ -1,7 +1,7 @@
 import numpy as np
-from distributions.distributions import CDistribution
-from distributions.mixture.CMixtureModel import CMixtureModel
-from distributions.parametric.CMultivariateNormal import CMultivariateNormal
+from ais_benchmarks.distributions import CDistribution
+from ais_benchmarks.distributions import CMultivariateNormal
+from ais_benchmarks.distributions import CMixtureModel
 
 
 class CGaussianMixtureModel(CDistribution):

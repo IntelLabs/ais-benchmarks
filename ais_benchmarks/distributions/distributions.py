@@ -1,8 +1,8 @@
 import time
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from utils.plot_utils import plot_pdf2d
-from utils.plot_utils import plot_pdf
+from ais_benchmarks.utils.plot_utils import plot_pdf2d
+from ais_benchmarks.utils.plot_utils import plot_pdf
 
 
 class CDistribution(metaclass=ABCMeta):

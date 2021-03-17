@@ -2,7 +2,8 @@ import unittest
 import numpy as np
 import time
 
-from metrics.performance import CElapsedTime
+from ais_benchmarks.metrics.performance import CElapsedTime
+
 
 class CMetricsTests(unittest.TestCase):
     """
