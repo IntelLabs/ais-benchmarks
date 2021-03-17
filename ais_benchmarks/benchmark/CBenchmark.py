@@ -10,8 +10,11 @@ import pathlib
 import os
 import sys
 
-import ais_benchmarks.distributions
-import ais_benchmarks.sampling_methods
+# Import all distributions and sampling methods in order to instantiate them if they are referenced in
+# the .yaml files configuring the benchmark
+from ais_benchmarks.distributions import *
+from ais_benchmarks.sampling_methods import *
+
 from ais_benchmarks.sampling_methods.base import t_tensor
 from ais_benchmarks.metrics.divergences import CKLDivergence
 from ais_benchmarks.metrics.divergences import CJSDivergence

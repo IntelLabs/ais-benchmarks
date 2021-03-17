@@ -180,7 +180,7 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         self.ess_target = params["target_ess"]
         assert 0 < self.ess_target < 1, "Invalid target ESS value. Must be (0,1]"
 
-        self.debug = params["debug"]
+        self.debug = False
 
         self.reset()
 

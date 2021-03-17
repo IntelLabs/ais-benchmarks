@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.parametric.CMultivariateUniform import CMultivariateUniform
+from ais_benchmarks.distributions import CMultivariateUniform
 
 
 class BenchDenUniform(CMultivariateUniform):
