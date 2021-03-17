@@ -1,6 +1,6 @@
 import numpy as np
 import time
-import ais_benchmarks.distributions
+from ais_benchmarks.distributions import *
 
 from ais_benchmarks.sampling_methods.base import CMixtureSamplingMethod
 from ais_benchmarks.utils.plot_utils import plot_pdf

@@ -1,7 +1,7 @@
 import numpy as np
 from ais_benchmarks.distributions import CDistribution
 from ais_benchmarks.distributions import CMultivariateNormal
-from ais_benchmarks.distributions import CMixtureModel
+from ais_benchmarks.distributions.mixture.CMixtureModel import CMixtureModel
 
 
 class CGaussianMixtureModel(CDistribution):
@@ -60,6 +60,7 @@ class CGaussianMixtureModel(CDistribution):
         res["params"]["sigmas"] = [v.tolist() for v in self.sigmas]
         res["params"]["weights"] = self.weights.tolist()
         return res
+
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt

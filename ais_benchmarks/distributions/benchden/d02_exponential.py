@@ -1,5 +1,5 @@
 import numpy as np
-from distributions.parametric.CMultivariateExponential import CMultivariateExponential
+from ais_benchmarks.distributions import CMultivariateExponential
 
 
 class BenchDenExponential(CMultivariateExponential):

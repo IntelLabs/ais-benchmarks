@@ -3,7 +3,7 @@ import time
 from ais_benchmarks.sampling_methods.base import CMixtureSamplingMethod
 from ais_benchmarks.utils.plot_utils import plot_pdf
 from ais_benchmarks.utils.plot_utils import plot_pdf2d
-import ais_benchmarks.distributions
+from ais_benchmarks.distributions import *
 
 
 # TODO: Implement convergence test and futher generate samples from the approximated distribution
