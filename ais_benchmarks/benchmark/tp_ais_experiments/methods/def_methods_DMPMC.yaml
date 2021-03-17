@@ -1,0 +1,9 @@
+# Define the methods to be evaluated and its parameter configuration
+methods:
+    - name: dm_pmc
+      type: sampling_methods.CDeterministicMixtureAIS
+      params:
+        K: 10         # Number of samples per proposal distribution
+        N: 5          # Number of proposal distributions
+        J: 1000       # Limit number of samples
+        sigma: 0.1   # Scaling parameter of the spherical gaussian proposal distributions

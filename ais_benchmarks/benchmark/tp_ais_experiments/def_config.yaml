@@ -1,0 +1,27 @@
+# Number of times each experiment is repeated
+nreps: 10
+
+# Random seed used for reproducibility. Set to -1 to avoid setting the random seed.
+rseed: -1
+
+# Metrics computed
+metrics: [KLD, JSD, EVMSE, T, MEM]
+
+# Debug mode config and debug display
+debug: {algo: false,                         # Debug mode argument passed to algorithms: [true, false]
+        text: true,                          # Show experiment execution progress on terminal: [true, false]
+        plot: {show: false,                   # Plot sampling algorithm progress and show on screen: [true, false]
+               save: false,                   # Save the sampling algo plot on file: [true, false]
+               path: results/debug_plots/}}  # Path to save the plot algo progress: [string]
+
+# Animation module configuration
+animation: {enable: true,                    # Compile the sequence of visualized sampling steps into an animation
+            fps: 1,                         # Frames per second used for the animation
+            animation_path: results/anim/}  # If value is true, save the plots as a .png in the provided path
+
+# Benchmark execution results configuration
+output:
+    file: results/results.txt
+    make_plots: true
+    plots_path: results/
+    plots_dpi: 1200

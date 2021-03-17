@@ -1,0 +1,9 @@
+# Define the methods to be evaluated and its parameter configuration
+methods:
+    - name: HiDaisee_70
+      type: sampling_methods.CHiDaiseeSampling
+      params:
+        target_ess: 0.70
+        n_min: 10
+        tau: .01
+        debug: 0
