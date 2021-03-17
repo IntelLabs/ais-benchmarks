@@ -1,9 +1,0 @@
-# Define the methods to be evaluated and its parameter configuration
-methods:
-    - name: m_pmc
-      type: sampling_methods.CMixturePMC
-      params:
-        K: 20         # Number of samples per proposal distribution
-        N: 5          # Number of proposal distributions
-        J: 1000       # Limit number of samples
-        sigma: 0.1   # Scaling parameter of the spherical gaussian proposal distributions
