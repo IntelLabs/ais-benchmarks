@@ -1,4 +1,5 @@
 import time
+import sys
 import numpy as np
 from numpy import array as t_tensor
 import itertools
@@ -36,7 +37,7 @@ class CTreePyramidNode:
         self.radius = t_tensor(radius)  # n_r
         self.children = [None] * (2 ** len(center))  # n_s
         self.weight = weight  # n_w
-        self.coords = t_tensor([[0] * len(center)])  # n_x
+        self.coords = t_tensor([[0.0] * len(center)])  # n_x
         self.leaf_idx = leaf_idx
         self.node_idx = node_idx
         self.level = level
@@ -122,8 +123,8 @@ class CTreePyramid:
         self.leaves = [self.root]
         self.centers = np.array([self.root.center])
         self.radii = np.array([self.root.radius])
-        self.samples = np.zeros((1, self.ndims))
-        self.weights = np.array([0])
+        self.samples = np.zeros((1, self.ndims), dtype=np.float64)
+        self.weights = np.array([0.0], dtype=np.float64)
         self.leaves_idx = [True]
         self.kernel = kernel
 
