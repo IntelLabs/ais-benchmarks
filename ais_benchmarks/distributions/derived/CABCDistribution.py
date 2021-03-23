@@ -51,22 +51,25 @@ class ABCDistribution(CDistribution):
     def condition(self, o):
         self.o = o
 
-    def generate(self):
-        self.gen_d.set_params(z)        # Set the model parameters to the evaluated params
-        self.gen_d.condition(self.o)    # Condition the generative model at the points to be evaluated
-        fx = self.gen_d.sample()        # Evaluate the generative model at the observed values
+    def generate(self, z):
+        self.gen_d.condition(z)         # Condition the generative model at the points to be evaluated
+        fx = self.gen_d.sample()        # Generate observations at the conditioned latent values
+        return fx
 
-        self.sensor_d.condition(fx)     # Condition the sensor model on the generated observation
-        o_hat = self.sensor_d.sample()  # Obtain the generated observation from the sensor model
-        return o_hat
+        # TODO: Do not bypass the sensor model in the data generation process
+        # self.sensor_d.loc = fx          # Center the sensor model on the generated observation
+        # o_hat = self.sensor_d.sample()  # Obtain the generated observation from the sensor model
+        # return o_hat
 
     def log_prob(self, z):
         if self.o is None:
             raise ValueError("ABCDistribution prob or logprob cannot be evaluated w/o conditioning it first with \
                              an observation. Make sure to call self.condition(obs) first.")
 
-        o_hat = self.generate()
-        prior_lprob = self.prior_d.log_prob(z).reshape(len(z), 1)  # Evaluate the prior probability of the latent values
+        # Generate a possible observation for the evaluated latent variable values 'z'
+        o_hat = np.array(self.generate(z)[:, 0:len(self.o)], dtype=np.float64)
+
+        prior_lprob = self.prior_d.log_prob(z)  # Evaluate the prior probability of the latent values
         sensor_lprob = 0.0  # TODO: Consider adding the sensor model probability into de computation
         # sensor_lprob = self.sensor_d.log_prob(o_hat)  # Evaluate the measurement probability of the generated observation
 
@@ -74,10 +77,9 @@ class ABCDistribution(CDistribution):
         # values, the prior probability of the parameter values and the measurement probability. Prefer to use log_prob
         # function if provided for numerical stability.
         if self.loglikelihood_f is not None:
-            return (self.loglikelihood_f(self.o, o_hat, self.slack) + prior_lprob + sensor_lprob).reshape(len(z), 1)
+            return self.loglikelihood_f(self.o, o_hat, self.slack) + prior_lprob + sensor_lprob
         elif self.likelihood_f is not None:
-            return (np.log(
-                self.likelihood_f(self.o, o_hat, self.slack)) + prior_lprob + sensor_lprob).reshape(len(z), 1)
+            return np.log(self.likelihood_f(self.o, o_hat, self.slack)) + prior_lprob + sensor_lprob
         else:
             raise Exception("ABCDistribution. likelihood_f and loglikelihood_f not defined. Must define at least one \
                              of them.")
@@ -87,8 +89,8 @@ class ABCDistribution(CDistribution):
             raise ValueError("ABCDistribution prob or logprob cannot be evaluated w/o conditioning it first with \
                              an observation. Make sure to call self.condition(obs) first.")
 
-        o_hat = self.generate()
-        prior_lprob = self.prior_d.log_prob(z).reshape(len(z), 1)    # Evaluate the prior probability of the latent values
+        o_hat = np.array(self.generate(z)[:, 0:len(self.o)])
+        prior_lprob = self.prior_d.log_prob(z)  # Evaluate the prior probability of the latent values
         sensor_lprob = 0.0  # TODO: Consider adding the sensor model probability into de computation
         # sensor_lprob = self.sensor_d.log_prob(o_hat)  # Evaluate the measurement probability of the generated observation
 
@@ -96,10 +98,9 @@ class ABCDistribution(CDistribution):
         # values, the prior probability of the parameter values and the measurement probability. Prefer to use log_prob
         # function if provided for numerical stability.
         if self.loglikelihood_f is not None:
-            return np.exp(
-                self.loglikelihood_f(self.o, o_hat, self.slack) + prior_lprob + sensor_lprob).reshape(len(z), 1)
+            return np.exp(self.loglikelihood_f(self.o, o_hat, self.slack) + prior_lprob + sensor_lprob)
         elif self.likelihood_f is not None:
-            return self.likelihood_f(self.o, o_hat, self.slack).reshape(len(z), 1) * np.exp(prior_lprob + sensor_lprob)
+            return self.likelihood_f(self.o, o_hat, self.slack) * np.exp(prior_lprob + sensor_lprob)
         else:
             raise Exception("ABCDistribution. likelihood_f and loglikelihood_f not defined. Must define at least one \
                              of them.")
