@@ -436,7 +436,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             lambda_hat = sorted(self.T.leaves, reverse=True)
 
             # Generate the new nodes to sample
-            new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())
+            new_nodes = self._expand_nodes(lambda_hat, self.parallel_samples)
+            # new_nodes = self._expand_nodes(lambda_hat, n_samples - self._get_nsamples())
 
             for node in new_nodes:
                 node.sample(node.sampler)
