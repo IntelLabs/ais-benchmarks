@@ -39,8 +39,10 @@ class CDeterministicMixtureAIS(CMixtureISSamplingMethod):
                                           "sigma": np.diag(t_tensor([self.sigma] * len(self.space_max)))})
             self.proposals.append(prop_d)
 
-        # Generate the mixture model induced by the LAIS proposals
-        self.model = CMixtureModel(self.proposals, t_tensor([1 / len(self.proposals)] * len(self.proposals)))
+        # Generate the mixture model induced by the DM-AIS proposals
+        self.model = CMixtureModel({"models": self.proposals,
+                                    "weights": t_tensor([1 / len(self.proposals)] * len(self.proposals)),
+                                    "dims": self.ndims, "support": [self.space_min, self.space_max]})
 
     def resample(self, samples, weights):
         # Normalize weights

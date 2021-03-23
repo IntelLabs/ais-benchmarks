@@ -316,7 +316,8 @@ class CHiDaiseeSampling(CMixtureISSamplingMethod):
         for c, r in zip(centers, radii):
             models.append(CMultivariateUniform({"center": np.array(c), "radius": np.array(r)}))
 
-        self.model = CMixtureModel(models, weights)
+        self.model = CMixtureModel({"models": models, "weights": weights,
+                                    "dims": self.ndims, "support": [self.space_min, self.space_max]})
 
     @staticmethod
     def draw_2d_tree(T, ax, facecolor=(1, 1, 1), edgecolor=(0, 0, 0), alpha=1.0):
