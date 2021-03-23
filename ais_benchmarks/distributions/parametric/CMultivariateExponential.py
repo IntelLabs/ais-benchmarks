@@ -21,19 +21,19 @@ class CMultivariateExponential(CDistribution):
         self.set_moments(np.array(params["mean"]))
 
     def set_moments(self, mean):
-        self.mean = mean
-        self.lmbda = 1 / mean
-        self.llmbda = np.log(self.lmbda * np.e)
+        self.loc = mean
+        self.scale = 1 / mean
+        self.log_scale = np.log(self.scale * np.e)
 
     def sample(self, n_samples=1):
-        return np.random.exponential(self.mean, n_samples)
+        return np.random.exponential(self.loc, n_samples)
 
     def log_prob(self, samples):
         samples = self._check_shape(samples)
 
         res = np.zeros(len(samples))
         inliers = np.all(samples > 0, axis=1).flatten()
-        res_in = -self.lmbda.reshape(self.dims, 1) * samples[inliers] * self.llmbda.reshape(self.dims, 1)
+        res_in = -self.scale.reshape(1, self.dims) * samples[inliers] * self.log_scale.reshape(1, self.dims)
         res_in = np.sum(res_in, axis=1)
         res[inliers] = res_in.flatten()
         return res
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     plt.title('CMultivariateExponential({"mean": %s})' % str(mean))
     dist.draw(plt.gca())
 
-    mean = np.array([1., 2.0])
+    mean = np.array([.1, .1])
     dist2 = CMultivariateExponential({"mean": mean})
 
     plt.subplot(2, 1, 2)

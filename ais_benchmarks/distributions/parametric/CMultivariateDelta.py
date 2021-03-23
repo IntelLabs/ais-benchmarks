@@ -13,22 +13,21 @@ class CMultivariateDelta(CDistribution):
         params["loglikelihood_f"] = self.log_prob
         params["dims"] = len(params["center"])
         super(CMultivariateDelta, self).__init__(params)
-        self.center = params["center"]
-        self.loc = self.center
+        self.loc = params["center"]
         self.scale = None
-        self.dims = len(self.center)
+        self.dims = len(self.loc)
 
         self.prob_val = 1
         self.logprob_val = np.log(self.prob_val)
 
     def sample(self, n_samples=1):
-        return np.full((n_samples, self.dims), self.center)
+        return np.full((n_samples, self.dims), self.loc)
 
     def log_prob(self, samples):
         samples = self._check_shape(samples)
 
         # Select the inliers
-        inliers = np.all(np.isclose(self.center, samples), axis=1)
+        inliers = np.all(np.isclose(self.loc, samples), axis=1)
         res = np.full(len(samples), -np.inf)
         res[inliers.flatten()] = np.inf
         return res
@@ -37,7 +36,7 @@ class CMultivariateDelta(CDistribution):
         samples = self._check_shape(samples)
 
         # Select the inliers
-        inliers = np.all(np.isclose(self.center, samples), axis=1)
+        inliers = np.all(np.isclose(self.loc, samples), axis=1)
         res = np.full(len(samples), 0.0)
         res[inliers.flatten()] = np.inf
         return res
@@ -56,9 +55,9 @@ class CMultivariateDelta(CDistribution):
 
     def draw(self, ax, resolution=.01, label=None, color=None):
         if self.dims == 1:
-            ax.plot((self.center, self.center), (0, 1), label=label, color=color)
+            ax.plot((self.loc, self.loc), (0, 1), label=label, color=color)
         elif self.dims == 2:
-            ax.scatter(self.center[0], self.center[1], label=label, color=color)
+            ax.scatter(self.loc[0], self.loc[1], label=label, color=color)
 
 
 if __name__ == "__main__":

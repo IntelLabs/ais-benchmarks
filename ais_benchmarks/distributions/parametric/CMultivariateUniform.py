@@ -14,16 +14,14 @@ class CMultivariateUniform(CDistribution):
         params["dims"] = len(params["center"])
         params["support"] = [params["center"] - params["radius"], params["center"] + params["radius"]]
         super(CMultivariateUniform, self).__init__(params)
-        self.center = params["center"]
-        self.radius = params["radius"]
-        self.loc = self.center
-        self.scale = self.radius
-        self.dims = len(self.center)
+        self.loc = params["center"]
+        self.scale = params["radius"]
+        self.dims = len(self._loc)
         # If there is only one value for the radius. All dimensions use the same radius.
-        if len(self.radius) == 1:
-            self.volume = (self.radius * 2) ** self.dims
-        elif len(self.radius) == self.dims:
-            self.volume = np.prod([self.radius * 2])
+        if len(self._scale) == 1:
+            self.volume = (self._scale * 2) ** self.dims
+        elif len(self._scale) == self.dims:
+            self.volume = np.prod([self._scale * 2])
         else:
             raise ValueError("Radius dimensionality not valid. It has to be 1 dim (all dimensions will use the same \
                              radius) or N dim, where N is the dimensionality")
@@ -32,16 +30,16 @@ class CMultivariateUniform(CDistribution):
         self.logprob_val = np.log(self.prob_val)
 
     def sample(self, n_samples=1):
-        minval = self.center - self.radius
-        maxval = self.center + self.radius
+        minval = self._loc - self._scale
+        maxval = self._loc + self._scale
         res = np.random.uniform(low=minval, high=maxval, size=(n_samples, self.dims))
         return res
 
     def log_prob(self, samples):
         samples = self._check_shape(samples)
 
-        min_val = self.center - self.radius
-        max_val = self.center + self.radius
+        min_val = self._loc - self._scale
+        max_val = self._loc + self._scale
         # Select the inliers if all the coordinates are in range
         inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)
         res = np.full(len(samples), self.logprob_val)
@@ -51,8 +49,8 @@ class CMultivariateUniform(CDistribution):
     def prob(self, samples):
         samples = self._check_shape(samples)
 
-        min_val = self.center - self.radius
-        max_val = self.center + self.radius
+        min_val = self._loc - self._scale
+        max_val = self._loc + self._scale
 
         # Select the inliers if all the coordinates are in range
         inliers = np.all(np.logical_and(min_val < samples, samples <= max_val), axis=1)
