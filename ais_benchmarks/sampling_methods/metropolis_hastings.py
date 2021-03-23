@@ -177,7 +177,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             res.extend(ax.plot(sample, y, style))
 
         proposal_d = copy.deepcopy(self.proposal_d)
-        proposal_d.mean += self.trajectory_samples[-1]
+        proposal_d.loc += self.trajectory_samples[-1]
         res.extend(plot_pdf(ax, proposal_d, self.space_min, self.space_max, color="r", options="r--", label="MCMC: $q_i(x)$"))
         res.extend(plot_pdf(ax, self, self.space_min, self.space_max, alpha=1.0, color="r", options="r-", resolution=0.01, label="MCMC: $q(x)$"))
         res.extend(ax.plot(self.space_min[0]-1, 0, "r.", label="MCMC: burn-in"))
@@ -200,7 +200,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             #     res.extend(ax.plot([sample[0]], [sample[1]], c="r", marker="o"))
 
         proposal_d = copy.deepcopy(self.proposal_d)
-        proposal_d.mean += self.trajectory_samples[-1]
+        proposal_d.loc += self.trajectory_samples[-1]
         res.extend(plot_pdf2d(ax, proposal_d, self.space_min, self.space_max, linestyles="dashed", label="MCMC: $q_i(x)$"))
 
         res.extend(plot_pdf2d(ax, self, self.space_min, self.space_max, alpha=0.5, resolution=0.02, label="$q(x)$"))
@@ -222,7 +222,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
 
         # TODO: Plot proposal
         # proposal_d = copy.deepcopy(self.proposal_d)
-        # proposal_d.mean += self.trajectory_samples[-1]
+        # proposal_d.loc += self.trajectory_samples[-1]
         # res.extend(plot_pdf2d(ax, proposal_d, self.space_min, self.space_max, linestyles="dashed", label="MCMC: $q_i(x)$"))
 
         # TODO: Plot KDE approximation

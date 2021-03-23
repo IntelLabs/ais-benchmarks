@@ -42,8 +42,8 @@ class CMultivariateNormal(CDistribution):
 
         self.set_moments(np.array(params["mean"]), np.array(params["sigma"]))
 
-        assert self.cov.shape == (self.dims, self.dims)
-        self.det = np.linalg.det(self.cov)
+        assert self._scale.shape == (self.dims, self.dims)
+        self.det = np.linalg.det(self._scale)
         assert self.det > 0
 
         self.term1 = - 0.5 * self.dims * np.log(np.pi * 2)
@@ -54,20 +54,18 @@ class CMultivariateNormal(CDistribution):
         self.det = np.linalg.det(cov)
         assert self.det > 0
 
-        self.mean = mean
-        self.cov = cov
-        self.loc = self.mean
-        self.scale = self.cov
+        self.loc = mean
+        self.scale = cov
         self.inv_cov = np.linalg.inv(cov)
         self.log_det = np.log(self.det)
         self.term2 = - 0.5 * self.log_det
 
     def sample(self, n_samples=1):
-        return np.random.multivariate_normal(self.mean.flatten(), self.cov, size=n_samples)
+        return np.random.multivariate_normal(self._loc.flatten(), self._scale, size=n_samples)
 
     def log_prob(self, samples):
         samples = self._check_shape(samples)
-        diff = (self.mean.reshape(1, self.dims) - samples).reshape(len(samples), self.dims, 1)
+        diff = (self._loc.reshape(1, self.dims) - samples).reshape(len(samples), self.dims, 1)
         term3 = -0.5 * (np.transpose(diff, axes=(0, 2, 1)) @ self.inv_cov @ diff)
         return (self.term1 + self.term2 + term3).reshape(len(samples))
 
@@ -88,7 +86,7 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
     mean = np.array([0.0])
-    cov = np.diag([0.1])
+    cov = np.array([[0.1]])
     dist = CMultivariateNormal({"mean": mean, "sigma": cov})
 
     plt.figure()

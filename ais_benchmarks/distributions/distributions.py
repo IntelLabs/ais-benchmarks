@@ -94,6 +94,24 @@ class CDistribution(metaclass=ABCMeta):
         self.likelihood_f = params["likelihood_f"]
         self.loglikelihood_f = params["loglikelihood_f"]
         self.support_vals = params["support"]
+        self._loc = None
+        self._scale = None
+
+    @property
+    def loc(self):
+        return self._loc
+
+    @loc.setter
+    def loc(self, loc):
+        self._loc = loc
+
+    @property
+    def scale(self):
+        return self._scale
+
+    @scale.setter
+    def scale(self, scale):
+        self._scale = scale
 
     def _check_param(self, params, param, type=None):
         """
@@ -300,7 +318,7 @@ class CKernel:
         return np.log(self.prob(x))
 
     def prob(self, x):
-        return self(x - self.loc)
+        return self(x)
 
     def __call__(self, x):
         return self.kernel((x - self.loc) * self.bw) * self.bw
