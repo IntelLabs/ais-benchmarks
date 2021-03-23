@@ -714,7 +714,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             #                                weight=weights[i]))
             i += 1
         self._self_normalize()
-        self.model = CMixtureModel(models, weights)
+        self.model = CMixtureModel({"models": models, "weights": weights,
+                                    "dims": self.ndims, "support":[self.space_min, self.space_max]})
         # self.viz_elements.append(viz.CProposalDist(0, func=self.model.prob, limits=[self.space_min, self.space_max]))
 
     def get_viz_frames(self):

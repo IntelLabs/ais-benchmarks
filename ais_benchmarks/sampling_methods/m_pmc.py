@@ -47,7 +47,8 @@ class CMixturePMC(CMixtureISSamplingMethod):
         self.wproposals = t_tensor([1/self.N] * self.N)
 
         # Generate the mixture model induced by the M-PMC proposals
-        self.model = CMixtureModel(self.proposals, self.wproposals)
+        self.model = CMixtureModel({"models": self.proposals, "weights": self.wproposals,
+                                    "dims": self.ndims, "support": [self.space_min, self.space_max]})
 
     def adapt(self, samples, weights, posteriors):
         # Update all N proposals and proposal weights with the M-PMC update rule

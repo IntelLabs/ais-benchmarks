@@ -168,7 +168,10 @@ class CMixtureSamplingMethod(CSamplingMethod):
                                              "dims": self.ndims,
                                              "support": np.array([np.array([x]) - cov * 6, np.array([x]) + cov * 6])})
             models.append(model)
-        self.model = CMixtureModel(models, np.full(shape=(self.n_samples_kde), fill_value=1/self.n_samples_kde))
+        self.model = CMixtureModel({"models": models,
+                                    "weights":np.full(shape=(self.n_samples_kde), fill_value=1/self.n_samples_kde),
+                                    "dims": self.ndims,
+                                    "support": [self.space_min, self.space_max]})
 
     def draw(self, ax):
         if len(self.space_max) == 1:

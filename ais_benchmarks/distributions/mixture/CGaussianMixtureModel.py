@@ -34,7 +34,8 @@ class CGaussianMixtureModel(CDistribution):
         else:
             self.weights = (1.0 / len(self.means)) * np.array([1] * len(self.means))
 
-        self.gmm = CMixtureModel(self.models, self.weights)
+        self.gmm = CMixtureModel({"models": self.models, "weights": self.weights,
+                                  "dims": self.dims, "support": self.support})
 
     def log_prob(self, samples):
         return self.gmm.log_prob(samples)
