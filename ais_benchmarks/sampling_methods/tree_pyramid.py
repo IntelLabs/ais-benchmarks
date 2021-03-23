@@ -295,6 +295,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
                 - haar: Uniform distribution with min=node.center-node.radius and max=node.center-node.radius.
                 - normal: Normal distribution with mean=node.center and std=node.radius.
         """
+        params["name"] = "TP_AIS"
         super(self.__class__, self).__init__(params)
         self.method = params["method"]
         assert self.method in ["simple", "dm", "mixture"], "Invalid method."
