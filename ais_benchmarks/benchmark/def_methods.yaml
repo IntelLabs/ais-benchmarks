@@ -34,7 +34,7 @@ methods:
         resampling: "'leaf'"
         kernel: "'haar'"
         ess_target: 0.90
-        parallel_samples: 512
+        parallel_samples: 64
 
     - name: mcmc_mh
       type: CMetropolisHastings
@@ -76,13 +76,13 @@ methods:
         kde_bw: 0.1
         n_samples_kde: 100
         inflate_factor: 1.1       # Inflate the ellipsoid fitted to the samples generated on one iteration
-
-    - name: nested
-      type: CNestedSampling
-      debug: true
-      params:
-        proposal: "'CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
-        N: 2          # Number of proposal distributions
-        kde_bw: 0.01
-        n_samples_kde: 100
-
+#
+#    - name: nested
+#      type: CNestedSampling
+#      debug: true
+#      params:
+#        proposal: "'CMultivariateNormal({\"mean\": np.zeros(self.ndims), \"sigma\": np.diag(np.ones(self.ndims) * 0.01)})'"
+#        N: 2          # Number of proposal distributions
+#        kde_bw: 0.01
+#        n_samples_kde: 100
+#
