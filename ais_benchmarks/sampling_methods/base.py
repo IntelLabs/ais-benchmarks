@@ -13,6 +13,7 @@ class CSamplingMethod(metaclass=ABCMeta):
         self.space_min = params["space_min"]
         self.space_max = params["space_max"]
         self.ndims = params["dims"]
+        self._name = params["name"] if "name" in params.keys() else "GenericSamplingMethod"
 
         assert self.space_max.shape == self.space_min.shape
         assert self.ndims == len(self.space_max)
@@ -73,6 +74,14 @@ class CSamplingMethod(metaclass=ABCMeta):
         ESS = 1 / np.sum(normweights*normweights)
         return ESS / len(self.samples)
 
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, val):
+        self._name = val
 
     @property
     def num_proposal_samples(self):
