@@ -57,7 +57,7 @@ class CKernelDensity(CDistribution):
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
-    samples = np.array([-.1, .3, .2, .25, .31]).reshape(5, 1)
+    samples = np.array([-.1, .3, .2, .25, .61]).reshape(5, 1)
     weights = np.ones(len(samples)) / len(samples)
     support = [-1, 1]
 
@@ -71,25 +71,29 @@ if __name__ == "__main__":
 
     plt.figure()
     plt.subplot(2, 2, 1)
-    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__)
+    plt.scatter(samples, np.zeros(len(samples)))
     plt.legend()
 
     plt.subplot(2, 2, 2)
     params["kernel_f"] = CKernel.kernel_normal
     dist = CKernelDensity(params)
-    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__)
+    plt.scatter(samples, np.zeros(len(samples)))
     plt.legend()
 
     plt.subplot(2, 2, 3)
     params["kernel_f"] = CKernel.kernel_triangular
     dist = CKernelDensity(params)
-    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__)
+    plt.scatter(samples, np.zeros(len(samples)))
     plt.legend()
 
     plt.subplot(2, 2, 4)
     params["kernel_f"] = CKernel.kernel_uniform
     dist = CKernelDensity(params)
-    dist.draw(plt.gca(), label=params["kernel_f"].__name__, n_points=1000)
+    dist.draw(plt.gca(), label=params["kernel_f"].__name__)
+    plt.scatter(samples, np.zeros(len(samples)))
     plt.legend()
 
     plt.show(block=True)
