@@ -21,7 +21,6 @@ class Banana2D(CDistribution):
         params["type"] = "banana"
         params["likelihood_f"] = self.prob
         params["loglikelihood_f"] = self.log_prob
-        params["mean"] = np.array([1])
         params["support"] = np.array([[-10, -10], [10, 10]])
         super(self.__class__, self).__init__(params)
 
@@ -51,7 +50,6 @@ class Banana2D(CDistribution):
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
-    mean = np.array([1.])
     dist = Banana2D(dict())
 
     plt.figure()
