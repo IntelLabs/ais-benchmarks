@@ -2,3 +2,4 @@ from ais_benchmarks.distributions.benchden.d01_uniform import BenchDenUniform
 from ais_benchmarks.distributions.benchden.d02_exponential import BenchDenExponential
 from ais_benchmarks.distributions.benchden.d03_maxwell import BenchDenMaxwell
 from ais_benchmarks.distributions.benchden.d04_laplace import BenchDenLaplace
+from ais_benchmarks.distributions.benchden.d10_symmetric_pareto import BenchDenSymmetricPareto
