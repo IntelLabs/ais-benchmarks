@@ -232,7 +232,7 @@ class CBenchmark(object):
         # TODO: Generate latex result tables
         # TODO: Generate the animation
 
-    def make_plots(self, benchmark_file=None, methods_file=None, config_file=None):
+    def make_plots(self, benchmark_file=None, methods_file=None, config_file=None, res_file=None):
         if benchmark_file is not None:
             self.load_benchmark(benchmark_file)
 
@@ -241,7 +241,10 @@ class CBenchmark(object):
 
         if methods_file is not None:
             for target_dist, ndims in zip(self.targets, self.ndims):
-                self.load_methods(methods_file, target_dist.domain_min, target_dist.domain_max, ndims)
+                self.load_methods(methods_file, target_dist.support()[0], target_dist.support()[1], ndims)
+
+        if res_file is not None:
+            self.output_file = res_file
 
         t_start = time.time()
         for target_d in self.targets:
@@ -260,9 +263,23 @@ class CBenchmark(object):
                 plt.gca().set_ylim(ymin, ymax * 1.2)
                 plt.savefig(self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric),
                             bbox_inches='tight', dpi=self.plot_dpi)
+                lgnd = plt.legend(mode="expand", loc=(1, 1), ncol=len(self.methods), prop={'size': 5}, numpoints=1)
+                self.save_legend(lgnd, "legend_h.pdf")
+                lgnd = plt.legend(mode="none", loc=(1, 1), ncol=1, prop={'size': 5}, numpoints=1)
+                self.save_legend(lgnd, "legend_v.pdf")
                 plt.close()
                 print("Generated " + self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric))
         print("PLOT GENERATION TOOK: %5.3fs" % (time.time() - t_start))
+
+    @staticmethod
+    def save_legend(legend, filename="legend.pdf"):
+        """
+        From: https://stackoverflow.com/questions/4534480/get-legend-as-a-separate-picture-in-matplotlib
+        """
+        fig = legend.figure
+        legend.figure.canvas.draw()
+        bbox = legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        fig.savefig(filename, dpi="figure", bbox_inches=bbox)
 
     @staticmethod
     def make_2d_plot(data, xaxis, yaxis, methods, selector=None, selector_val=None, labels=None, mark_points=10):
