@@ -478,8 +478,8 @@ class CBenchmark(object):
                 # TODO: Cleanup the debug viz code
                 # Display visualization of sampling procedure
                 if debug:
-                    # plt.title(text_display)
-                    plt.title(sampling_method.name)
+                    plt.title(text_display, fontsize=10)
+                    # plt.title(sampling_method.name)
                     # Remove previous points
                     for element in pts:
                         element.remove()
