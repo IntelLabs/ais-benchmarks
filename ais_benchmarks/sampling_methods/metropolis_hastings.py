@@ -36,6 +36,7 @@ class CMetropolisHastings(CMixtureSamplingMethod):
             - proposal_sigma: Scaling parameter of the spherical multivariate gaussian used as the proposal distribution
                               if the proposal_d parameter is not set this is used instead.
         """
+        params["name"] = "MCMC-MH"
         super(self.__class__, self).__init__(params)
         if "proposal_d" in params.keys() and params["proposal_d"] is not None:
             self.proposal_d = params["proposal_d"]
