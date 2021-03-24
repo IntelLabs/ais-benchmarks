@@ -264,9 +264,9 @@ class CBenchmark(object):
                 plt.savefig(self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric),
                             bbox_inches='tight', dpi=self.plot_dpi)
                 lgnd = plt.legend(mode="expand", loc=(1, 1), ncol=len(self.methods), prop={'size': 5}, numpoints=1)
-                self.save_legend(lgnd, "legend_h.pdf")
+                self.save_legend(lgnd, self.generate_plots_path + "legend_h.pdf")
                 lgnd = plt.legend(mode="none", loc=(1, 1), ncol=1, prop={'size': 5}, numpoints=1)
-                self.save_legend(lgnd, "legend_v.pdf")
+                self.save_legend(lgnd, self.generate_plots_path + "legend_v.pdf")
                 plt.close()
                 print("Generated " + self.generate_plots_path + "%dD_%s_%s.pdf" % (dims, dist, metric))
         print("PLOT GENERATION TOOK: %5.3fs" % (time.time() - t_start))
