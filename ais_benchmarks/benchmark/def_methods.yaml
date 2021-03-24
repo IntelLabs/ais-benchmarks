@@ -34,7 +34,8 @@ methods:
         resampling: "'leaf'"
         kernel: "'haar'"
         ess_target: 0.90
-        parallel_samples: 64
+        n_min: 5
+        parallel_samples: 32
 
     - name: mcmc_mh
       type: CMetropolisHastings
