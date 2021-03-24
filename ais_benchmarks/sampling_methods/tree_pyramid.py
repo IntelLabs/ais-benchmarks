@@ -155,12 +155,14 @@ class CTreePyramid:
         else:
             return self.find(val, prev=prev.get_child(val))
 
-    def expand(self, node, ess_target=None):
+    def expand(self, node, ess_target=None, n_min=5):
         assert node.is_leaf(), "Non leaf node expansion is not allowed: " + repr(node)
         ################################################
         # Compute the leaf ESS and only expand if the criteria is met
         ################################################
         if ess_target is not None:
+            if len(node.weight_hist) < n_min:
+                return None
             ESS = (np.sum(node.weight_hist) * np.sum(node.weight_hist)) / np.sum(node.weight_hist * node.weight_hist)
             # NESS = ESS / len(node.weight_hist)
             if ESS > ess_target * len(node.weight_hist):
@@ -272,6 +274,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             ess_target: Exploration threshold. When a subspace achieves the target ESS it is not further subdivided.
                         Use None to not use this subdivision criterion and use the default split the subspaces with
                         higher density.
+            n_min: Minimum number of samples required to consider subdivision using the ESS criteria. This is only
+                   used if the ess_target is not None.
             parallel_samples: Number of sampling units to use in parallel. This is used for the sample and resample
                               process to determine how many sampling operations to perform simultaneously.
             method: Importance sampling method used. Options are: "simple", "dm" and "mixture":
@@ -301,6 +305,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
         assert self.method in ["simple", "dm", "mixture"], "Invalid method."
 
         self.ess_target = params["ess_target"]
+        self.n_min = params["n_min"]
 
         self.resampling = params["resampling"]
         assert self.resampling in ["leaf", "none"], "Invalid resampling strategy"
@@ -648,7 +653,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
     def _expand_nodes(self, particles, max_parts):
         new_particles = []
         for p in particles:
-            new_parts = self.T.expand(p, self.ess_target)
+            new_parts = self.T.expand(p, self.ess_target, self.n_min)
             if new_parts is not None:
                 new_particles.extend(new_parts)
                 if len(new_particles) > max_parts:
