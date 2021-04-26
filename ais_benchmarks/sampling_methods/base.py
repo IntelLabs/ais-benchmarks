@@ -74,6 +74,11 @@ class CSamplingMethod(metaclass=ABCMeta):
         ESS = 1 / np.sum(normweights*normweights)
         return ESS / len(self.samples)
 
+    def get_stats(self):
+        return {"proposal_samples": self._num_q_samples,
+                "proposal_evals": self._num_q_evals,
+                "target_evals": self._num_pi_evals,
+                "n_samples": len(self.samples)}
 
     @property
     def name(self):

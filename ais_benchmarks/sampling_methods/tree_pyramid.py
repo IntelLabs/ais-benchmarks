@@ -323,6 +323,13 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
 
         self.viz_elements = list()
 
+    def get_stats(self):
+        return {"proposal_samples": self._num_q_samples,
+                "proposal_evals": self._num_q_evals,
+                "target_evals": self._num_pi_evals,
+                "n_samples": self._get_nsamples(),
+                "NESS": self.get_approx_NESS()}
+
     def reset(self):
         super(CTreePyramidSampling, self).reset()
         self.T = CTreePyramid(self.space_min, self.space_max, kernel=self.kernel)
@@ -373,6 +380,8 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             self.T.samples[self.T.root.node_idx] = self.T.root.coords
             self._num_q_samples += 1
             self.T.root.weigh(target_d, self.T.root.sampler)
+            self._num_pi_evals += 1  # Count the evaluation operation
+            self._num_q_evals += 1  # Count the evaluation operation
             self.T.weights[self.T.root.node_idx] = self.T.root.weight
             self._update_model()
 

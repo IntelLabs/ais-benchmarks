@@ -28,13 +28,14 @@ class CMixtureModel(CDistribution):
         # Address NaN or negative
         nan_indices = np.logical_or(np.isnan(weights), weights <= 0)
         if np.any(nan_indices):
-            print("CMixtureModel. WARNING! There are NaN, negative or zero weights. Those models won't be used",
-                  file=sys.stderr)
+            print(f"CMixtureModel. WARNING! There are {np.count_nonzero(nan_indices)} NaN, negative or "
+                  f"zero weights out of {len(weights)}. ", file=sys.stderr)
             weights[nan_indices] = 0
 
         # Make sure weights are normalized
         if weights.sum() <= 0:
-            print("CMixtureModel. ERROR! All weights are set to zero!", file=sys.stderr)
+            print("CMixtureModel. WARNING! All weights are set to zero!. "
+                  "Using equal weights for all components.", file=sys.stderr)
         else:
             weights = weights / weights.sum()
         self.weights = weights
