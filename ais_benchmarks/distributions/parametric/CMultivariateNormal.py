@@ -17,8 +17,9 @@ class CMultivariateNormal(CDistribution):
     :param params: The distribution class is initialized by a dictionary of parameters which must contain (besides
     class specific parameters) at least the following parameters:
     - mean: Array of first moments for each dimension. i.e. array of means
+    - sigma: Covariance matrix. Square, positive-semidefinite with size dims x dims.
     - support: PDF support. Namely, subspace containing all the probability density. The definite integral of the
-               PDF over the support subspace is 1.
+               PDF over the support subspace is 1. If this is not provided 6*sigma is used to cut the tails.
                WARNING!!: Infinite support distributions are not supported yet. TODO. Must add support for such feature.
     """
 
