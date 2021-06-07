@@ -698,7 +698,7 @@ class CTreePyramidSampling(CMixtureISSamplingMethod):
             nsamples_subspace = len(l.weight_hist)
             samples[i:i + nsamples_subspace] = l.coords_hist
             weights[i:i + nsamples_subspace] = l.weight_hist.flatten()
-        return samples, weights
+        return samples[weights > 0], weights[weights > 0]
 
     def _self_normalize(self):
         if np.sum(self.T.weights[self.T.leaves_idx]) > 0:
