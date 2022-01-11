@@ -1,8 +1,11 @@
 """
-Performance metrics will evaluate computation complexity, memory consumption and efficiency (power consumption)
+Performance metrics will evaluate computation complexity, memory
+consumption and efficiency (power consumption)
 """
 
 import time
+from timeit import default_timer as timer
+
 import gc
 import numpy as np
 from guppy import hpy
@@ -30,14 +33,14 @@ class CElapsedTime(CMetric):
             self.post()
             vals[i] = self.compute()
             self.reset()
-        self.overhead = (vals.mean() - delta_t) / n_samples
+        self.overhead = (vals.mean() - delta_t)
         print("CElapsedTime overhead estimate: ", self.overhead)
 
     def pre(self, **kwargs):
-        self.t_ini = time.time()
+        self.t_ini = timer()
 
     def post(self, **kwargs):
-        self.t_end = time.time()
+        self.t_end = timer()
         self.value += self.t_end - self.t_ini - self.overhead
 
     def compute(self, **kwargs):
