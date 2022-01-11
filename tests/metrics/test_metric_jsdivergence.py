@@ -31,9 +31,16 @@ class CMetricsTests(unittest.TestCase):
         print("Test JSD divergence. JSD:%.6f. Expected: %.6f. Error: %.3f%%" %
               (res, expected_res, np.fabs(100*(res-expected_res)/expected_res)))
 
-        self.assertAlmostEqual(res, expected_res, delta=expected_res*tolerance,
-                               msg="Divergence metric should be within %.1f%% of the expected value %f" %
-                                   (tolerance*100, expected_res))
+        max_delta = expected_res * tolerance
+
+        if np.isclose(max_delta, 0.0):
+            max_delta = tolerance
+
+        self.assertAlmostEqual(res, expected_res,
+                               delta=max_delta,
+                               msg=f"Divergence metric should be within "
+                                   f"{tolerance*100:.1f}%% of the expected "
+                                   f"value {expected_res}")
 
     @staticmethod
     def mvn_kld(mu0, mu1, sigma0, sigma1):
@@ -68,7 +75,7 @@ class CMetricsTests(unittest.TestCase):
         # Test distributions are the same
         p = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([1])})
         q = CMultivariateNormal({"mean": np.array([0]), "sigma": np.diag([1])})
-        self.do_test(p, q, 0)
+        self.do_test(p, q, 0.0)
 
     def test_similar(self):
         mu0 = np.array([0])
