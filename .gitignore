@@ -4,3 +4,4 @@ visualization/manim/media
 benchmark/results.txt
 *results_*
 results.txt
+.pytest_cache
