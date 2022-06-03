@@ -147,10 +147,12 @@ class CTreePyramid:
         :param prev: node that represents the subspace to search
         :return: node that contains val
         """
-        if prev is None:
+        if prev is None and self.root is None:
+            return None
+        else:
             prev = self.root
 
-        if prev is not None and prev.is_leaf():
+        if prev.is_leaf():
             return prev
         else:
             return self.find(val, prev=prev.get_child(val))
