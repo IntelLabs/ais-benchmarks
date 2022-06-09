@@ -12,7 +12,7 @@ info below.
 ### Ubuntu Linux
 ```shell script
 sudo apt install python python-pip python-tk
-git clone https://github.com/jfelip/ais-benchmarks.git
+git clone https://github.com/IntelLabs/ais-benchmarks.git ais-benchmarks
 cd ais-benchmarks
 pip install cython scikit-build
 pip install -r requirements.txt

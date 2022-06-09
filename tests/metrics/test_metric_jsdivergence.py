@@ -39,7 +39,7 @@ class CMetricsTests(unittest.TestCase):
         self.assertAlmostEqual(res, expected_res,
                                delta=max_delta,
                                msg=f"Divergence metric should be within "
-                                   f"{tolerance*100:.1f}%% of the expected "
+                                   f"{tolerance*100:.1f}% of the expected "
                                    f"value {expected_res}")
 
     @staticmethod
