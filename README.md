@@ -8,9 +8,11 @@ of the art implementations, if you find this package useful for your research pl
 info below. 
 
 ### Installation and quickstart
+The last supported version is 3.10. guppy3 which is used for CPU and Memory metrics is still not ported to 3.11. 
+Once this dependency runs on 3.11 ais-benchmarks should be capable to run on 3.11
 
 ### Ubuntu Linux
-```shell script
+```shell
 sudo apt install python python-pip python-tk
 git clone https://github.com/IntelLabs/ais-benchmarks.git ais-benchmarks
 cd ais-benchmarks
@@ -19,8 +21,17 @@ pip install -r requirements.txt
 python benchmark/run_benchmark.py
 ```
 ### Windows
-TODO
+You need to have python3 and git in your PATH for Windows powershell to find
+the commands
 
+Install python 3.10:
+https://www.python.org/downloads/release/python-3109/
+```shell
+git clone https://github.com/IntelLabs/ais-benchmarks.git ais-benchmarks
+cd ais-benchmarks
+pip install -r requirements.txt
+python benchmark/run_benchmark.py
+```
 
 ### Batching:
 All methods assume the first dimension to be the batch dimension to support vectorized implementations. The results
