@@ -173,4 +173,6 @@ if __name__ == "__main__":
 
     plt.xlim(-.1, 1.1)
     plt.ylim(-.1, 1.1)
+    # Disable automatic plot axis
+    plt.axis('off')
     plt.show()
