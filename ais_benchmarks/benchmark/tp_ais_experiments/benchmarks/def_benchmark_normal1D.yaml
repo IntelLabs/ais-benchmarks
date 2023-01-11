@@ -1,0 +1,18 @@
+targets:
+- batch_size: 2
+  name: normal
+  nsamples: 2000
+  nsamples_eval: 20000
+  params:
+    dims: 1
+    family: mixture
+    means:
+    - - 4.2792326633989095
+    sigmas:
+    - - 0.39158215616489883
+    support:
+    - - 2.3213218825744155
+    - - 6.2371434442234035
+    weights:
+    - 1.0
+  type: distributions.CGaussianMixtureModel
