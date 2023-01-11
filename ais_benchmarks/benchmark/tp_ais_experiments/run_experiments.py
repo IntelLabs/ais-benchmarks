@@ -1,4 +1,8 @@
 """
+Script for running multiple experiments in parallel. Place individual config files of the methods to evaluate
+into the methods subdir. Place the individual config file for the target distributions to evaluate in the
+benchmarks subdir. The experiment runner will parallelize the experiments based on the machine CPU count as follows:
+
 For each method in methods subdir
     For each benchmark in benchmarks subdir
         Create a job description
