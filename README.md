@@ -220,3 +220,5 @@ Learning from uncertainty.IEEE Transactions on Signal Processing,63(16):4422–4
 
 [10] Lu, Xiaoyu, Tom Rainforth, Yuan Zhou, Jan-Willem van de Meent, and Yee Whye Teh. “On Exploration, 
 Exploitation and Learning in Adaptive Importance Sampling.” ArXiv:1810.13296 [Cs, Stat], October 31, 2018. 
+
+<!-- First Review - 10/31/2023 MRB -->
